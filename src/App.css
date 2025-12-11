@@ -3,6 +3,39 @@
   background-color: #fafafa;
 }
 
+.main-content {
+  min-height: 100vh;
+  transition: margin-left 0.3s ease;
+}
+
+.main-content.sidebar-open {
+  margin-left: 250px;
+}
+
+.main-content.sidebar-closed {
+  margin-left: 70px;
+}
+
+@media (max-width: 768px) {
+  .main-content.sidebar-open {
+    margin-left: 220px;
+  }
+  
+  .main-content.sidebar-closed {
+    margin-left: 60px;
+  }
+}
+
+@media (max-width: 480px) {
+  .main-content.sidebar-open {
+    margin-left: 200px;
+  }
+  
+  .main-content.sidebar-closed {
+    margin-left: 50px;
+  }
+}
+
 /* Modal styles */
 .modal-overlay {
   position: fixed;

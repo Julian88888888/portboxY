@@ -1,0 +1,167 @@
+/* Sidebar Styles */
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  background: white;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  padding-top: 20px;
+}
+
+.sidebar.open {
+  width: 250px;
+}
+
+.sidebar.closed {
+  width: 70px;
+}
+
+.sidebar-toggle {
+  position: absolute;
+  top: 20px;
+  right: -15px;
+  width: 30px;
+  height: 30px;
+  background: #667eea;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s ease;
+  z-index: 1001;
+  color: white;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.sidebar-toggle:hover {
+  background: #5a6fd8;
+  transform: scale(1.1);
+}
+
+.toggle-icon {
+  display: block;
+  transition: transform 0.3s ease;
+}
+
+.sidebar-nav {
+  flex: 1;
+  padding: 60px 0 20px 0;
+  overflow-y: auto;
+}
+
+.sidebar-nav-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.sidebar-nav-list li {
+  margin: 0;
+  padding: 0;
+}
+
+.nav-item {
+  width: 100%;
+  padding: 16px 20px;
+  background: none;
+  border: none;
+  text-align: left;
+  font-size: 16px;
+  font-weight: 500;
+  color: #333;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-left: 3px solid transparent;
+  position: relative;
+}
+
+.nav-item:hover {
+  background: #f8f9ff;
+  color: #667eea;
+  border-left-color: #667eea;
+}
+
+.nav-item.active {
+  background: #f0f4ff;
+  color: #667eea;
+  border-left-color: #667eea;
+  font-weight: 600;
+}
+
+.nav-item.active:hover {
+  background: #e8efff;
+}
+
+.nav-icon {
+  font-size: 20px;
+  min-width: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-text {
+  white-space: nowrap;
+  opacity: 1;
+  transition: opacity 0.2s ease;
+}
+
+.sidebar.closed .nav-text {
+  opacity: 0;
+  width: 0;
+  overflow: hidden;
+}
+
+.sidebar.closed .nav-item {
+  justify-content: center;
+  padding: 16px;
+}
+
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .sidebar.open {
+    width: 220px;
+  }
+  
+  .sidebar.closed {
+    width: 60px;
+  }
+  
+  .nav-item {
+    padding: 14px 16px;
+    font-size: 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  .sidebar.open {
+    width: 200px;
+  }
+  
+  .sidebar.closed {
+    width: 50px;
+  }
+  
+  .nav-item {
+    padding: 12px;
+    font-size: 14px;
+  }
+  
+  .nav-icon {
+    font-size: 18px;
+  }
+}
+

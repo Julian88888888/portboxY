@@ -487,6 +487,91 @@ export default function JobRequestPopup({ onEditProfile }) {
           <div className="line_divider"></div>
         </div>
       </div>
+      <div className="section">
+        <div className="content_wrapper">
+          <h4 className="section_title">PORTFOLIO</h4>
+          <div className="spacing_24"></div>
+          <div className="w-layout-grid blog_grid">
+            <a id="w-node-_2c61a3c0-5d6c-0c89-e858-5abe532a3531-7361f4cc" href="#" className="product_item w-inline-block">
+              <div className="product_image_wrapper">
+                <img 
+                  src="images/fashion-photo.jpg" 
+                  loading="lazy" 
+                  sizes="(max-width: 600px) 100vw, 600px" 
+                  srcSet="images/fashion-photo-p-500.jpg 500w, images/fashion-photo.jpg 600w" 
+                  alt="" 
+                  className="product_image fashionphoto"
+                />
+                <div className="discount_tag">Fashion</div>
+              </div>
+              <div className="spacing_16"></div>
+              <div className="font_weight_bold">Fashion</div>
+              <div className="spacing_4"></div>
+              <p className="text_color_grey">High Fashion Portfolio Work</p>
+            </a>
+            <a id="w-node-_2c61a3c0-5d6c-0c89-e858-5abe532a353c-7361f4cc" href="#" className="product_item w-inline-block">
+              <div className="product_image_wrapper">
+                <img 
+                  src="images/glamour-photo.jpg" 
+                  loading="lazy" 
+                  sizes="(max-width: 600px) 100vw, 600px" 
+                  srcSet="images/glamour-photo-p-500.jpg 500w, images/glamour-photo.jpg 600w" 
+                  alt="" 
+                  className="product_image glamourphoto"
+                />
+                <div className="discount_tag">Glamour</div>
+              </div>
+              <div className="spacing_16"></div>
+              <div className="font_weight_bold">Glamour</div>
+              <div className="spacing_4"></div>
+              <p className="text_color_grey">Creative and Artistic work</p>
+            </a>
+          </div>
+          <div className="spacing_32"></div>
+          <div className="w-layout-grid blog_grid">
+            <a id="w-node-_2c61a3c0-5d6c-0c89-e858-5abe532a3549-7361f4cc" href="#" className="product_item w-inline-block">
+              <div className="product_image_wrapper">
+                <img 
+                  src="images/swimwear-photo.jpg" 
+                  loading="lazy" 
+                  sizes="(max-width: 600px) 100vw, 600px" 
+                  srcSet="images/swimwear-photo-p-500.jpg 500w, images/swimwear-photo.jpg 600w" 
+                  alt="" 
+                  className="product_image swimwearphoto"
+                />
+                <div className="discount_tag">Swimwear</div>
+              </div>
+              <div className="spacing_16"></div>
+              <div className="font_weight_bold">Swimwear</div>
+              <div className="spacing_4"></div>
+              <p className="text_color_grey">My Swimwear Portfolio</p>
+            </a>
+            <a id="w-node-_2c61a3c0-5d6c-0c89-e858-5abe532a3554-7361f4cc" href="#" className="product_item w-inline-block">
+              <div className="product_image_wrapper">
+                <img 
+                  src="images/print-photo.jpg" 
+                  loading="lazy" 
+                  sizes="(max-width: 600px) 100vw, 600px" 
+                  srcSet="images/print-photo-p-500.jpg 500w, images/print-photo.jpg 600w" 
+                  alt="" 
+                  className="product_image printphoto"
+                />
+                <div className="discount_tag">Print</div>
+              </div>
+              <div className="spacing_16"></div>
+              <div className="font_weight_bold">Print</div>
+              <div className="spacing_4"></div>
+              <p className="text_color_grey">My Published Work</p>
+            </a>
+          </div>
+          <div className="spacing_32"></div>
+          <div className="spacing_48">
+            <a data-w-id="a31dac47-4806-1da6-f61f-71f75a9e52f5" href="#" className="button bookme_large w-button">Book Me</a>
+          </div>
+          <div className="line_divider"></div>
+          <div className="spacing_48"></div>
+        </div>
+      </div>
       <div className="section links_sec">
         <div className="content_wrapper largebanner_btn">
           <div className="spacing_48"></div>

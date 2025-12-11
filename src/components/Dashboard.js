@@ -1,0 +1,1371 @@
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '../contexts/AuthContext';
+import './Dashboard.css';
+
+export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
+  const { user, updateProfile } = useAuth();
+  const [activeTab, setActiveTab] = useState(propActiveTab || 'Tab 1');
+  const [activeBookingTab, setActiveBookingTab] = useState('Tab 2');
+
+  // Sync with prop changes - this ensures the tab reflects the current page
+  useEffect(() => {
+    if (propActiveTab && propActiveTab !== activeTab) {
+      setActiveTab(propActiveTab);
+    }
+  }, [propActiveTab]);
+
+  const handleTabChange = (tab) => {
+    // Immediately call onTabChange to update the page in App.js
+    if (onTabChange) {
+      onTabChange(tab);
+    }
+    // Also update local state for immediate UI feedback
+    setActiveTab(tab);
+  };
+  const [formData, setFormData] = useState({
+    username: '',
+    name: '',
+    bio: '',
+    jobType: 'Model',
+    showProfilePhoto: true,
+    showHeaderPhoto: true,
+    showProfileDescription: true,
+    instagram: '',
+    twitter: '',
+    showSocialLinks: true,
+    industry: '',
+    status: '',
+    markets: '',
+    availableFor: '',
+    showProfileStats: true,
+    showModelStats: true,
+    heightFeet: '',
+    heightInches: '',
+    heightUnit: '',
+    weight: '',
+    weightUnit: '',
+    bust: '',
+    bustSize: '',
+    waist: '',
+    waistUnit: '',
+    hips: '',
+    hipsUnit: '',
+    shoe: '',
+    shoeUnit: '',
+    hairColor: '',
+    hairLength: '',
+    eyeColor: '',
+    age: '',
+    gender: '',
+    ethnicity: '',
+    showPortfolioWidget: true,
+    showPortfolioTitle: true,
+    showAlbumBadge: true,
+    showAlbumTitle: true,
+    showAlbumDescription: true,
+    showBookMeButton: true,
+    enableBookingsWidget: true,
+    enableBookingsTitle: true,
+    bookingsTitle: 'BOOKINGS',
+    hometown: '',
+    showHometown: true,
+    bookingDescription: '',
+    showRequestDescription: true,
+    availableForBooking: '',
+    showAvailableFor: true,
+    showCustomLinksWidget: true,
+    showCustomLinksTitle: true,
+    email: '',
+    password: '',
+    confirmPassword: ''
+  });
+
+  useEffect(() => {
+    if (user) {
+      setFormData(prev => ({
+        ...prev,
+        username: user.username || '',
+        name: user.name || '',
+        bio: user.bio || '',
+        industry: user.industry || '',
+        status: user.status || '',
+        markets: user.markets || '',
+        availableFor: user.availableFor || '',
+        heightFeet: user.heightFeet || '',
+        heightInches: user.heightInches || '',
+        heightUnit: user.heightUnit || '',
+        weight: user.weight || '',
+        weightUnit: user.weightUnit || '',
+        bust: user.bust || '',
+        bustSize: user.bustSize || '',
+        waist: user.waist || '',
+        waistUnit: user.waistUnit || '',
+        hips: user.hips || '',
+        hipsUnit: user.hipsUnit || '',
+        shoe: user.shoe || '',
+        shoeUnit: user.shoeUnit || '',
+        age: user.age || '',
+        gender: user.gender || '',
+        email: user.email || '',
+        instagram: user.socialLinks?.instagram || '',
+        twitter: user.socialLinks?.twitter || '',
+        hometown: user.currentCity || ''
+      }));
+    }
+  }, [user]);
+
+  const handleInputChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }));
+  };
+
+  const handleSubmit = async (e, formType) => {
+    e.preventDefault();
+    try {
+      const result = await updateProfile(formData);
+      if (result.success) {
+        alert('Settings saved successfully!');
+      } else {
+        alert('Error saving settings: ' + (result.error || 'Unknown error'));
+      }
+    } catch (error) {
+      alert('Error saving settings: ' + error.message);
+    }
+  };
+
+  const getProfileImage = () => {
+    if (user?.profilePhotos && user.profilePhotos.length > 0) {
+      const mainPhoto = user.profilePhotos.find(photo => photo.isMain);
+      return mainPhoto ? mainPhoto.url : user.profilePhotos[0].url;
+    }
+    return '/images/headshot_model.jpg';
+  };
+
+  const jobTypes = [
+    { 
+      id: 'Model', 
+      icon: <svg width="24" height="24" viewBox="0 0 24 24" strokeWidth="1.5" fill="none" xmlns="http://www.w3.org/2000/svg" color="#FFFFFF">
+        <path d="M18 21H6C6 21 7.66042 16.1746 7.5 13C7.3995 11.0112 5.97606 9.92113 6.5 8C6.72976 7.15753 7.5 6 7.5 6C7.5 6 9 7 12 7C15 7 16.5 6 16.5 6C16.5 6 17.2702 7.15753 17.5 8C18.0239 9.92113 16.6005 11.0112 16.5 13C16.3396 16.1746 18 21 18 21Z" stroke="#FFFFFF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"></path>
+        <path d="M7.49988 6.00002V3" stroke="#FFFFFF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"></path>
+        <path d="M16.5 6.00002V3" stroke="#FFFFFF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"></path>
+      </svg>
+    },
+    { 
+      id: 'Photographer', 
+      icon: <svg className="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+        <path stroke="currentColor" strokeLinejoin="round" strokeWidth="2" d="M4 18V8a1 1 0 0 1 1-1h1.5l1.707-1.707A1 1 0 0 1 8.914 5h6.172a1 1 0 0 1 .707.293L17.5 7H19a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1Z"></path>
+        <path stroke="currentColor" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"></path>
+      </svg>
+    },
+    { 
+      id: 'Wardrobe Stylist', 
+      icon: <svg width="24" height="24" viewBox="0 0 24 24" strokeWidth="1.5" fill="none" xmlns="http://www.w3.org/2000/svg" color="#000000">
+        <path d="M6 4H9C9 4 9 7 12 7C15 7 15 4 15 4H18M18 11V19.4C18 19.7314 17.7314 20 17.4 20H6.6C6.26863 20 6 19.7314 6 19.4L6 11" stroke="#000000" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"></path>
+        <path d="M18 4L22.4429 5.77717C22.7506 5.90023 22.9002 6.24942 22.7772 6.55709L21.1509 10.6228C21.0597 10.8506 20.8391 11 20.5938 11H18" stroke="#000000" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"></path>
+        <path d="M5.99993 4L1.55701 5.77717C1.24934 5.90023 1.09969 6.24942 1.22276 6.55709L2.84906 10.6228C2.94018 10.8506 3.1608 11 3.40615 11H5.99993" stroke="#000000" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"></path>
+      </svg>
+    },
+    { 
+      id: 'Hair Stylist', 
+      icon: <svg className="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+        <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 9H5a1 1 0 0 0-1 1v4a1 1 0 0 0 1 1h6m0-6v6m0-6 5.419-3.87A1 1 0 0 1 18 5.942v12.114a1 1 0 0 1-1.581.814L11 15m7 0a3 3 0 0 0 0-6M6 15h3v5H6v-5Z"></path>
+      </svg>
+    },
+    { 
+      id: 'Makeup Artist', 
+      icon: <svg width="24" height="24" viewBox="0 0 24 24" strokeWidth="1.5" fill="none" xmlns="http://www.w3.org/2000/svg" color="#000000">
+        <path d="M19 12L5 21" stroke="#000000" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"></path>
+        <path d="M5 3L5 12" stroke="#000000" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"></path>
+        <path d="M19 3V12" stroke="#000000" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"></path>
+        <path d="M5 12L19 21" stroke="#000000" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"></path>
+        <path d="M4 12L20 12" stroke="#000000" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"></path>
+        <path d="M5 4L19 4" stroke="#000000" strokeWidth="1.5" strokeLinejoin="round"></path>
+        <path d="M5 7L19 7" stroke="#000000" strokeWidth="1.5" strokeLinejoin="round"></path>
+      </svg>
+    },
+    { 
+      id: 'Brand', 
+      icon: <svg className="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+        <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7H5a2 2 0 0 0-2 2v4m5-6h8M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m0 0h3a2 2 0 0 1 2 2v4m0 0v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-6m18 0s-4 2-9 2-9-2-9-2m9-2h.01"></path>
+      </svg>
+    },
+    { 
+      id: 'Agency', 
+      icon: <svg className="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+        <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7H5a2 2 0 0 0-2 2v4m5-6h8M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m0 0h3a2 2 0 0 1 2 2v4m0 0v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-6m18 0s-4 2-9 2-9-2-9-2m9-2h.01"></path>
+      </svg>
+    }
+  ];
+
+  return (
+    <div className="section full_sec">
+      <div className="w-layout-hflex mainheader">
+        <div className="headerbar">
+          <a href="/" className="w-inline-block">
+            <div className="text-block-5">Portfolio-In-Link</div>
+          </a>
+          <a href="/" className="w-inline-block">
+            <img 
+              src={getProfileImage()} 
+              loading="lazy" 
+              alt="" 
+              className="prodile_image small_img"
+              onError={(e) => {
+                e.target.src = '/images/headshot_model.jpg';
+              }}
+            />
+          </a>
+        </div>
+      </div>
+      
+      <section>
+        <div className="spacing_48"></div>
+        <div className="tabs w-tabs">
+          <div className="tabs-menu w-tab-menu">
+            <button
+              type="button"
+              onClick={() => handleTabChange('Tab 1')}
+              className={`tab-link-tab-1 w-inline-block w-tab-link ${activeTab === 'Tab 1' ? 'w--current' : ''}`}
+              style={{ 
+                background: activeTab === 'Tab 1' ? 'white' : 'transparent', 
+                border: 'none', 
+                padding: '12px 16px',
+                marginBottom: '8px',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                textAlign: 'left',
+                width: '100%',
+                textDecoration: 'none',
+                color: activeTab === 'Tab 1' ? 'var(--black, #070707)' : 'var(--black, #070707)',
+                display: 'block'
+              }}
+            >
+              <div>Profile</div>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleTabChange('Tab 2')}
+              className={`tab-link-tab-2 w-inline-block w-tab-link ${activeTab === 'Tab 2' ? 'w--current' : ''}`}
+              style={{ 
+                background: activeTab === 'Tab 2' ? 'white' : 'transparent', 
+                border: 'none', 
+                padding: '12px 16px',
+                marginBottom: '8px',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                textAlign: 'left',
+                width: '100%',
+                textDecoration: 'none',
+                color: activeTab === 'Tab 2' ? 'var(--black, #070707)' : 'var(--black, #070707)',
+                display: 'block'
+              }}
+            >
+              <div>Portfolio</div>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleTabChange('Tab 3')}
+              className={`tab-link-tab-3 w-inline-block w-tab-link ${activeTab === 'Tab 3' ? 'w--current' : ''}`}
+              style={{ 
+                background: activeTab === 'Tab 3' ? 'white' : 'transparent', 
+                border: 'none', 
+                padding: '12px 16px',
+                marginBottom: '8px',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                textAlign: 'left',
+                width: '100%',
+                textDecoration: 'none',
+                color: activeTab === 'Tab 3' ? 'var(--black, #070707)' : 'var(--black, #070707)',
+                display: 'block'
+              }}
+            >
+              <div>Bookings</div>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleTabChange('Tab 4')}
+              className={`tab-link-tab-4 w-inline-block w-tab-link ${activeTab === 'Tab 4' ? 'w--current' : ''}`}
+              style={{ 
+                background: activeTab === 'Tab 4' ? 'white' : 'transparent', 
+                border: 'none', 
+                padding: '12px 16px',
+                marginBottom: '8px',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                textAlign: 'left',
+                width: '100%',
+                textDecoration: 'none',
+                color: activeTab === 'Tab 4' ? 'var(--black, #070707)' : 'var(--black, #070707)',
+                display: 'block'
+              }}
+            >
+              <div>Custom Links</div>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleTabChange('Tab 5')}
+              className={`tab-link-tab-5 w-inline-block w-tab-link ${activeTab === 'Tab 5' ? 'w--current' : ''}`}
+              style={{ 
+                background: activeTab === 'Tab 5' ? 'white' : 'transparent', 
+                border: 'none', 
+                padding: '12px 16px',
+                marginBottom: '8px',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                textAlign: 'left',
+                width: '100%',
+                textDecoration: 'none',
+                color: activeTab === 'Tab 5' ? 'var(--black, #070707)' : 'var(--black, #070707)',
+                display: 'block'
+              }}
+            >
+              <div>Account Settings</div>
+            </button>
+          </div>
+          
+          <div className="tabs-content w-tab-content">
+            {/* Tab 1: Profile */}
+            {activeTab === 'Tab 1' && (
+              <div className="w-tab-pane w--tab-active">
+                <div className="w-layout-vflex flex-block-8">
+                  {/* Profile Settings */}
+                  <div className="settingssection">
+                    <div className="profileimg_wrapper">
+                      <div className="profile_wrapper">
+                        <img 
+                          src={getProfileImage()} 
+                          alt="" 
+                          className="prodile_image"
+                          onError={(e) => {
+                            e.target.src = '/images/headshot_model.jpg';
+                          }}
+                        />
+                      </div>
+                      <div className="text_wrapper text_align_center">
+                        <div className="flex_wrapper flex_center">
+                          <h3>{formData.name || 'Mary Adams'}</h3>
+                          <a href="#" className="button_icon accent_button small_btn w-inline-block">
+                            <div>{formData.jobType}</div>
+                          </a>
+                        </div>
+                        <div className="spacing_8"></div>
+                        <p className="username_txt">@{formData.username || 'maryadams'}</p>
+                        <p className="text_color_grey text_width_medium">
+                          {formData.bio || 'I am a professional model with many years of experience working for top brands all over the world.'}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="spacing_24"></div>
+                    <h3>Profile Settings</h3>
+                    <div className="w-form">
+                      <div className="spacing_24"></div>
+                      <form onSubmit={(e) => handleSubmit(e, 'profile')}>
+                        <div className="w-layout-hflex flex-block-10">
+                          <div>
+                            <p className="text_color_grey text_width_medium">Add Profile Photo/Logo</p>
+                            <img loading="lazy" src="https://d3e54v103j8qbb.cloudfront.net/plugins/Basic/assets/placeholder.60f9b1840c.svg" alt="" style={{width: '100px', height: '100px', marginTop: '8px'}} />
+                            <div className="w-layout-hflex flex-block-9" style={{marginTop: '12px'}}>
+                              <img width="50" height="Auto" alt="" src="/images/smSwitch.png" loading="lazy" />
+                              <p>Show Profile Photo/Logo</p>
+                            </div>
+                          </div>
+                          <div>
+                            <p className="text_color_grey text_width_medium">Add Profile Header Photo</p>
+                            <img loading="lazy" src="https://d3e54v103j8qbb.cloudfront.net/plugins/Basic/assets/placeholder.60f9b1840c.svg" alt="" style={{width: '100px', height: '100px', marginTop: '8px'}} />
+                            <div className="w-layout-hflex flex-block-9" style={{marginTop: '12px'}}>
+                              <img width="50" height="Auto" alt="" src="/images/smSwitch.png" loading="lazy" />
+                              <p>Show Profile Header Photo</p>
+                            </div>
+                          </div>
+                        </div>
+                        <p className="text_color_grey text_width_medium" style={{marginTop: '24px', marginBottom: '16px'}}>Select Your Profile Job Type ⤵</p>
+                        <div className="w-layout-hflex header_roles">
+                          {jobTypes.map((job) => (
+                            <a
+                              key={job.id}
+                              href="#"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                setFormData(prev => ({ ...prev, jobType: job.id }));
+                              }}
+                              className={`flex_wrapper flex_distribute link_block small_choice w-inline-block ${formData.jobType === job.id ? 'highlight_type' : ''}`}
+                              style={{minWidth: '140px'}}
+                            >
+                              <div>{job.id}</div>
+                              <div className="icon_24x24 w-embed" style={{width: '24px', height: '24px', flexShrink: 0}}>{job.icon}</div>
+                            </a>
+                          ))}
+                        </div>
+                        <label htmlFor="username">Username</label>
+                        <input 
+                          className="w-input" 
+                          maxLength="256" 
+                          name="username" 
+                          placeholder="@username" 
+                          type="text" 
+                          id="username" 
+                          value={formData.username}
+                          onChange={handleInputChange}
+                        />
+                        <label htmlFor="name">Name</label>
+                        <input 
+                          className="w-input" 
+                          maxLength="256" 
+                          name="name" 
+                          placeholder="Full Name/Business" 
+                          type="text" 
+                          id="name"
+                          value={formData.name}
+                          onChange={handleInputChange}
+                        />
+                        <label htmlFor="bio">Profile Description</label>
+                        <textarea 
+                          id="bio" 
+                          name="bio" 
+                          maxLength="5000" 
+                          placeholder="I am a professional model with many years of experience working for top brands all over the world." 
+                          className="w-input"
+                          value={formData.bio}
+                          onChange={handleInputChange}
+                        />
+                        <div className="w-layout-hflex flex-block-9">
+                          <img width="50" height="Auto" alt="" src="/images/smSwitch.png" loading="lazy" />
+                          <p>Show Profile Description</p>
+                        </div>
+                        <input type="submit" className="submit-button w-button" value="Save" />
+                      </form>
+                      <div className="w-form-done" tabIndex="-1" role="region" aria-label="Email Form success">
+                        <div>Thank you! Your submission has been received!</div>
+                      </div>
+                      <div className="w-form-fail" tabIndex="-1" role="region" aria-label="Email Form failure">
+                        <div>Oops! Something went wrong while submitting the form.</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Social Links */}
+                  <div className="settingssection">
+                    <div className="spacing_24"></div>
+                    <h3>Social Links</h3>
+                    <div className="w-form">
+                      <div className="spacing_24"></div>
+                      <form onSubmit={(e) => handleSubmit(e, 'social')}>
+                        <div className="w-layout-hflex flex-block-9">
+                          <img width="50" height="Auto" alt="" src="/images/smSwitch.png" loading="lazy" />
+                          <p>Show Social Links</p>
+                        </div>
+                        <label htmlFor="instagram">Instagram</label>
+                        <input 
+                          className="w-input" 
+                          maxLength="256" 
+                          name="instagram" 
+                          placeholder="@username" 
+                          type="text" 
+                          id="instagram"
+                          value={formData.instagram}
+                          onChange={handleInputChange}
+                        />
+                        <label htmlFor="twitter">X</label>
+                        <input 
+                          className="w-input" 
+                          maxLength="256" 
+                          name="twitter" 
+                          placeholder="@username" 
+                          type="text" 
+                          id="twitter"
+                          value={formData.twitter}
+                          onChange={handleInputChange}
+                        />
+                        <div className="spacing_24"></div>
+                        <input type="submit" className="submit-button w-button" value="Save" />
+                      </form>
+                      <div className="w-form-done" tabIndex="-1" role="region" aria-label="Email Form success">
+                        <div>Thank you! Your submission has been received!</div>
+                      </div>
+                      <div className="w-form-fail" tabIndex="-1" role="region" aria-label="Email Form failure">
+                        <div>Oops! Something went wrong while submitting the form.</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Profile Stats */}
+                  <div className="settingssection">
+                    <div className="spacing_24"></div>
+                    <h3>Profile Stats</h3>
+                    <div className="spacing_24"></div>
+                    <div className="w-layout-hflex flex-block-9">
+                      <img width="50" height="Auto" alt="" src="/images/smSwitch.png" loading="lazy" />
+                      <p>Show Profile Stats</p>
+                    </div>
+                    <div className="w-form">
+                      <div className="spacing_24">
+                        <div className="columns industry_stats w-row">
+                          <div className="w-col w-col-3 w-col-small-6 w-col-tiny-tiny-stack">
+                            <div className="text_heading">INDUSTRY</div>
+                            <div className="text_paragraph">{formData.industry || 'Fashion'}</div>
+                          </div>
+                          <div className="w-col w-col-3 w-col-small-6 w-col-tiny-tiny-stack">
+                            <div className="text_heading">STATUS</div>
+                            <div className="text_paragraph">{formData.status || 'Professional'}</div>
+                          </div>
+                          <div className="w-col w-col-3 w-col-small-6 w-col-tiny-tiny-stack">
+                            <div className="text_heading">MARKETS</div>
+                            {(formData.markets || 'Miami, Los Angeles, New York').split(',').map((market, idx) => (
+                              <div key={idx} className="text_paragraph">{market.trim()}</div>
+                            ))}
+                          </div>
+                          <div className="w-col w-col-3 w-col-small-6 w-col-tiny-tiny-stack">
+                            <div className="text_heading">AVAILABLE FOR</div>
+                            <div className="text_paragraph">{formData.availableFor || 'Beauty, Editorial, Glamour, Print'}</div>
+                          </div>
+                        </div>
+                      </div>
+                      <form onSubmit={(e) => handleSubmit(e, 'stats')}>
+                        <label htmlFor="industry">Industry</label>
+                        <select 
+                          id="industry" 
+                          name="industry" 
+                          className="dropdowntxt w-select"
+                          value={formData.industry}
+                          onChange={handleInputChange}
+                        >
+                          <option value="">Select one...</option>
+                          <option value="Fashion">Fashion</option>
+                          <option value="Glamour">Glamour</option>
+                          <option value="Commercial">Commercial</option>
+                        </select>
+                        <label htmlFor="status">Status</label>
+                        <select 
+                          id="status" 
+                          name="status" 
+                          className="dropdowntxt w-select"
+                          value={formData.status}
+                          onChange={handleInputChange}
+                        >
+                          <option value="">Select one...</option>
+                          <option value="Amateur">Amateur</option>
+                          <option value="Semi-Professional">Semi-Professional</option>
+                          <option value="Professional">Professional</option>
+                        </select>
+                        <label htmlFor="markets">Markets</label>
+                        <input 
+                          className="w-input" 
+                          maxLength="256" 
+                          name="markets" 
+                          placeholder="Type Markets" 
+                          type="text" 
+                          id="markets"
+                          value={formData.markets}
+                          onChange={handleInputChange}
+                        />
+                        <label htmlFor="availableFor">Available For</label>
+                        <select 
+                          id="availableFor" 
+                          name="availableFor" 
+                          className="dropdowntxt w-select"
+                          value={formData.availableFor}
+                          onChange={handleInputChange}
+                        >
+                          <option value="">Select one...</option>
+                          <option value="Beauty">Beauty</option>
+                          <option value="Commercial">Commercial</option>
+                          <option value="Film">Film</option>
+                        </select>
+                        <input type="submit" className="submit-button w-button" value="Save" />
+                      </form>
+                      <div className="w-form-done" tabIndex="-1" role="region" aria-label="Email Form success">
+                        <div>Thank you! Your submission has been received!</div>
+                      </div>
+                      <div className="w-form-fail" tabIndex="-1" role="region" aria-label="Email Form failure">
+                        <div>Oops! Something went wrong while submitting the form.</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Model Stats */}
+                  <div className="settingssection">
+                    <div className="spacing_24"></div>
+                    <h3>Model Stats</h3>
+                    <div className="spacing_24"></div>
+                    <div className="w-layout-hflex flex-block-9">
+                      <img width="50" height="Auto" alt="" src="/images/smSwitch.png" loading="lazy" />
+                      <p>Show Model Stats</p>
+                    </div>
+                    <div className="w-layout-blockcontainer stat_container w-container">
+                      <div className="columns personal_stats w-row">
+                        <div className="w-col w-col-2 w-col-small-2 w-col-tiny-6">
+                          <div className="text_heading">HEIGHT</div>
+                          <div className="text_paragraph">
+                            {formData.heightFeet && formData.heightInches 
+                              ? `${formData.heightFeet}'${formData.heightInches}"` 
+                              : "5'11\""}
+                          </div>
+                        </div>
+                        <div className="w-col w-col-2 w-col-small-2 w-col-tiny-6">
+                          <div className="text_heading">WEIGHT</div>
+                          <div className="text_paragraph">{formData.weight || '135 lbs'}</div>
+                        </div>
+                        <div className="w-col w-col-2 w-col-small-2 w-col-tiny-6">
+                          <div className="text_heading">BUST</div>
+                          <div className="text_paragraph">{formData.bust || '23A'}</div>
+                        </div>
+                        <div className="w-col w-col-2 w-col-small-2 w-col-tiny-6">
+                          <div className="text_heading">WAIST</div>
+                          <div className="text_paragraph">{formData.waist || '26 in'}</div>
+                        </div>
+                        <div className="w-col w-col-2 w-col-small-2 w-col-tiny-6">
+                          <div className="text_heading">HIPS</div>
+                          <div className="text_paragraph">{formData.hips || '36 in'}</div>
+                        </div>
+                        <div className="w-col w-col-2 w-col-small-2 w-col-tiny-6">
+                          <div className="text_heading">SHOE</div>
+                          <div className="text_paragraph">{formData.shoe || '7 US'}</div>
+                        </div>
+                      </div>
+                      <div className="columns personal_stats w-row">
+                        <div className="w-col w-col-2 w-col-small-2 w-col-tiny-6">
+                          <div className="text_heading">HAIR COLOR</div>
+                          <div className="text_paragraph">{formData.hairColor || 'Black'}</div>
+                        </div>
+                        <div className="w-col w-col-2 w-col-small-2 w-col-tiny-6">
+                          <div className="text_heading">HAIR LENGTH</div>
+                          <div className="text_paragraph">{formData.hairLength || 'Long'}</div>
+                        </div>
+                        <div className="w-col w-col-2 w-col-small-2 w-col-tiny-6">
+                          <div className="text_heading">EYE COLOR</div>
+                          <div className="text_paragraph">{formData.eyeColor || 'Brown'}</div>
+                        </div>
+                        <div className="w-col w-col-2 w-col-small-2 w-col-tiny-6">
+                          <div className="text_heading">AGE</div>
+                          <div className="text_paragraph">{formData.age || '26'}</div>
+                        </div>
+                        <div className="w-col w-col-2 w-col-small-2 w-col-tiny-6">
+                          <div className="text_heading">GENDER</div>
+                          <div className="text_paragraph">{formData.gender || 'Female'}</div>
+                        </div>
+                        <div className="w-col w-col-2 w-col-small-2 w-col-tiny-6">
+                          <div className="text_heading">ETHNICITY</div>
+                          <div className="text_paragraph">{formData.ethnicity || 'White'}</div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="w-form">
+                      <div className="spacing_24"></div>
+                      <form onSubmit={(e) => handleSubmit(e, 'model-stats')}>
+                        <label htmlFor="heightFeet">Height</label>
+                        <input 
+                          className="w-input" 
+                          maxLength="256" 
+                          name="heightFeet" 
+                          placeholder="i.e 5" 
+                          type="text" 
+                          value={formData.heightFeet}
+                          onChange={handleInputChange}
+                        />
+                        <input 
+                          className="w-input" 
+                          maxLength="256" 
+                          name="heightInches" 
+                          placeholder="i.e 11" 
+                          type="text" 
+                          value={formData.heightInches}
+                          onChange={handleInputChange}
+                        />
+                        <select 
+                          id="heightUnit" 
+                          name="heightUnit" 
+                          className="dropdowntxt w-select"
+                          value={formData.heightUnit}
+                          onChange={handleInputChange}
+                        >
+                          <option value="">Select one...</option>
+                          <option value="FeetInches">Feet (') & Inches (")</option>
+                          <option value="MetersCentimeters">Meters (m) & Centimeters (cm)</option>
+                        </select>
+                        <label htmlFor="weight">Weight</label>
+                        <input 
+                          className="w-input" 
+                          maxLength="256" 
+                          name="weight" 
+                          placeholder="i.e 135" 
+                          type="text" 
+                          value={formData.weight}
+                          onChange={handleInputChange}
+                        />
+                        <select 
+                          id="weightUnit" 
+                          name="weightUnit" 
+                          className="dropdowntxt w-select"
+                          value={formData.weightUnit}
+                          onChange={handleInputChange}
+                        >
+                          <option value="">Select one...</option>
+                          <option value="Pounds">Pounds (lbs)</option>
+                          <option value="Kilograms">Kilograms (kg)</option>
+                          <option value="Grams">Grams (g)</option>
+                        </select>
+                        <label htmlFor="bust">Bust Size</label>
+                        <input 
+                          className="w-input" 
+                          maxLength="256" 
+                          name="bust" 
+                          placeholder="i.e 30" 
+                          type="text" 
+                          value={formData.bust}
+                          onChange={handleInputChange}
+                        />
+                        <select 
+                          id="bustSize" 
+                          name="bustSize" 
+                          className="dropdowntxt w-select"
+                          value={formData.bustSize}
+                          onChange={handleInputChange}
+                        >
+                          <option value="">Select one...</option>
+                          <option value="A">A</option>
+                          <option value="B">B</option>
+                          <option value="C">C</option>
+                          <option value="D">D</option>
+                        </select>
+                        <label htmlFor="waist">Waist Size</label>
+                        <input 
+                          className="w-input" 
+                          maxLength="256" 
+                          name="waist" 
+                          placeholder="i.e 27" 
+                          type="text" 
+                          value={formData.waist}
+                          onChange={handleInputChange}
+                        />
+                        <select 
+                          id="waistUnit" 
+                          name="waistUnit" 
+                          className="dropdowntxt w-select"
+                          value={formData.waistUnit}
+                          onChange={handleInputChange}
+                        >
+                          <option value="">Select one...</option>
+                          <option value="Centimeters">Centimeters (cm)</option>
+                          <option value="Inches">Inches (in)</option>
+                        </select>
+                        <label htmlFor="hips">Hip Size</label>
+                        <input 
+                          className="w-input" 
+                          maxLength="256" 
+                          name="hips" 
+                          placeholder="i.e 36" 
+                          type="text" 
+                          value={formData.hips}
+                          onChange={handleInputChange}
+                        />
+                        <select 
+                          id="hipsUnit" 
+                          name="hipsUnit" 
+                          className="dropdowntxt w-select"
+                          value={formData.hipsUnit}
+                          onChange={handleInputChange}
+                        >
+                          <option value="">Select one...</option>
+                          <option value="Centimeters">Centimeters (cm)</option>
+                          <option value="Inches">Inches (in)</option>
+                        </select>
+                        <label htmlFor="shoe">Shoe Size</label>
+                        <input 
+                          className="w-input" 
+                          maxLength="256" 
+                          name="shoe" 
+                          placeholder="i.e 7" 
+                          type="text" 
+                          value={formData.shoe}
+                          onChange={handleInputChange}
+                        />
+                        <select 
+                          id="shoeUnit" 
+                          name="shoeUnit" 
+                          className="dropdowntxt w-select"
+                          value={formData.shoeUnit}
+                          onChange={handleInputChange}
+                        >
+                          <option value="">Select one...</option>
+                          <option value="USUK">US/UK</option>
+                          <option value="EU">EU</option>
+                          <option value="JPCNKR">JP/CN/KR</option>
+                        </select>
+                        <label htmlFor="hairColor">Hair Color</label>
+                        <input 
+                          className="w-input" 
+                          maxLength="256" 
+                          name="hairColor" 
+                          placeholder="i.e Black" 
+                          type="text" 
+                          value={formData.hairColor}
+                          onChange={handleInputChange}
+                        />
+                        <label htmlFor="hairLength">Hair Length</label>
+                        <input 
+                          className="w-input" 
+                          maxLength="256" 
+                          name="hairLength" 
+                          placeholder="i.e Long" 
+                          type="text" 
+                          value={formData.hairLength}
+                          onChange={handleInputChange}
+                        />
+                        <label htmlFor="eyeColor">Eye Color</label>
+                        <input 
+                          className="w-input" 
+                          maxLength="256" 
+                          name="eyeColor" 
+                          placeholder="i.e Brown" 
+                          type="text" 
+                          value={formData.eyeColor}
+                          onChange={handleInputChange}
+                        />
+                        <label htmlFor="age">Age</label>
+                        <input 
+                          className="w-input" 
+                          maxLength="256" 
+                          name="age" 
+                          placeholder="D.O.B" 
+                          type="text" 
+                          value={formData.age}
+                          onChange={handleInputChange}
+                        />
+                        <label htmlFor="gender">Gender</label>
+                        <select 
+                          id="gender" 
+                          name="gender" 
+                          className="dropdowntxt w-select"
+                          value={formData.gender}
+                          onChange={handleInputChange}
+                        >
+                          <option value="">Select one...</option>
+                          <option value="Female">Female</option>
+                          <option value="Male">Male</option>
+                        </select>
+                        <label htmlFor="ethnicity">Ethnicity</label>
+                        <select 
+                          id="ethnicity" 
+                          name="ethnicity" 
+                          className="dropdowntxt w-select"
+                          value={formData.ethnicity}
+                          onChange={handleInputChange}
+                        >
+                          <option value="">Select one...</option>
+                          <option value="White">White</option>
+                          <option value="Black">Black</option>
+                          <option value="Asian">Asian</option>
+                          <option value="Hispanic">Hispanic</option>
+                        </select>
+                        <input type="submit" className="submit-button w-button" value="Save" />
+                      </form>
+                      <div className="w-form-done" tabIndex="-1" role="region" aria-label="Email Form success">
+                        <div>Thank you! Your submission has been received!</div>
+                      </div>
+                      <div className="w-form-fail" tabIndex="-1" role="region" aria-label="Email Form failure">
+                        <div>Oops! Something went wrong while submitting the form.</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Book Me Button */}
+                  <div className="settingssection">
+                    <div className="spacing_24"></div>
+                    <h3>Book Me Button</h3>
+                    <div className="w-layout-hflex flex-block-9">
+                      <img width="50" height="Auto" alt="" src="/images/smSwitch.png" loading="lazy" />
+                      <p>Show Book Me Button</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Tab 2: Portfolio */}
+            {activeTab === 'Tab 2' && (
+              <div className="w-tab-pane w--tab-active">
+                <div className="w-layout-vflex flex-block-8">
+                  <div className="w-layout-hflex flex-block-9">
+                    <img width="50" height="Auto" alt="" src="/images/smSwitch.png" loading="lazy" />
+                    <p>Show Portfolio Widget</p>
+                  </div>
+                  <h3>Portfolio Settings</h3>
+                  <div className="w-layout-hflex flex-block-9">
+                    <img width="50" height="Auto" alt="" src="/images/smSwitch.png" loading="lazy" />
+                    <p>Show Portfolio Section Title</p>
+                  </div>
+                  <div className="w-layout-hflex flex-block-5 inputtxtdiv">
+                    <div className="text_color_muted">PORTFOLIO</div>
+                  </div>
+                  <div className="spacing_24"></div>
+                  <div className="w-layout-grid blog_grid">
+                    {user?.profilePhotos && user.profilePhotos.length > 0 ? (
+                      user.profilePhotos.slice(0, 2).map((photo, index) => (
+                        <a key={photo.id || index} href="#" className="product_item w-inline-block">
+                          <div className="product_image_wrapper">
+                            <img 
+                              src={photo.url} 
+                              alt="" 
+                              className="product_image fashionphoto"
+                              onError={(e) => {
+                                e.target.src = '/images/fashion-photo.jpg';
+                              }}
+                            />
+                            <div className="discount_tag">Album {index + 1}</div>
+                          </div>
+                          <div className="spacing_16"></div>
+                          <div className="font_weight_bold">Album {index + 1}</div>
+                          <div className="spacing_4"></div>
+                          <p className="text_color_grey">Portfolio Work</p>
+                        </a>
+                      ))
+                    ) : (
+                      <>
+                        <a href="#" className="product_item w-inline-block">
+                          <div className="product_image_wrapper">
+                            <img 
+                              src="/images/fashion-photo.jpg" 
+                              alt="" 
+                              className="product_image fashionphoto"
+                            />
+                            <div className="discount_tag">Fashion</div>
+                          </div>
+                          <div className="spacing_16"></div>
+                          <div className="font_weight_bold">Fashion</div>
+                          <div className="spacing_4"></div>
+                          <p className="text_color_grey">High Fashion Portfolio Work</p>
+                        </a>
+                        <a href="#" className="product_item w-inline-block">
+                          <div className="product_image_wrapper">
+                            <img 
+                              src="/images/cloud-computing-upload.png" 
+                              alt="" 
+                              className="product_image fileupload"
+                            />
+                            <div className="discount_tag">Album Title</div>
+                          </div>
+                          <div className="spacing_16"></div>
+                          <div className="font_weight_bold">Add Title</div>
+                          <div className="spacing_4"></div>
+                          <p className="text_color_grey">Add Album Description</p>
+                        </a>
+                      </>
+                    )}
+                  </div>
+                  <div className="spacing_24"></div>
+                  <div className="w-layout-hflex flex-block-9">
+                    <img width="50" height="Auto" alt="" src="/images/smSwitch.png" loading="lazy" />
+                    <p>Show Album Badge</p>
+                  </div>
+                  <div className="w-layout-hflex flex-block-9">
+                    <img width="50" height="Auto" alt="" src="/images/smSwitch.png" loading="lazy" />
+                    <p>Show Album Title</p>
+                  </div>
+                  <div className="w-layout-hflex flex-block-9">
+                    <img width="50" height="Auto" alt="" src="/images/smSwitch.png" loading="lazy" />
+                    <p>Show Album Description</p>
+                  </div>
+                  <div className="settingssection">
+                    <div className="spacing_24"></div>
+                    <h3>Book Me Button</h3>
+                    <div className="w-layout-hflex flex-block-9">
+                      <img width="50" height="Auto" alt="" src="/images/smSwitch.png" loading="lazy" />
+                      <p>Show Book Me Button</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Tab 3: Bookings */}
+            {activeTab === 'Tab 3' && (
+              <div className="w-tab-pane w--tab-active">
+                <div className="w-tabs">
+                  <div className="w-tab-menu">
+                    <a 
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setActiveBookingTab('Tab 1');
+                      }}
+                      className={`bookingtabs w-inline-block w-tab-link ${activeBookingTab === 'Tab 1' ? 'w--current' : ''}`}
+                    >
+                      <div>Bookings</div>
+                    </a>
+                    <a 
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setActiveBookingTab('Tab 2');
+                      }}
+                      className={`bookingtabs w-inline-block w-tab-link ${activeBookingTab === 'Tab 2' ? 'w--current' : ''}`}
+                    >
+                      <div>Booking Settings</div>
+                    </a>
+                  </div>
+                  <div className="w-tab-content">
+                    {activeBookingTab === 'Tab 1' && (
+                      <div className="w-tab-pane">
+                        <div className="w-layout-vflex flex-block-11">
+                          <div className="spacing_48"></div>
+                          <p className="paragraph">No Messages.</p>
+                        </div>
+                      </div>
+                    )}
+                    {activeBookingTab === 'Tab 2' && (
+                      <div className="w-tab-pane w--tab-active">
+                        <div className="w-layout-vflex flex-block-8">
+                          <div className="w-layout-hflex flex-block-9">
+                            <img width="50" height="Auto" alt="" src="/images/smSwitch.png" loading="lazy" />
+                            <p>Enable Bookings Widget</p>
+                          </div>
+                          <h3>Bookings Settings</h3>
+                          <div className="settingssection">
+                            <div className="w-form">
+                              <form onSubmit={(e) => handleSubmit(e, 'bookings')}>
+                                <div className="w-layout-hflex flex-block-9">
+                                  <img width="50" height="Auto" alt="" src="/images/smSwitch.png" loading="lazy" />
+                                  <p>Enable Bookings Section Title</p>
+                                </div>
+                                <input 
+                                  className="w-input" 
+                                  maxLength="256" 
+                                  name="bookingsTitle" 
+                                  placeholder="BOOKINGS" 
+                                  type="text" 
+                                  value={formData.bookingsTitle}
+                                  onChange={handleInputChange}
+                                />
+                                <div className="spacing_24"></div>
+                                <label htmlFor="hometown">Hometown</label>
+                                <input 
+                                  className="w-input" 
+                                  maxLength="256" 
+                                  name="hometown" 
+                                  placeholder="I.e. Miami" 
+                                  type="text" 
+                                  value={formData.hometown}
+                                  onChange={handleInputChange}
+                                />
+                                <div className="w-layout-hflex flex-block-9">
+                                  <img width="50" height="Auto" alt="" src="/images/smSwitch.png" loading="lazy" />
+                                  <p>Show Hometown</p>
+                                </div>
+                                <label htmlFor="bookingDescription">Booking Request Description</label>
+                                <textarea 
+                                  id="bookingDescription" 
+                                  name="bookingDescription" 
+                                  maxLength="5000" 
+                                  placeholder="Example Text" 
+                                  className="w-input"
+                                  value={formData.bookingDescription}
+                                  onChange={handleInputChange}
+                                />
+                                <div className="w-layout-hflex flex-block-9">
+                                  <img width="50" height="Auto" alt="" src="/images/smSwitch.png" loading="lazy" />
+                                  <p>Show Request Description</p>
+                                </div>
+                                <label htmlFor="availableForBooking">Available For</label>
+                                <select 
+                                  id="availableForBooking" 
+                                  name="availableForBooking" 
+                                  className="dropdowntxt w-select"
+                                  value={formData.availableForBooking}
+                                  onChange={handleInputChange}
+                                >
+                                  <option value="">Select one...</option>
+                                  <option value="Photoshoot">Photoshoot</option>
+                                  <option value="Acting">Acting</option>
+                                  <option value="Runway">Runway</option>
+                                </select>
+                                <div className="w-layout-hflex flex-block-9">
+                                  <img width="50" height="Auto" alt="" src="/images/smSwitch.png" loading="lazy" />
+                                  <p>Show Available For</p>
+                                </div>
+                                <input type="submit" className="submit-button w-button" value="Save" />
+                              </form>
+                              <div className="w-form-done" tabIndex="-1" role="region" aria-label="Email Form success">
+                                <div>Thank you! Your submission has been received!</div>
+                              </div>
+                              <div className="w-form-fail" tabIndex="-1" role="region" aria-label="Email Form failure">
+                                <div>Oops! Something went wrong while submitting the form.</div>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="spacing_24"></div>
+                          <div className="modelpopup">
+                            <h3>Edit Job Request Form</h3>
+                            <div className="w-form">
+                              <div className="spacing_24"></div>
+                              <p className="text_color_grey text_width_medium">Select a job type ⤵</p>
+                              <div className="spacing_24"></div>
+                              <div className="w-layout-hflex flex-block-4">
+                                <a href="#" className="flex_wrapper flex_distribute link_block small_choice w-inline-block">
+                                  <div>Photoshoot</div>
+                                  <div className="icon_24x24 w-embed">
+                                    <svg className="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                                      <path stroke="currentColor" strokeLinejoin="round" strokeWidth="2" d="M4 18V8a1 1 0 0 1 1-1h1.5l1.707-1.707A1 1 0 0 1 8.914 5h6.172a1 1 0 0 1 .707.293L17.5 7H19a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1Z"></path>
+                                      <path stroke="currentColor" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"></path>
+                                    </svg>
+                                  </div>
+                                </a>
+                                <a href="#" className="flex_wrapper flex_distribute link_block small_choice w-inline-block">
+                                  <div>Acting</div>
+                                  <div className="icon_24x24 w-embed">
+                                    <svg className="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                                      <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 6H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1Zm7 11-6-2V9l6-2v10Z"></path>
+                                    </svg>
+                                  </div>
+                                </a>
+                                <a href="#" className="flex_wrapper flex_distribute link_block small_choice w-inline-block">
+                                  <div>Runway</div>
+                                  <div className="icon_24x24 w-embed">
+                                    <svg className="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                                      <path stroke="currentColor" strokeLinejoin="round" strokeWidth="2" d="M9 5h-.16667c-.86548 0-1.70761.28071-2.4.8L3.5 8l2 3.5L8 10v9h8v-9l2.5 1.5 2-3.5-2.9333-2.2c-.6924-.51929-1.5346-.8-2.4-.8H15M9 5c0 1.5 1.5 3 3 3s3-1.5 3-3M9 5h6"></path>
+                                    </svg>
+                                  </div>
+                                </a>
+                                <a href="#" className="flex_wrapper flex_distribute link_block small_choice w-inline-block">
+                                  <div>Promo</div>
+                                  <div className="icon_24x24 w-embed">
+                                    <svg className="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                                      <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 9H5a1 1 0 0 0-1 1v4a1 1 0 0 0 1 1h6m0-6v6m0-6 5.419-3.87A1 1 0 0 1 18 5.942v12.114a1 1 0 0 1-1.581.814L11 15m7 0a3 3 0 0 0 0-6M6 15h3v5H6v-5Z"></path>
+                                    </svg>
+                                  </div>
+                                </a>
+                              </div>
+                              <form onSubmit={(e) => handleSubmit(e, 'job-request')}>
+                                <label htmlFor="jobTitle">Job Title</label>
+                                <input 
+                                  className="w-input" 
+                                  maxLength="256" 
+                                  name="jobTitle" 
+                                  placeholder="i.e Fashion Designer Photoshoot" 
+                                  type="text" 
+                                  id="jobTitle"
+                                />
+                                <label htmlFor="datesRequesting">Dates Requesting</label>
+                                <input 
+                                  className="w-input" 
+                                  maxLength="256" 
+                                  name="datesRequesting" 
+                                  placeholder="Dates" 
+                                  type="text" 
+                                  id="datesRequesting"
+                                />
+                                <label htmlFor="cityCountry">City/Country</label>
+                                <input 
+                                  className="w-input" 
+                                  maxLength="256" 
+                                  name="cityCountry" 
+                                  placeholder="Name of City/Country" 
+                                  type="text" 
+                                  id="cityCountry"
+                                />
+                                <label htmlFor="payRate">Pay Rate</label>
+                                <input 
+                                  className="w-input" 
+                                  maxLength="256" 
+                                  name="payRate" 
+                                  placeholder="Pay rate for job" 
+                                  type="text" 
+                                  id="payRate"
+                                />
+                                <select id="payRateUnit" name="payRateUnit" className="dropdowntxt w-select">
+                                  <option value="">Select one...</option>
+                                  <option value="Per Hour">Per Hour</option>
+                                  <option value="Per Day">Per Day</option>
+                                  <option value="Per Project">Per Project</option>
+                                </select>
+                                <label htmlFor="jobDetails">Job Details</label>
+                                <textarea 
+                                  id="jobDetails" 
+                                  name="jobDetails" 
+                                  maxLength="5000" 
+                                  placeholder="Description of project" 
+                                  className="w-input"
+                                />
+                                <input type="submit" className="submit-button w-button" value="Submit" />
+                              </form>
+                              <div className="w-form-done" tabIndex="-1" role="region" aria-label="Email Form success">
+                                <div>Thank you! Your submission has been received!</div>
+                              </div>
+                              <div className="w-form-fail" tabIndex="-1" role="region" aria-label="Email Form failure">
+                                <div>Oops! Something went wrong while submitting the form.</div>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="settingssection">
+                            <div className="spacing_24"></div>
+                            <h3>Book Me Button</h3>
+                            <div className="w-layout-hflex flex-block-9">
+                              <img width="50" height="Auto" alt="" src="/images/smSwitch.png" loading="lazy" />
+                              <p>Show Book Me Button</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Tab 4: Custom Links */}
+            {activeTab === 'Tab 4' && (
+              <div className="w-tab-pane w--tab-active">
+                <div className="w-layout-vflex flex-block-8">
+                  <div className="w-layout-hflex flex-block-9">
+                    <img width="50" height="Auto" alt="" src="/images/smSwitch.png" loading="lazy" />
+                    <p>Show Custom Links Widget</p>
+                  </div>
+                  <div className="spacing_24"></div>
+                  <h3>Custom Links Settings</h3>
+                  <div className="w-layout-hflex flex-block-9">
+                    <img width="50" height="Auto" alt="" src="/images/smSwitch.png" loading="lazy" />
+                    <p>Show Custom Links Title</p>
+                  </div>
+                  <div className="div-block-3">
+                    <div className="w-layout-hflex flex-block-5 inputtxtdiv">
+                      <div className="text_color_muted">MY LINKS</div>
+                    </div>
+                  </div>
+                  <div className="spacing_24"></div>
+                  <div className="linkpanel">
+                    <div className="w-layout-hflex flex-block-9">
+                      <img width="50" height="Auto" alt="" src="/images/smSwitch.png" loading="lazy" />
+                      <p>Enable Link</p>
+                    </div>
+                    <div className="w-form">
+                      <div className="spacing_24"></div>
+                      <form onSubmit={(e) => handleSubmit(e, 'custom-link')}>
+                        <label htmlFor="linkIcon">Icon</label>
+                        <img 
+                          loading="lazy" 
+                          src="https://d3e54v103j8qbb.cloudfront.net/plugins/Basic/assets/placeholder.60f9b1840c.svg" 
+                          alt="" 
+                          className="linkphoto"
+                        />
+                        <label htmlFor="linkTitle">Title</label>
+                        <input 
+                          className="w-input" 
+                          maxLength="256" 
+                          name="linkTitle" 
+                          placeholder="Add Link Title" 
+                          type="text" 
+                          id="linkTitle"
+                        />
+                        <label htmlFor="linkUrl">URL</label>
+                        <input 
+                          className="w-input" 
+                          maxLength="256" 
+                          name="linkUrl" 
+                          placeholder="Add Link" 
+                          type="url" 
+                          id="linkUrl"
+                          required
+                        />
+                        <input type="submit" className="submit-button w-button" value="Save" />
+                      </form>
+                      <div className="w-form-done" tabIndex="-1" role="region" aria-label="Email Form success">
+                        <div>Thank you! Your submission has been received!</div>
+                      </div>
+                      <div className="w-form-fail" tabIndex="-1" role="region" aria-label="Email Form failure">
+                        <div>Oops! Something went wrong while submitting the form.</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="spacing_24"></div>
+                  <div className="w-layout-hflex flex-block-9">
+                    <div className="w-embed">
+                      <svg className="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
+                        <path fillRule="evenodd" d="M2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10S2 17.523 2 12Zm11-4.243a1 1 0 1 0-2 0V11H7.757a1 1 0 1 0 0 2H11v3.243a1 1 0 1 0 2 0V13h3.243a1 1 0 1 0 0-2H13V7.757Z" clipRule="evenodd"></path>
+                      </svg>
+                    </div>
+                    <p>Add More Links</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Tab 5: Account Settings */}
+            {activeTab === 'Tab 5' && (
+              <div className="w-tab-pane w--tab-active">
+                <div className="w-layout-vflex flex-block-8">
+                  <div className="settingssection">
+                    <h3>Account Settings</h3>
+                    <div className="w-form">
+                      <div className="spacing_24"></div>
+                      <form onSubmit={(e) => handleSubmit(e, 'account')}>
+                        <label htmlFor="email">Email Address</label>
+                        <input 
+                          className="w-input" 
+                          maxLength="256" 
+                          name="email" 
+                          placeholder="Enter Email Address" 
+                          type="email" 
+                          id="email"
+                          value={formData.email}
+                          onChange={handleInputChange}
+                          required
+                        />
+                        <label htmlFor="password">Change Password</label>
+                        <input 
+                          className="w-input" 
+                          maxLength="256" 
+                          name="password" 
+                          placeholder="Enter Password" 
+                          type="password" 
+                          id="password"
+                          value={formData.password}
+                          onChange={handleInputChange}
+                          required
+                        />
+                        <label htmlFor="confirmPassword">Confirm Password</label>
+                        <input 
+                          className="w-input" 
+                          maxLength="256" 
+                          name="confirmPassword" 
+                          placeholder="Enter Password" 
+                          type="password" 
+                          id="confirmPassword"
+                          value={formData.confirmPassword}
+                          onChange={handleInputChange}
+                          required
+                        />
+                        <input type="submit" className="submit-button w-button" value="Save" />
+                      </form>
+                      <div className="w-form-done" tabIndex="-1" role="region" aria-label="Email Form success">
+                        <div>Thank you! Your submission has been received!</div>
+                      </div>
+                      <div className="w-form-fail" tabIndex="-1" role="region" aria-label="Email Form failure">
+                        <div>Oops! Something went wrong while submitting the form.</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
+      
+      <div className="section footer_sec">
+        <div className="content_wrapper content_align_center">
+          <div className="spacing_24"></div>
+          <div className="line_divider"></div>
+          <div className="spacing_24"></div>
+          <div className="spacing_48"></div>
+          <div className="text_wrapper text_align_center">
+            <p className="text_color_grey text_width_medium"><strong>©</strong>2026 Portfolio-In-Link</p>
+          </div>
+          <div className="spacing_24"></div>
+        </div>
+      </div>
+    </div>
+  );
+}

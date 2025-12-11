@@ -1,0 +1,504 @@
+/* Dashboard specific styles */
+.dashboard-container {
+  background-color: var(--white-smoke, #eef2f5);
+  min-height: 100vh;
+}
+
+.tabs {
+  flex-flow: row;
+  justify-content: flex-start;
+  display: flex;
+  gap: 0;
+}
+
+.tabs-menu {
+  flex-flow: column;
+  align-items: flex-start;
+  display: flex;
+  min-width: 250px;
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  margin-right: 20px;
+}
+
+.tabs-content {
+  flex: 1;
+  display: block;
+}
+
+.w-tab-link {
+  padding: 12px 16px;
+  margin-bottom: 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  color: var(--black, #070707);
+  display: block;
+  width: 100%;
+}
+
+.w-tab-link:hover {
+  background-color: #f5f5f5;
+}
+
+.w-tab-link.w--current {
+  background-color: white !important;
+  color: var(--black, #070707) !important;
+  font-weight: 600;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.w-tab-link.w--current:hover {
+  background-color: white !important;
+}
+
+/* Base rule - all panes hidden by default */
+.tabs-content .w-tab-pane {
+  position: relative;
+  display: none;
+}
+
+/* Inactive panes - ensures they stay hidden */
+.tabs-content .w-tab-pane:not(.w--tab-active) {
+  display: none !important;
+}
+
+/* Active pane - highest specificity, must be last to ensure it overrides */
+.tabs-content .w-tab-pane.w--tab-active {
+  display: block !important;
+}
+
+.settingssection {
+  background-color: #fff;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.profileimg_wrapper {
+  justify-content: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+.profile_wrapper {
+  display: flex;
+  justify-content: center;
+}
+
+.prodile_image {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid var(--blue-violet, #783ff3);
+}
+
+.prodile_image.small_img {
+  width: 50px;
+  height: 50px;
+  border: 2px solid var(--blue-violet, #783ff3);
+}
+
+.text_wrapper {
+  text-align: center;
+}
+
+.flex_wrapper {
+  display: flex;
+  gap: 12px;
+}
+
+.flex_wrapper.flex_center {
+  justify-content: center;
+  align-items: center;
+}
+
+.flex_wrapper.flex_distribute {
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header_roles {
+  flex-flow: wrap;
+  justify-content: center;
+  align-items: flex-start;
+  max-width: 600px;
+  gap: 12px;
+  margin: 20px 0;
+}
+
+.link_block {
+  padding: 12px 16px;
+  border: 2px solid #e5e5e5;
+  border-radius: 8px;
+  text-decoration: none;
+  color: var(--black, #070707);
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.link_block:hover {
+  border-color: var(--blue-violet, #783ff3);
+  background-color: #f8f5ff;
+}
+
+.link_block.highlight_type {
+  background-color: var(--blue-violet, #783ff3);
+  color: white;
+  border-color: var(--blue-violet, #783ff3);
+}
+
+.link_block.highlight_type svg {
+  color: white;
+}
+
+.link_block.highlight_type svg path {
+  stroke: white;
+}
+
+.icon_24x24 {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.icon_24x24 svg {
+  width: 100%;
+  height: 100%;
+}
+
+.w-embed {
+  display: inline-block;
+}
+
+.small_choice {
+  min-width: 120px;
+  font-size: 14px;
+}
+
+.flex-block-8 {
+  padding-left: 40px;
+  width: 100%;
+}
+
+.flex-block-9 {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  margin: 12px 0;
+}
+
+.flex-block-10 {
+  grid-column-gap: 24px;
+  grid-row-gap: 24px;
+  grid-template-columns: 1fr 1fr;
+  display: grid;
+  margin: 20px 0;
+}
+
+.flex-block-10 > div {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.flex-block-4 {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 20px 0;
+}
+
+.modelpopup {
+  background-color: #fff;
+  border-radius: 12px;
+  padding: 24px;
+  margin: 24px 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.w-form {
+  margin-top: 24px;
+}
+
+.w-form label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: var(--black, #070707);
+}
+
+.w-input {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid #e5e5e5;
+  border-radius: 8px;
+  font-size: 16px;
+  margin-bottom: 16px;
+  transition: border-color 0.3s ease;
+}
+
+.w-input:focus {
+  outline: none;
+  border-color: var(--blue-violet, #783ff3);
+}
+
+.w-select {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid #e5e5e5;
+  border-radius: 8px;
+  font-size: 16px;
+  margin-bottom: 16px;
+  background-color: white;
+  cursor: pointer;
+}
+
+.submit-button {
+  background-color: var(--blue-violet, #783ff3);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.submit-button:hover {
+  background-color: #6a35d9;
+}
+
+.text_color_grey {
+  color: var(--dim-grey, #484848);
+}
+
+.text_width_medium {
+  max-width: 500px;
+}
+
+.username_txt {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--blue-violet, #783ff3);
+  margin: 8px 0;
+}
+
+.spacing_8 {
+  height: 8px;
+}
+
+.spacing_24 {
+  height: 24px;
+}
+
+.spacing_48 {
+  height: 48px;
+}
+
+.mainheader {
+  background-color: #fff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-bottom: 0;
+}
+
+.headerbar {
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  height: 75px;
+  padding-left: 20px;
+  padding-right: 20px;
+  display: flex;
+}
+
+.text-block-5 {
+  font-size: 30px;
+  font-weight: 700;
+  color: var(--blue-violet, #783ff3);
+}
+
+.section.full_sec {
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.section {
+  padding: 24px 5%;
+}
+
+.blog_grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 24px;
+  margin: 24px 0;
+}
+
+.product_item {
+  background-color: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+  text-decoration: none;
+  color: var(--black, #070707);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.product_item:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.product_image_wrapper {
+  position: relative;
+  width: 100%;
+  height: 200px;
+  overflow: hidden;
+}
+
+.product_image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.discount_tag {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  background-color: var(--blue-violet, #783ff3);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.stat_container {
+  margin: 24px 0;
+}
+
+.personal_stats {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.text_heading {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--dim-grey, #484848);
+  margin-bottom: 8px;
+}
+
+.text_paragraph {
+  font-size: 16px;
+  color: var(--black, #070707);
+  margin-bottom: 4px;
+}
+
+.industry_stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+  margin: 24px 0;
+}
+
+.bookingtabs {
+  width: 250px;
+  min-width: 250px;
+}
+
+.linkpanel {
+  background-color: #fff;
+  min-width: 600px;
+  max-width: 600px;
+  padding: 10px 24px 24px;
+  border-radius: 12px;
+  margin: 24px 0;
+}
+
+.div-block-3 {
+  background-color: #fff;
+  padding: 16px;
+  border-radius: 8px;
+  margin: 16px 0;
+}
+
+.inputtxtdiv {
+  background-color: #fff;
+  border-radius: 18px;
+  justify-content: space-between;
+  align-items: center;
+  height: 60px;
+  padding: 20px;
+  display: flex;
+}
+
+.text_color_muted {
+  color: var(--dim-grey, #484848);
+  font-weight: 600;
+}
+
+.footer_sec {
+  margin-top: 48px;
+  padding-top: 48px;
+  border-top: 1px solid #dee2e5;
+}
+
+@media screen and (max-width: 991px) {
+  .tabs {
+    flex-direction: column;
+  }
+
+  .tabs-menu {
+    width: 100%;
+    margin-right: 0;
+    margin-bottom: 20px;
+  }
+
+  .flex-block-8 {
+    padding-left: 0;
+  }
+
+  .personal_stats {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .industry_stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media screen and (max-width: 767px) {
+  .header_roles {
+    flex-flow: wrap;
+  }
+
+  .personal_stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .industry_stats {
+    grid-template-columns: 1fr;
+  }
+
+  .linkpanel {
+    min-width: 100%;
+    max-width: 100%;
+  }
+}
