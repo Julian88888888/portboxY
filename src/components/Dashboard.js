@@ -3,9 +3,18 @@ import { useAuth } from '../contexts/AuthContext';
 import './Dashboard.css';
 
 export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
-  const { user, updateProfile } = useAuth();
+  const { user, updateProfile, uploadPortfolioAlbum, updatePortfolioAlbum, deletePortfolioAlbum } = useAuth();
   const [activeTab, setActiveTab] = useState(propActiveTab || 'Tab 1');
   const [activeBookingTab, setActiveBookingTab] = useState('Tab 2');
+  const [isPortfolioModalOpen, setIsPortfolioModalOpen] = useState(false);
+  const [editingAlbum, setEditingAlbum] = useState(null);
+  const [portfolioFormData, setPortfolioFormData] = useState({
+    title: '',
+    description: '',
+    tag: 'Fashion',
+    imageFile: null,
+    imagePreview: null
+  });
 
   // Sync with prop changes - this ensures the tab reflects the current page
   useEffect(() => {
@@ -903,25 +912,76 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                   </div>
                   <div className="spacing_24"></div>
                   <div className="w-layout-grid blog_grid">
-                    {user?.profilePhotos && user.profilePhotos.length > 0 ? (
-                      user.profilePhotos.slice(0, 2).map((photo, index) => (
-                        <a key={photo.id || index} href="#" className="product_item w-inline-block">
-                          <div className="product_image_wrapper">
-                            <img 
-                              src={photo.url} 
-                              alt="" 
-                              className="product_image fashionphoto"
-                              onError={(e) => {
-                                e.target.src = '/images/fashion-photo.jpg';
+                    {user?.portfolioAlbums && user.portfolioAlbums.length > 0 ? (
+                      user.portfolioAlbums.map((album, index) => (
+                        <div key={album.id || index} className="product_item w-inline-block" style={{ position: 'relative' }}>
+                          <a href="#" className="product_item w-inline-block">
+                            <div className="product_image_wrapper">
+                              <img 
+                                src={album.imageUrl} 
+                                alt={album.title} 
+                                className="product_image fashionphoto"
+                                onError={(e) => {
+                                  e.target.src = '/images/fashion-photo.jpg';
+                                }}
+                              />
+                              <div className="discount_tag">{album.tag || 'Portfolio'}</div>
+                            </div>
+                            <div className="spacing_16"></div>
+                            <div className="font_weight_bold">{album.title || 'Untitled'}</div>
+                            <div className="spacing_4"></div>
+                            <p className="text_color_grey">{album.description || 'Portfolio Work'}</p>
+                          </a>
+                          <div style={{ position: 'absolute', top: '8px', right: '8px', display: 'flex', gap: '4px' }}>
+                            <button
+                              onClick={(e) => {
+                                e.preventDefault();
+                                setEditingAlbum(album);
+                                setPortfolioFormData({
+                                  title: album.title || '',
+                                  description: album.description || '',
+                                  tag: album.tag || 'Fashion',
+                                  imageFile: null,
+                                  imagePreview: album.imageUrl
+                                });
+                                setIsPortfolioModalOpen(true);
                               }}
-                            />
-                            <div className="discount_tag">Album {index + 1}</div>
+                              style={{
+                                background: 'rgba(0,0,0,0.6)',
+                                border: 'none',
+                                borderRadius: '4px',
+                                padding: '4px 8px',
+                                color: 'white',
+                                cursor: 'pointer',
+                                fontSize: '12px'
+                              }}
+                            >
+                              Edit
+                            </button>
+                            <button
+                              onClick={async (e) => {
+                                e.preventDefault();
+                                if (window.confirm('Are you sure you want to delete this album?')) {
+                                  const result = await deletePortfolioAlbum(album.id);
+                                  if (!result.success) {
+                                    alert(result.error || 'Failed to delete album');
+                                  }
+                                }
+                              }}
+                              style={{
+                                background: 'rgba(220,53,69,0.8)',
+                                border: 'none',
+                                borderRadius: '4px',
+                                padding: '4px 8px',
+                                color: 'white',
+                                cursor: 'pointer',
+                                fontSize: '12px'
+                              }}
+                            >
+                              Delete
+                            </button>
                           </div>
-                          <div className="spacing_16"></div>
-                          <div className="font_weight_bold">Album {index + 1}</div>
-                          <div className="spacing_4"></div>
-                          <p className="text_color_grey">Portfolio Work</p>
-                        </a>
+                        </div>
                       ))
                     ) : (
                       <>
@@ -939,14 +999,30 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                           <div className="spacing_4"></div>
                           <p className="text_color_grey">High Fashion Portfolio Work</p>
                         </a>
-                        <a href="#" className="product_item w-inline-block">
+                        <a 
+                          href="#" 
+                          className="product_item w-inline-block"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setEditingAlbum(null);
+                            setPortfolioFormData({
+                              title: '',
+                              description: '',
+                              tag: 'Fashion',
+                              imageFile: null,
+                              imagePreview: null
+                            });
+                            setIsPortfolioModalOpen(true);
+                          }}
+                          style={{ cursor: 'pointer' }}
+                        >
                           <div className="product_image_wrapper">
                             <img 
                               src="/images/cloud-computing-upload.png" 
                               alt="" 
                               className="product_image fileupload"
                             />
-                            <div className="discount_tag">Album Title</div>
+                            <div className="discount_tag">Add Album</div>
                           </div>
                           <div className="spacing_16"></div>
                           <div className="font_weight_bold">Add Title</div>
@@ -956,6 +1032,24 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                       </>
                     )}
                   </div>
+                  <div className="spacing_24"></div>
+                  <button
+                    onClick={() => {
+                      setEditingAlbum(null);
+                      setPortfolioFormData({
+                        title: '',
+                        description: '',
+                        tag: 'Fashion',
+                        imageFile: null,
+                        imagePreview: null
+                      });
+                      setIsPortfolioModalOpen(true);
+                    }}
+                    className="submit-button w-button"
+                    style={{ marginTop: '16px' }}
+                  >
+                    Add New Album
+                  </button>
                   <div className="spacing_24"></div>
                   <div className="w-layout-hflex flex-block-9">
                     <img width="50" height="Auto" alt="" src="/images/smSwitch.png" loading="lazy" />
@@ -1366,6 +1460,203 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
           <div className="spacing_24"></div>
         </div>
       </div>
+
+      {/* Portfolio Album Modal */}
+      {isPortfolioModalOpen && (
+        <div 
+          className="modal-overlay" 
+          onClick={() => setIsPortfolioModalOpen(false)}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0,0,0,0.7)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000
+          }}
+        >
+          <div 
+            className="modal-content" 
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: 'white',
+              borderRadius: '12px',
+              padding: '24px',
+              maxWidth: '600px',
+              width: '90%',
+              maxHeight: '90vh',
+              overflow: 'auto'
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h3>{editingAlbum ? 'Edit Album' : 'Add New Album'}</h3>
+              <button
+                onClick={() => setIsPortfolioModalOpen(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '24px',
+                  cursor: 'pointer',
+                  padding: '0',
+                  width: '30px',
+                  height: '30px'
+                }}
+              >
+                ×
+              </button>
+            </div>
+
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                if (!portfolioFormData.imageFile && !portfolioFormData.imagePreview && !editingAlbum) {
+                  alert('Please select an image');
+                  return;
+                }
+
+                const result = editingAlbum
+                  ? await updatePortfolioAlbum(editingAlbum.id, {
+                      title: portfolioFormData.title,
+                      description: portfolioFormData.description,
+                      tag: portfolioFormData.tag,
+                      imageFile: portfolioFormData.imageFile
+                    })
+                  : await uploadPortfolioAlbum({
+                      title: portfolioFormData.title,
+                      description: portfolioFormData.description,
+                      tag: portfolioFormData.tag,
+                      imageFile: portfolioFormData.imageFile
+                    });
+
+                if (result.success) {
+                  setIsPortfolioModalOpen(false);
+                  setPortfolioFormData({
+                    title: '',
+                    description: '',
+                    tag: 'Fashion',
+                    imageFile: null,
+                    imagePreview: null
+                  });
+                  setEditingAlbum(null);
+                } else {
+                  alert(result.error || 'Failed to save album');
+                }
+              }}
+            >
+              <div className="form-group" style={{ marginBottom: '16px' }}>
+                <label htmlFor="albumTitle">Title</label>
+                <input
+                  type="text"
+                  id="albumTitle"
+                  className="w-input"
+                  value={portfolioFormData.title}
+                  onChange={(e) => setPortfolioFormData({ ...portfolioFormData, title: e.target.value })}
+                  placeholder="Album Title"
+                  required
+                />
+              </div>
+
+              <div className="form-group" style={{ marginBottom: '16px' }}>
+                <label htmlFor="albumTag">Tag/Category</label>
+                <select
+                  id="albumTag"
+                  className="w-select"
+                  value={portfolioFormData.tag}
+                  onChange={(e) => setPortfolioFormData({ ...portfolioFormData, tag: e.target.value })}
+                  required
+                >
+                  <option value="Fashion">Fashion</option>
+                  <option value="Glamour">Glamour</option>
+                  <option value="Commercial">Commercial</option>
+                  <option value="Editorial">Editorial</option>
+                  <option value="Beauty">Beauty</option>
+                  <option value="Swimwear">Swimwear</option>
+                  <option value="Print">Print</option>
+                  <option value="Portfolio">Portfolio</option>
+                </select>
+              </div>
+
+              <div className="form-group" style={{ marginBottom: '16px' }}>
+                <label htmlFor="albumDescription">Description</label>
+                <textarea
+                  id="albumDescription"
+                  className="w-input"
+                  value={portfolioFormData.description}
+                  onChange={(e) => setPortfolioFormData({ ...portfolioFormData, description: e.target.value })}
+                  placeholder="Album Description"
+                  rows="3"
+                />
+              </div>
+
+              <div className="form-group" style={{ marginBottom: '16px' }}>
+                <label htmlFor="albumImage">Image {editingAlbum && '(leave empty to keep current)'}</label>
+                <input
+                  type="file"
+                  id="albumImage"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                      const reader = new FileReader();
+                      reader.onloadend = () => {
+                        setPortfolioFormData({
+                          ...portfolioFormData,
+                          imageFile: file,
+                          imagePreview: reader.result
+                        });
+                      };
+                      reader.readAsDataURL(file);
+                    }
+                  }}
+                  required={!editingAlbum}
+                />
+                {portfolioFormData.imagePreview && (
+                  <img
+                    src={portfolioFormData.imagePreview}
+                    alt="Preview"
+                    style={{
+                      width: '100%',
+                      maxHeight: '300px',
+                      objectFit: 'cover',
+                      marginTop: '12px',
+                      borderRadius: '8px'
+                    }}
+                  />
+                )}
+              </div>
+
+              <div style={{ display: 'flex', gap: '12px', marginTop: '24px' }}>
+                <button
+                  type="button"
+                  onClick={() => setIsPortfolioModalOpen(false)}
+                  style={{
+                    padding: '12px 24px',
+                    background: '#f5f5f5',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    flex: 1
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="submit-button w-button"
+                  style={{ flex: 1 }}
+                >
+                  {editingAlbum ? 'Update Album' : 'Add Album'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+

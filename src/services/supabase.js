@@ -43,23 +43,100 @@ if (supabaseUrl && supabaseAnonKey) {
 export const supabaseAuth = {
   // Sign up with email and password
   signUp: async (email, password, metadata = {}) => {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: metadata, // Store additional user metadata
-      },
-    });
-    return { data, error };
+    // Validate inputs
+    if (!email || !password) {
+      return { 
+        data: null, 
+        error: { 
+          message: 'Email and password are required',
+          status: 400
+        } 
+      };
+    }
+
+    // Trim and normalize email
+    const normalizedEmail = email.trim().toLowerCase();
+    
+    // Prepare metadata - ensure all values are strings or valid types
+    const cleanMetadata = {};
+    if (metadata.firstName) cleanMetadata.firstName = String(metadata.firstName).trim();
+    if (metadata.lastName) cleanMetadata.lastName = String(metadata.lastName).trim();
+    if (metadata.phone) cleanMetadata.phone = String(metadata.phone).trim();
+    if (metadata.userType) cleanMetadata.userType = String(metadata.userType).trim();
+    if (metadata.profilePhotos) cleanMetadata.profilePhotos = Array.isArray(metadata.profilePhotos) ? metadata.profilePhotos : [];
+    if (metadata.links) cleanMetadata.links = Array.isArray(metadata.links) ? metadata.links : [];
+
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email: normalizedEmail,
+        password: password,
+        options: {
+          data: cleanMetadata, // Store additional user metadata
+        },
+      });
+
+      if (error) {
+        console.error('Supabase signUp error:', {
+          message: error.message,
+          status: error.status,
+          error: error
+        });
+      }
+
+      return { data, error };
+    } catch (err) {
+      console.error('Unexpected error in signUp:', err);
+      return { 
+        data: null, 
+        error: { 
+          message: err.message || 'An unexpected error occurred',
+          status: 500
+        } 
+      };
+    }
   },
 
   // Sign in with email and password
   signIn: async (email, password) => {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    return { data, error };
+    // Validate inputs
+    if (!email || !password) {
+      return { 
+        data: null, 
+        error: { 
+          message: 'Email and password are required',
+          status: 400
+        } 
+      };
+    }
+
+    // Trim and normalize email
+    const normalizedEmail = email.trim().toLowerCase();
+
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: normalizedEmail,
+        password: password,
+      });
+
+      if (error) {
+        console.error('Supabase signIn error:', {
+          message: error.message,
+          status: error.status,
+          error: error
+        });
+      }
+
+      return { data, error };
+    } catch (err) {
+      console.error('Unexpected error in signIn:', err);
+      return { 
+        data: null, 
+        error: { 
+          message: err.message || 'An unexpected error occurred',
+          status: 500
+        } 
+      };
+    }
   },
 
   // Sign out

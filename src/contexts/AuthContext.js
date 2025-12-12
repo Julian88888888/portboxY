@@ -18,6 +18,40 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [session, setSession] = useState(null);
 
+  // Load portfolio albums from database for a specific user
+  const loadPortfolioAlbumsForUser = async (userId) => {
+    try {
+      const { data: albums, error } = await supabase
+        .from('portfolio_albums')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error loading portfolio albums:', error);
+        return;
+      }
+
+      // Format albums for frontend
+      const formattedAlbums = (albums || []).map(album => ({
+        id: album.id,
+        title: album.title,
+        description: album.description,
+        tag: album.tag,
+        imageUrl: album.image_url,
+        uploadedAt: album.created_at,
+      }));
+
+      // Update user state with portfolio albums
+      setUser(prev => ({
+        ...prev,
+        portfolioAlbums: formattedAlbums,
+      }));
+    } catch (error) {
+      console.error('Load portfolio albums error:', error);
+    }
+  };
+
   // Initialize auth state on app load
   useEffect(() => {
     const initializeAuth = async () => {
@@ -38,7 +72,7 @@ export const AuthProvider = ({ children }) => {
           
           // Load additional user profile data from user metadata
           const userMetadata = session.user.user_metadata || {};
-          setUser({
+          const userData = {
             ...session.user,
             firstName: userMetadata.firstName || '',
             lastName: userMetadata.lastName || '',
@@ -46,7 +80,14 @@ export const AuthProvider = ({ children }) => {
             userType: userMetadata.userType || 'model',
             profilePhotos: userMetadata.profilePhotos || [],
             links: userMetadata.links || [],
-          });
+            portfolioAlbums: [], // Will be loaded from database
+          };
+          setUser(userData);
+          
+          // Load portfolio albums from database
+          if (session.user.id) {
+            loadPortfolioAlbumsForUser(session.user.id);
+          }
         }
         
         setLoading(false);
@@ -66,7 +107,7 @@ export const AuthProvider = ({ children }) => {
         if (session?.user) {
           setSession(session);
           const userMetadata = session.user.user_metadata || {};
-          setUser({
+          const userData = {
             ...session.user,
             firstName: userMetadata.firstName || '',
             lastName: userMetadata.lastName || '',
@@ -74,8 +115,15 @@ export const AuthProvider = ({ children }) => {
             userType: userMetadata.userType || 'model',
             profilePhotos: userMetadata.profilePhotos || [],
             links: userMetadata.links || [],
-          });
+            portfolioAlbums: [], // Will be loaded from database
+          };
+          setUser(userData);
           setIsAuthenticated(true);
+          
+          // Load portfolio albums from database
+          if (session.user.id) {
+            loadPortfolioAlbumsForUser(session.user.id);
+          }
         } else {
           setSession(null);
           setUser(null);
@@ -92,18 +140,54 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (credentials) => {
     try {
+      // Validate required fields
+      if (!credentials?.email || !credentials?.password) {
+        return { success: false, error: 'Email and password are required' };
+      }
+
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(credentials.email)) {
+        return { success: false, error: 'Invalid email format' };
+      }
+
       const { data, error } = await supabaseAuth.signIn(
         credentials.email,
         credentials.password
       );
 
       if (error) {
-        return { success: false, error: error.message };
+        console.error('Login error:', error);
+        
+        // Provide more detailed error messages
+        let errorMessage = error.message || 'Login failed';
+        
+        if (error.message) {
+          const errorLower = error.message.toLowerCase();
+          
+          // Handle specific Supabase error codes
+          if (errorLower.includes('invalid login credentials') ||
+              errorLower.includes('invalid credentials') ||
+              errorLower.includes('email not confirmed') ||
+              error.status === 400) {
+            errorMessage = 'Invalid email or password. Please check your credentials and try again.';
+          } else if (errorLower.includes('email not confirmed') ||
+                     errorLower.includes('not confirmed')) {
+            errorMessage = 'Please verify your email address before signing in. Check your inbox for a confirmation email.';
+          } else if (errorLower.includes('too many requests') ||
+                     errorLower.includes('rate limit')) {
+            errorMessage = 'Too many login attempts. Please wait a moment and try again.';
+          } else if (errorLower.includes('user not found')) {
+            errorMessage = 'No account found with this email address. Please sign up first.';
+          }
+        }
+        
+        return { success: false, error: errorMessage };
       }
 
       if (data?.user) {
         const userMetadata = data.user.user_metadata || {};
-        setUser({
+        const userData = {
           ...data.user,
           firstName: userMetadata.firstName || '',
           lastName: userMetadata.lastName || '',
@@ -111,15 +195,24 @@ export const AuthProvider = ({ children }) => {
           userType: userMetadata.userType || 'model',
           profilePhotos: userMetadata.profilePhotos || [],
           links: userMetadata.links || [],
-        });
+          portfolioAlbums: [], // Will be loaded from database
+        };
+        setUser(userData);
         setSession(data.session);
         setIsAuthenticated(true);
+        
+        // Load portfolio albums from database
+        if (data.user.id) {
+          loadPortfolioAlbumsForUser(data.user.id);
+        }
+        
         return { success: true };
       }
 
-      return { success: false, error: 'Login failed' };
+      return { success: false, error: 'Login failed - no user data returned' };
     } catch (error) {
-      return { success: false, error: error.message };
+      console.error('Login exception:', error);
+      return { success: false, error: error.message || 'An unexpected error occurred during login' };
     }
   };
 
@@ -127,39 +220,82 @@ export const AuthProvider = ({ children }) => {
     try {
       const { email, password, firstName, lastName, phone, userType } = userData;
 
-      // Sign up with Supabase
-      const { data, error } = await supabaseAuth.signUp(email, password, {
-        firstName,
-        lastName,
-        phone,
-        userType,
-        profilePhotos: [],
-        links: [],
-      });
-
-      if (error) {
-        return { success: false, error: error.message };
+      // Validate required fields
+      if (!email || !password) {
+        return { success: false, error: 'Email and password are required' };
       }
 
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        return { success: false, error: 'Invalid email format' };
+      }
+
+      // Validate password length (Supabase minimum is 6 characters)
+      if (password.length < 6) {
+        return { success: false, error: 'Password must be at least 6 characters long' };
+      }
+
+      // Prepare metadata object
+      const metadata = {};
+      if (firstName) metadata.firstName = firstName;
+      if (lastName) metadata.lastName = lastName;
+      if (phone) metadata.phone = phone;
+      if (userType) metadata.userType = userType;
+      metadata.profilePhotos = [];
+      metadata.links = [];
+
+      // Sign up with Supabase
+      const { data, error } = await supabaseAuth.signUp(email, password, metadata);
+
+      if (error) {
+        console.error('Supabase signup error:', error);
+        
+        // Provide more detailed error messages
+        let errorMessage = error.message || 'Registration failed';
+        
+        if (error.message) {
+          // Handle specific Supabase error codes
+          if (error.message.includes('User already registered') || 
+              error.message.includes('already registered') ||
+              error.status === 422) {
+            errorMessage = 'This email is already registered. Please sign in instead.';
+          } else if (error.message.includes('Password')) {
+            errorMessage = 'Password does not meet requirements. Please use at least 6 characters.';
+          } else if (error.message.includes('Email')) {
+            errorMessage = 'Invalid email address. Please check and try again.';
+          }
+        }
+        
+        return { success: false, error: errorMessage };
+      }
+
+      // Check if user was created (even if email confirmation is required)
       if (data?.user) {
         const userMetadata = data.user.user_metadata || {};
         setUser({
           ...data.user,
-          firstName: userMetadata.firstName || firstName,
-          lastName: userMetadata.lastName || lastName,
-          phone: userMetadata.phone || phone,
-          userType: userMetadata.userType || userType,
+          firstName: userMetadata.firstName || firstName || '',
+          lastName: userMetadata.lastName || lastName || '',
+          phone: userMetadata.phone || phone || '',
+          userType: userMetadata.userType || userType || 'model',
           profilePhotos: userMetadata.profilePhotos || [],
           links: userMetadata.links || [],
         });
-        setSession(data.session);
-        setIsAuthenticated(true);
-        return { success: true };
+        
+        // Session might be null if email confirmation is required
+        if (data.session) {
+          setSession(data.session);
+          setIsAuthenticated(true);
+        }
+        
+        return { success: true, requiresConfirmation: !data.session };
       }
 
-      return { success: false, error: 'Registration failed' };
+      return { success: false, error: 'Registration failed - no user data returned' };
     } catch (error) {
-      return { success: false, error: error.message };
+      console.error('Registration error:', error);
+      return { success: false, error: error.message || 'An unexpected error occurred' };
     }
   };
 
@@ -209,6 +345,7 @@ export const AuthProvider = ({ children }) => {
           userType: userMetadata.userType || 'model',
           profilePhotos: userMetadata.profilePhotos || [],
           links: userMetadata.links || [],
+          portfolioAlbums: userMetadata.portfolioAlbums || [],
         });
         return { success: true, data: data.user };
       }
@@ -472,6 +609,196 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const uploadPortfolioAlbum = async (albumData) => {
+    try {
+      if (!user?.id) {
+        return { success: false, error: 'User not authenticated' };
+      }
+
+      const { imageFile, title, description, tag } = albumData;
+
+      if (!imageFile) {
+        return { success: false, error: 'Image file is required' };
+      }
+
+      // Upload image to Supabase Storage
+      const fileExt = imageFile.name.split('.').pop();
+      const uniqueId = Date.now() + '-' + Math.random().toString(36).substring(2, 9);
+      const fileName = `${user.id}/portfolio/${uniqueId}.${fileExt}`;
+      
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('profile-photos')
+        .upload(fileName, imageFile, {
+          cacheControl: '3600',
+          upsert: false,
+        });
+
+      if (uploadError) {
+        console.error('Upload error:', uploadError);
+        return { success: false, error: uploadError.message || 'Failed to upload image' };
+      }
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('profile-photos')
+        .getPublicUrl(fileName);
+
+      // Insert album into Supabase database table
+      const { data: insertedAlbum, error: dbError } = await supabase
+        .from('portfolio_albums')
+        .insert({
+          user_id: user.id,
+          title: title || 'Untitled Album',
+          description: description || '',
+          tag: tag || 'Portfolio',
+          image_url: publicUrl,
+          display_order: 0
+        })
+        .select()
+        .single();
+
+      if (dbError) {
+        console.error('Database error:', dbError);
+        // Try to delete uploaded file if database insert failed
+        await supabase.storage.from('profile-photos').remove([fileName]);
+        return { success: false, error: dbError.message || 'Failed to save album to database' };
+      }
+
+      // Format album for frontend
+      const newAlbum = {
+        id: insertedAlbum.id,
+        title: insertedAlbum.title,
+        description: insertedAlbum.description,
+        tag: insertedAlbum.tag,
+        imageUrl: insertedAlbum.image_url,
+        uploadedAt: insertedAlbum.created_at,
+      };
+
+      // Refresh user's portfolio albums
+      await loadPortfolioAlbumsForUser(user.id);
+
+      return { success: true, data: newAlbum };
+    } catch (error) {
+      console.error('Upload portfolio album error:', error);
+      return { success: false, error: error.message || 'An error occurred while uploading album' };
+    }
+  };
+
+  const updatePortfolioAlbum = async (albumId, albumData) => {
+    try {
+      if (!user?.id) {
+        return { success: false, error: 'User not authenticated' };
+      }
+
+      const updatePayload = {};
+      
+      if (albumData.title !== undefined) updatePayload.title = albumData.title;
+      if (albumData.description !== undefined) updatePayload.description = albumData.description;
+      if (albumData.tag !== undefined) updatePayload.tag = albumData.tag;
+
+      // If new image file provided, upload it first
+      if (albumData.imageFile) {
+        const fileExt = albumData.imageFile.name.split('.').pop();
+        const uniqueId = Date.now() + '-' + Math.random().toString(36).substring(2, 9);
+        const fileName = `${user.id}/portfolio/${uniqueId}.${fileExt}`;
+        
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('profile-photos')
+          .upload(fileName, albumData.imageFile, {
+            cacheControl: '3600',
+            upsert: false,
+          });
+
+        if (uploadError) {
+          return { success: false, error: uploadError.message || 'Failed to upload image' };
+        }
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('profile-photos')
+          .getPublicUrl(fileName);
+
+        updatePayload.image_url = publicUrl;
+      }
+
+      // Update album in database
+      const { data, error } = await supabase
+        .from('portfolio_albums')
+        .update(updatePayload)
+        .eq('id', albumId)
+        .eq('user_id', user.id)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Update error:', error);
+        return { success: false, error: error.message || 'Failed to update album' };
+      }
+
+      // Refresh user's portfolio albums
+      await loadPortfolioAlbumsForUser(user.id);
+
+      return { success: true };
+    } catch (error) {
+      console.error('Update portfolio album error:', error);
+      return { success: false, error: error.message || 'An error occurred while updating album' };
+    }
+  };
+
+  const deletePortfolioAlbum = async (albumId) => {
+    try {
+      if (!user?.id) {
+        return { success: false, error: 'User not authenticated' };
+      }
+
+      // Get album data first to get image URL
+      const { data: album, error: fetchError } = await supabase
+        .from('portfolio_albums')
+        .select('image_url')
+        .eq('id', albumId)
+        .eq('user_id', user.id)
+        .single();
+
+      if (fetchError) {
+        return { success: false, error: 'Album not found' };
+      }
+
+      // Delete image from storage if exists
+      if (album?.image_url) {
+        // Extract file path from URL
+        const urlParts = album.image_url.split('/');
+        const fileName = urlParts.slice(-2).join('/'); // Get user_id/filename
+        const { error: storageError } = await supabase.storage
+          .from('profile-photos')
+          .remove([fileName]);
+
+        if (storageError) {
+          console.error('Error deleting file:', storageError);
+          // Continue with database deletion even if storage deletion fails
+        }
+      }
+
+      // Delete album from database
+      const { error: deleteError } = await supabase
+        .from('portfolio_albums')
+        .delete()
+        .eq('id', albumId)
+        .eq('user_id', user.id);
+
+      if (deleteError) {
+        console.error('Delete error:', deleteError);
+        return { success: false, error: deleteError.message || 'Failed to delete album' };
+      }
+
+      // Refresh user's portfolio albums
+      await loadPortfolioAlbumsForUser(user.id);
+
+      return { success: true };
+    } catch (error) {
+      console.error('Delete portfolio album error:', error);
+      return { success: false, error: error.message || 'An error occurred while deleting album' };
+    }
+  };
+
   const value = {
     user,
     session,
@@ -487,6 +814,9 @@ export const AuthProvider = ({ children }) => {
     resetPassword,
     changePassword,
     updateLinks,
+    uploadPortfolioAlbum,
+    updatePortfolioAlbum,
+    deletePortfolioAlbum,
   };
 
   return (

@@ -28,6 +28,21 @@ const LoginModal = ({ isOpen, onClose, onSwitchToSignUp }) => {
     setIsLoading(true);
 
     try {
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.email)) {
+        setError('Please enter a valid email address');
+        setIsLoading(false);
+        return;
+      }
+
+      // Validate password is not empty
+      if (!formData.password || formData.password.trim().length === 0) {
+        setError('Please enter your password');
+        setIsLoading(false);
+        return;
+      }
+
       const result = await login(formData);
       
       if (result.success) {
@@ -35,9 +50,11 @@ const LoginModal = ({ isOpen, onClose, onSwitchToSignUp }) => {
         // Optionally redirect or update app state
         window.location.reload(); // Simple refresh for now
       } else {
+        // Use the error message from the result (already formatted)
         setError(result.error || 'Login failed. Please check your credentials.');
       }
     } catch (error) {
+      console.error('Login form error:', error);
       setError(error.message || 'Login failed. Please check your credentials.');
     } finally {
       setIsLoading(false);

@@ -36,9 +36,25 @@ const SignUpModal = ({ isOpen, onClose, onSwitchToLogin }) => {
     setIsLoading(true);
 
     try {
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.email)) {
+        throw new Error('Please enter a valid email address');
+      }
+
+      // Validate password length (Supabase requires minimum 6 characters)
+      if (formData.password.length < 6) {
+        throw new Error('Password must be at least 6 characters long');
+      }
+
       // Validate passwords match
       if (formData.password !== formData.confirmPassword) {
         throw new Error('Passwords do not match');
+      }
+
+      // Validate required fields
+      if (!formData.firstName || !formData.lastName || !formData.email || !formData.phone) {
+        throw new Error('Please fill in all required fields');
       }
 
       // Prepare data for API (remove confirmPassword)
@@ -54,7 +70,29 @@ const SignUpModal = ({ isOpen, onClose, onSwitchToLogin }) => {
           window.location.reload(); // Simple refresh for now
         }, 2000);
       } else {
-        setError(result.error || 'Registration failed. Please try again.');
+        // Better error handling for Supabase errors
+        let errorMessage = result.error || 'Registration failed. Please try again.';
+        
+        // Parse common Supabase errors
+        if (result.error) {
+          const errorLower = result.error.toLowerCase();
+          
+          if (errorLower.includes('already registered') || 
+              errorLower.includes('user already exists') ||
+              errorLower.includes('already exists')) {
+            errorMessage = 'This email is already registered. Please sign in instead.';
+          } else if (errorLower.includes('password') || errorLower.includes('too short')) {
+            errorMessage = 'Password must be at least 6 characters long.';
+          } else if (errorLower.includes('email') || errorLower.includes('invalid')) {
+            errorMessage = 'Invalid email address. Please check and try again.';
+          } else if (errorLower.includes('422') || errorLower.includes('unprocessable')) {
+            errorMessage = 'Invalid data provided. Please check all fields are filled correctly.';
+          } else if (errorLower.includes('rate limit') || errorLower.includes('too many')) {
+            errorMessage = 'Too many requests. Please wait a moment and try again.';
+          }
+        }
+        
+        setError(errorMessage);
       }
     } catch (error) {
       setError(error.message || 'Registration failed. Please try again.');
