@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import ProfileSettings from './ProfileSettings';
 import './Dashboard.css';
 
 export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
@@ -370,27 +371,12 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                     </div>
                     <div className="spacing_24"></div>
                     <h3>Profile Settings</h3>
+                    {/* Profile Photo and Header Settings Component */}
+                    <ProfileSettings />
+                    <div className="spacing_24"></div>
                     <div className="w-form">
                       <div className="spacing_24"></div>
                       <form onSubmit={(e) => handleSubmit(e, 'profile')}>
-                        <div className="w-layout-hflex flex-block-10">
-                          <div>
-                            <p className="text_color_grey text_width_medium">Add Profile Photo/Logo</p>
-                            <img loading="lazy" src="https://d3e54v103j8qbb.cloudfront.net/plugins/Basic/assets/placeholder.60f9b1840c.svg" alt="" style={{width: '100px', height: '100px', marginTop: '8px'}} />
-                            <div className="w-layout-hflex flex-block-9" style={{marginTop: '12px'}}>
-                              <img width="50" height="Auto" alt="" src="/images/smSwitch.png" loading="lazy" />
-                              <p>Show Profile Photo/Logo</p>
-                            </div>
-                          </div>
-                          <div>
-                            <p className="text_color_grey text_width_medium">Add Profile Header Photo</p>
-                            <img loading="lazy" src="https://d3e54v103j8qbb.cloudfront.net/plugins/Basic/assets/placeholder.60f9b1840c.svg" alt="" style={{width: '100px', height: '100px', marginTop: '8px'}} />
-                            <div className="w-layout-hflex flex-block-9" style={{marginTop: '12px'}}>
-                              <img width="50" height="Auto" alt="" src="/images/smSwitch.png" loading="lazy" />
-                              <p>Show Profile Header Photo</p>
-                            </div>
-                          </div>
-                        </div>
                         <p className="text_color_grey text_width_medium" style={{marginTop: '24px', marginBottom: '16px'}}>Select Your Profile Job Type ⤵</p>
                         <div className="w-layout-hflex header_roles">
                           {jobTypes.map((job) => (

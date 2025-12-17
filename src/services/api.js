@@ -9,13 +9,29 @@ class ApiService {
 
   // Helper method to get auth headers (now uses Supabase session)
   async getAuthHeaders() {
-    const { data: { session } } = await supabase.auth.getSession();
-    const token = session?.access_token;
-    
-    return {
-      'Content-Type': 'application/json',
-      ...(token && { Authorization: `Bearer ${token}` })
-    };
+    try {
+      const { data, error } = await supabase.auth.getSession();
+      
+      if (error) {
+        console.error('Error getting session:', error);
+        return {
+          'Content-Type': 'application/json'
+        };
+      }
+      
+      const session = data?.session;
+      const token = session?.access_token;
+      
+      return {
+        'Content-Type': 'application/json',
+        ...(token && { Authorization: `Bearer ${token}` })
+      };
+    } catch (error) {
+      console.error('Error in getAuthHeaders:', error);
+      return {
+        'Content-Type': 'application/json'
+      };
+    }
   }
 
   // Helper method to handle API responses
@@ -90,14 +106,30 @@ class ApiService {
 
   async getCurrentUser() {
     console.warn('ApiService.getCurrentUser() is deprecated. Use AuthContext.user instead.');
-    const { data: { user } } = await supabase.auth.getUser();
-    return user;
+    try {
+      const { data, error } = await supabase.auth.getUser();
+      if (error || !data || !data.user) {
+        return null;
+      }
+      return data.user;
+    } catch (error) {
+      console.error('Error getting current user:', error);
+      return null;
+    }
   }
 
   async getToken() {
     console.warn('ApiService.getToken() is deprecated. Use AuthContext.session.access_token instead.');
-    const { data: { session } } = await supabase.auth.getSession();
-    return session?.access_token;
+    try {
+      const { data, error } = await supabase.auth.getSession();
+      if (error || !data || !data.session) {
+        return null;
+      }
+      return data.session.access_token;
+    } catch (error) {
+      console.error('Error getting token:', error);
+      return null;
+    }
   }
 }
 

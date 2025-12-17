@@ -7,6 +7,7 @@ require('dotenv').config();
 const { connectDB } = require('./config/database');
 const authRoutes = require('./routes/auth');
 const portfolioRoutes = require('./routes/portfolio');
+const profileRoutes = require('./routes/profile');
 
 const app = express();
 const PORT = process.env.PORT || 5002;
@@ -62,6 +63,7 @@ app.get('/health', (req, res) => {
 // API routes
 app.use('/api/auth', authRoutes);
 app.use('/api/portfolios', portfolioRoutes);
+app.use('/api/me', profileRoutes);
 
 // 404 handler
 app.use('*', (req, res) => {

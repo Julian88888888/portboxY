@@ -33,14 +33,18 @@ export const AuthProvider = ({ children }) => {
       }
 
       // Format albums for frontend
-      const formattedAlbums = (albums || []).map(album => ({
-        id: album.id,
-        title: album.title,
-        description: album.description,
-        tag: album.tag,
-        imageUrl: album.image_url,
-        uploadedAt: album.created_at,
-      }));
+      const formattedAlbums = (albums || []).map(album => {
+        const formatted = {
+          id: album.id,
+          title: album.title,
+          description: album.description,
+          tag: album.tag || 'Portfolio', // Ensure tag always has a value
+          imageUrl: album.image_url,
+          uploadedAt: album.created_at,
+        };
+        console.log('Loaded album tag:', formatted.tag, 'for album:', formatted.title); // Debug log
+        return formatted;
+      });
 
       // Update user state with portfolio albums
       setUser(prev => ({
@@ -644,16 +648,20 @@ export const AuthProvider = ({ children }) => {
         .getPublicUrl(fileName);
 
       // Insert album into Supabase database table
+      const albumPayload = {
+        user_id: user.id,
+        title: title || 'Untitled Album',
+        description: description || '',
+        tag: tag || 'Portfolio',
+        image_url: publicUrl,
+        display_order: 0
+      };
+      
+      console.log('Saving album with tag:', albumPayload.tag); // Debug log
+      
       const { data: insertedAlbum, error: dbError } = await supabase
         .from('portfolio_albums')
-        .insert({
-          user_id: user.id,
-          title: title || 'Untitled Album',
-          description: description || '',
-          tag: tag || 'Portfolio',
-          image_url: publicUrl,
-          display_order: 0
-        })
+        .insert(albumPayload)
         .select()
         .single();
 
