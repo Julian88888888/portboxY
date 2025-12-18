@@ -74,3 +74,4 @@ CREATE TRIGGER sync_header_photo_paths_trigger
 
 
 
+

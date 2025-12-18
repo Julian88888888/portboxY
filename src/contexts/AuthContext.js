@@ -169,8 +169,16 @@ export const AuthProvider = ({ children }) => {
         if (error.message) {
           const errorLower = error.message.toLowerCase();
           
+          // Handle network errors first (status 0 or "Failed to fetch")
+          if (error.status === 0 || errorLower.includes('failed to fetch') || errorLower.includes('network error')) {
+            errorMessage = 'Unable to connect to the authentication service. This could be due to:\n\n' +
+              '1. Network connectivity issues\n' +
+              '2. Supabase configuration error\n' +
+              '3. CORS settings in Supabase\n\n' +
+              'Please check your internet connection and contact support if the problem persists.';
+          }
           // Handle specific Supabase error codes
-          if (errorLower.includes('invalid login credentials') ||
+          else if (errorLower.includes('invalid login credentials') ||
               errorLower.includes('invalid credentials') ||
               errorLower.includes('email not confirmed') ||
               error.status === 400) {

@@ -4,10 +4,21 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = process.env.REACT_APP_SUPABASE_URL || '';
 const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY || '';
 
+// Export these for validation checks
+export const getSupabaseConfig = () => ({
+  url: supabaseUrl,
+  hasKey: !!supabaseAnonKey,
+  isConfigured: !!(supabaseUrl && supabaseAnonKey)
+});
+
 if (!supabaseUrl || !supabaseAnonKey) {
   const errorMsg = 'Missing Supabase environment variables. Please check your .env file or Vercel environment variables.';
   console.error(errorMsg);
   console.error('Required variables: REACT_APP_SUPABASE_URL, REACT_APP_SUPABASE_ANON_KEY');
+  console.error('Current values:', {
+    url: supabaseUrl ? `${supabaseUrl.substring(0, 30)}...` : 'NOT SET',
+    key: supabaseAnonKey ? 'SET' : 'NOT SET'
+  });
   // Don't throw error in production, but log it clearly
   if (process.env.NODE_ENV === 'development') {
     throw new Error(errorMsg);
@@ -18,15 +29,42 @@ if (!supabaseUrl || !supabaseAnonKey) {
 let supabase = null;
 
 if (supabaseUrl && supabaseAnonKey) {
-  supabase = createClient(supabaseUrl, supabaseAnonKey, {
-    auth: {
-      autoRefreshToken: true,
-      persistSession: true,
-      detectSessionInUrl: true,
-      storage: window.localStorage,
-      storageKey: 'supabase.auth.token',
-    },
-  });
+  try {
+    // Validate URL format
+    try {
+      new URL(supabaseUrl);
+    } catch (urlError) {
+      console.error('Invalid Supabase URL format:', supabaseUrl);
+      throw new Error('Invalid Supabase URL format');
+    }
+
+    supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        autoRefreshToken: true,
+        persistSession: true,
+        detectSessionInUrl: true,
+        storage: typeof window !== 'undefined' ? window.localStorage : undefined,
+        storageKey: 'supabase.auth.token',
+      },
+      global: {
+        headers: {
+          'x-client-info': 'portbox-web'
+        }
+      }
+    });
+    
+    console.log('Supabase client initialized successfully');
+  } catch (initError) {
+    console.error('Error initializing Supabase client:', initError);
+    // Create a placeholder client that will fail gracefully
+    supabase = createClient('https://placeholder.supabase.co', 'placeholder-key', {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+        detectSessionInUrl: false,
+      },
+    });
+  }
 } else {
   // Create a mock client that will fail gracefully
   console.warn('Supabase client not initialized. Please configure environment variables.');
@@ -109,6 +147,38 @@ export const supabaseAuth = {
       };
     }
 
+    // Check if Supabase is properly configured
+    if (!supabaseUrl || !supabaseAnonKey) {
+      const errorMsg = 'Supabase is not configured. Please check your environment variables.';
+      console.error(errorMsg);
+      console.error('Supabase URL:', supabaseUrl ? 'Set' : 'Missing');
+      console.error('Supabase Key:', supabaseAnonKey ? 'Set' : 'Missing');
+      return {
+        data: null,
+        error: {
+          message: errorMsg,
+          status: 500
+        }
+      };
+    }
+
+    // Validate Supabase URL format
+    try {
+      const url = new URL(supabaseUrl);
+      if (!url.hostname.includes('supabase.co') && !url.hostname.includes('supabase')) {
+        console.warn('Supabase URL may be incorrect:', supabaseUrl);
+      }
+    } catch (urlError) {
+      console.error('Invalid Supabase URL format:', supabaseUrl);
+      return {
+        data: null,
+        error: {
+          message: 'Invalid Supabase configuration. Please check your environment variables.',
+          status: 500
+        }
+      };
+    }
+
     // Trim and normalize email
     const normalizedEmail = email.trim().toLowerCase();
 
@@ -124,11 +194,45 @@ export const supabaseAuth = {
           status: error.status,
           error: error
         });
+
+        // Provide more helpful error messages for common issues
+        if (error.message === 'Failed to fetch' || error.status === 0) {
+          // Network error - likely CORS, wrong URL, or network issue
+          const diagnosticInfo = {
+            supabaseUrl: supabaseUrl ? `${supabaseUrl.substring(0, 20)}...` : 'NOT SET',
+            hasKey: !!supabaseAnonKey,
+            environment: process.env.NODE_ENV,
+            currentOrigin: typeof window !== 'undefined' ? window.location.origin : 'N/A'
+          };
+          console.error('Network error diagnostic:', diagnosticInfo);
+          
+          return {
+            data: null,
+            error: {
+              message: 'Network error: Unable to connect to Supabase. Please check: 1) Your Supabase URL is correct, 2) CORS is enabled in Supabase settings, 3) Your network connection is working.',
+              status: 0,
+              originalError: error
+            }
+          };
+        }
       }
 
       return { data, error };
     } catch (err) {
       console.error('Unexpected error in signIn:', err);
+      
+      // Handle network errors
+      if (err.message === 'Failed to fetch' || err.name === 'TypeError') {
+        return {
+          data: null,
+          error: {
+            message: 'Network error: Unable to connect to Supabase. Please check your internet connection and Supabase configuration.',
+            status: 0,
+            originalError: err
+          }
+        };
+      }
+      
       return { 
         data: null, 
         error: { 

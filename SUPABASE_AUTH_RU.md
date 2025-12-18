@@ -234,3 +234,4 @@ function MyComponent() {
 4. Обратитесь к документации Supabase
 
 
+
