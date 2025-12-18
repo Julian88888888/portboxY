@@ -36,3 +36,4 @@ SELECT
   COUNT(CASE WHEN tag IS NULL THEN 1 END) as albums_without_tag
 FROM portfolio_albums;
 
+

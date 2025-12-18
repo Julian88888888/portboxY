@@ -72,3 +72,4 @@ CREATE TRIGGER sync_header_photo_paths_trigger
     FOR EACH ROW
     EXECUTE FUNCTION sync_header_photo_paths();
 
+

@@ -150,3 +150,4 @@ If you encounter errors, check:
 - Buckets are set to **Public**
 - User is authenticated
 
+

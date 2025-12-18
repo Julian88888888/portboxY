@@ -158,3 +158,4 @@ After creating buckets and policies:
 
 5. **Check Network tab**: Look for failed requests to see what error Supabase is returning
 
+

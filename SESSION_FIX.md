@@ -55,3 +55,4 @@ const user = sessionData.session.user;
    - `REACT_APP_SUPABASE_URL` is set
    - `REACT_APP_SUPABASE_ANON_KEY` is set
 
+

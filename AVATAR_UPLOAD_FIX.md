@@ -124,3 +124,4 @@ profile-headers/
    - Verify `profiles` table exists
    - Check that `profile_photo_path` and `profile_header_path` columns exist
 
+

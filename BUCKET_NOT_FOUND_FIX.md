@@ -85,3 +85,4 @@ Both buckets:
 - Check that you're connected to the correct Supabase project
 - Verify your environment variables (`REACT_APP_SUPABASE_URL`) point to the correct project
 
+

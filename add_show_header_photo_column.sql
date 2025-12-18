@@ -49,3 +49,4 @@ CREATE TRIGGER sync_show_header_photo_trigger
     FOR EACH ROW
     EXECUTE FUNCTION sync_show_header_photo();
 
+

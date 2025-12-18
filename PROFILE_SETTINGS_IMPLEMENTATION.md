@@ -276,3 +276,4 @@ Profile updated, UI refreshed
    - Better error messages
    - Network error detection
 
+

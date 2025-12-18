@@ -268,3 +268,4 @@ function useProfileRealtime() {
 4. Verify real-time updates work
 5. (Optional) Add realtime sync for multi-tab support
 
+

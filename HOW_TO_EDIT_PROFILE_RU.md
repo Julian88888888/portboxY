@@ -87,3 +87,4 @@
 2. Перевірте формат (тільки зображення: JPG, PNG, тощо)
 3. Перевірте, чи налаштовані storage buckets в Supabase (див. STORAGE_SETUP.md)
 
+

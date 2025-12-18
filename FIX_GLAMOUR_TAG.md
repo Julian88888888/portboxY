@@ -114,3 +114,4 @@ WHERE tag IS NULL OR tag = 'Portfolio';
 
 Или установить разные теги вручную через Supabase Table Editor.
 
+

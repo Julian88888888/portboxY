@@ -27,3 +27,4 @@ echo "  1. Stop the dev server (Ctrl+C)"
 echo "  2. Run: rm -rf node_modules && pnpm install"
 echo "  3. Restart: pnpm start"
 
+

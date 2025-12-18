@@ -123,3 +123,4 @@ const PublicProfile: React.FC<PublicProfileProps> = ({ userId }) => {
 
 export default PublicProfile;
 
+
