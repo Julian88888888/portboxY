@@ -50,3 +50,4 @@ CREATE TRIGGER sync_show_header_photo_trigger
     EXECUTE FUNCTION sync_show_header_photo();
 
 
+

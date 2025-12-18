@@ -88,3 +88,4 @@
 3. Перевірте, чи налаштовані storage buckets в Supabase (див. STORAGE_SETUP.md)
 
 
+

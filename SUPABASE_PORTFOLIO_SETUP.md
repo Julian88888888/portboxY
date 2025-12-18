@@ -193,3 +193,4 @@ SELECT COUNT(*) FROM portfolio_albums
 WHERE user_id = auth.uid();
 ```
 
+

@@ -73,3 +73,4 @@ CREATE TRIGGER sync_header_photo_paths_trigger
     EXECUTE FUNCTION sync_header_photo_paths();
 
 
+
