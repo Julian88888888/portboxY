@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { useProfile } from '../hooks/useProfile';
+import { getAvatarUrl, getHeaderUrl } from '../services/profileService';
 import ProfileSettings from './ProfileSettings';
 import './Dashboard.css';
 
 export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
   const { user, updateProfile, uploadPortfolioAlbum, updatePortfolioAlbum, deletePortfolioAlbum } = useAuth();
+  const { data: profile } = useProfile();
   const [activeTab, setActiveTab] = useState(propActiveTab || 'Tab 1');
   const [activeBookingTab, setActiveBookingTab] = useState('Tab 2');
   const [isPortfolioModalOpen, setIsPortfolioModalOpen] = useState(false);
@@ -147,12 +150,29 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
   };
 
   const getProfileImage = () => {
+    // First check if profile photo is enabled and exists in profile settings
+    if (profile?.show_profile_photo && profile?.profile_photo_path) {
+      return getAvatarUrl(profile.profile_photo_path);
+    }
+    
+    // Fallback to old method (profilePhotos) if profile settings not available
     if (user?.profilePhotos && user.profilePhotos.length > 0) {
       const mainPhoto = user.profilePhotos.find(photo => photo.isMain);
       return mainPhoto ? mainPhoto.url : user.profilePhotos[0].url;
     }
     return '/images/headshot_model.jpg';
   };
+
+  // Get header photo URL for background (only if toggle is ON)
+  const getHeaderBackgroundUrl = () => {
+    const showHeader = profile?.show_profile_header ?? profile?.show_header_photo ?? true;
+    if (!showHeader) return null;
+    const headerPath = profile?.profile_header_path || profile?.header_photo_path;
+    if (!headerPath) return null;
+    return getHeaderUrl(headerPath);
+  };
+
+  const headerBackgroundUrl = getHeaderBackgroundUrl();
 
   const jobTypes = [
     { 
@@ -344,8 +364,31 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                 <div className="w-layout-vflex flex-block-8">
                   {/* Profile Settings */}
                   <div className="settingssection">
-                    <div className="profileimg_wrapper">
-                      <div className="profile_wrapper">
+                    <div 
+                      className="profileimg_wrapper"
+                      style={{
+                        backgroundImage: headerBackgroundUrl ? `url(${headerBackgroundUrl})` : 'none',
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center',
+                        backgroundRepeat: 'no-repeat',
+                        borderRadius: headerBackgroundUrl ? '8px' : '0',
+                        padding: headerBackgroundUrl ? '20px' : '0',
+                        position: 'relative'
+                      }}
+                    >
+                      {headerBackgroundUrl && (
+                        <div style={{
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          right: 0,
+                          bottom: 0,
+                          background: 'linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.1) 50%, rgba(0,0,0,0.4) 100%)',
+                          borderRadius: '8px',
+                          pointerEvents: 'none'
+                        }} />
+                      )}
+                      <div className="profile_wrapper" style={{ position: 'relative', zIndex: 1 }}>
                         <img 
                           src={getProfileImage()} 
                           alt="" 
@@ -357,7 +400,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                       </div>
                       <div className="text_wrapper text_align_center">
                         <div className="flex_wrapper flex_center">
-                          <h3>{formData.name || 'Mary Adams'}</h3>
+                          <h3>{formData.name || 'Mary Adams'} </h3>
                           <a href="#" className="button_icon accent_button small_btn w-inline-block">
                             <div>{formData.jobType}</div>
                           </a>

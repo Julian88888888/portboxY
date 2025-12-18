@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { useProfile } from '../hooks/useProfile';
+import { getAvatarUrl, getHeaderUrl } from '../services/profileService';
 
 const days = [
   { key: "monday", label: "Mon", hours: "5 hours" },
@@ -32,16 +34,35 @@ const travels = [
 
 export default function JobRequestPopup({ onEditProfile }) {
   const { user } = useAuth();
+  const { data: profile } = useProfile();
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   
-  // Get main photo or first photo from profilePhotos
+  // Get profile photo from ProfileSettings (profile_photo_path)
   const getProfileImage = () => {
+    // First check if profile photo is enabled and exists in profile settings
+    if (profile?.show_profile_photo && profile?.profile_photo_path) {
+      return getAvatarUrl(profile.profile_photo_path);
+    }
+    
+    // Fallback to old method (profilePhotos) if profile settings not available
     if (user?.profilePhotos && user.profilePhotos.length > 0) {
       const mainPhoto = user.profilePhotos.find(photo => photo.isMain);
       return mainPhoto ? mainPhoto.url : user.profilePhotos[0].url;
     }
+    
     return '/images/headshot_model.jpg'; // Fallback to default image
   };
+
+  // Get header photo URL for background (only if toggle is ON)
+  const getHeaderBackgroundUrl = () => {
+    const showHeader = profile?.show_profile_header ?? profile?.show_header_photo ?? true;
+    if (!showHeader) return null;
+    const headerPath = profile?.profile_header_path || profile?.header_photo_path;
+    if (!headerPath) return null;
+    return getHeaderUrl(headerPath);
+  };
+
+  const headerBackgroundUrl = getHeaderBackgroundUrl();
 
   const handleClosePopup = (e) => {
     e.preventDefault();
@@ -64,8 +85,31 @@ export default function JobRequestPopup({ onEditProfile }) {
     {isPopupOpen && (
     <div data-w-id="cc4101c3-66ed-1ace-7cdf-cd6dc85132d0" style={{opacity: 1, display: "flex"}} className="popup">
       <div data-w-id="69b0d63f-e58e-63a6-6dec-9a1e74daa935" style={{transform: "translate3d(0px, 0px, 0px) scale3d(1, 1, 1) rotateX(0deg) rotateY(0deg) rotateZ(0deg) skew(0deg, 0deg)", opacity: 1, transformStyle: "preserve-3d"}} className="modelpopup">
-        <div className="profileimg_wrapper">
-          <div className="profile_wrapper">
+        <div 
+          className="profileimg_wrapper"
+          style={{
+            backgroundImage: headerBackgroundUrl ? `url(${headerBackgroundUrl})` : 'none',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat',
+            borderRadius: headerBackgroundUrl ? '8px' : '0',
+            padding: headerBackgroundUrl ? '20px' : '0',
+            position: 'relative'
+          }}
+        >
+          {headerBackgroundUrl && (
+            <div style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: 'linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.1) 50%, rgba(0,0,0,0.4) 100%)',
+              borderRadius: '8px',
+              pointerEvents: 'none'
+            }} />
+          )}
+          <div className="profile_wrapper" style={{ position: 'relative', zIndex: 1 }}>
             <img 
               src={getProfileImage()} 
               loading="lazy" 
@@ -167,7 +211,22 @@ export default function JobRequestPopup({ onEditProfile }) {
       </div>
     </div>
     )}
-      <section class="section home_sec"></section>
+      <section 
+        className="section home_sec"
+        style={{
+          backgroundImage: `linear-gradient(#ffffff05 82%, #f3f5f8bd 94%, #eef2f5), url('${headerBackgroundUrl || '/images/preview_48e3aa10-7b99-11e4-bb3d-ff03371996b1.jpg'}')`,
+          backgroundPosition: '0 0, 50% 0',
+          backgroundRepeat: 'repeat, no-repeat',
+          backgroundSize: 'auto, cover',
+          backgroundClip: 'border-box',
+          justifyContent: 'center',
+          alignItems: 'flex-end',
+          height: '600px',
+          marginBottom: '-184px',
+          paddingBottom: '20px',
+          display: 'flex'
+        }}
+      ></section>
       <div className="section profile_sec">
         <div className="content_wrapper content_align_center">
           <div className="spacing_48" />

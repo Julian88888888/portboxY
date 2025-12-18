@@ -6,7 +6,7 @@ import {
   updateProfileSettings,
   getUploadUrl,
   uploadFileToUrl,
-  ProfileSettings
+  type ProfileSettings
 } from '../services/profileApi';
 import supabase from '../services/supabase';
 
@@ -315,56 +315,84 @@ const ProfileSettingsComponent: React.FC = () => {
     updated_at: new Date().toISOString()
   };
 
+  // Get header image URL from Supabase storage
+  const getHeaderImageUrl = (): string => {
+    if (profileData.profile_header_path) {
+      const { data } = supabase.storage.from('profile-headers').getPublicUrl(profileData.profile_header_path);
+      return data.publicUrl;
+    }
+    return '/images/preview_48e3aa10-7b99-11e4-bb3d-ff03371996b1.jpg';
+  };
+
+  const headerImageUrl = getHeaderImageUrl();
+
   return (
-    <div style={{ padding: '24px', maxWidth: '800px', margin: '0 auto' }}>
-      <h2 style={{ marginBottom: '24px' }}>Profile Settings</h2>
+    <section 
+      className="section home_sec"
+      style={{
+        backgroundImage: `linear-gradient(#ffffff05 82%, #f3f5f8bd 94%, #eef2f5), url('${headerImageUrl}')`,
+        backgroundPosition: '0 0, 50% 0',
+        backgroundRepeat: 'repeat, no-repeat',
+        backgroundSize: 'auto, cover',
+        backgroundClip: 'border-box',
+        justifyContent: 'center',
+        alignItems: 'flex-end',
+        height: '600px',
+        marginBottom: '-184px',
+        paddingBottom: '20px',
+        display: 'flex'
+      }}
+    >
+      <div style={{ padding: '24px', maxWidth: '800px', margin: '0 auto' }}>
+        <h2 style={{ marginBottom: '24px' }}>Profile Settings</h2>
 
-      {toast && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          onClose={() => setToast(null)}
+        {toast && (
+          <Toast
+            message={toast.message}
+            type={toast.type}
+            onClose={() => setToast(null)}
+          />
+        )}
+
+        {/* Profile Photo Upload */}
+        <ImageUpload
+          label="Add Profile Photo/Logo"
+          currentImagePath={profileData.profile_photo_path}
+          onUpload={(file) => handleImageUpload('profile_photo', file)}
+          onRemove={() => handleImageRemove('profile_photo')}
+          error={errors.profile_photo}
+          loading={uploading.profile_photo}
+          bucket="profile-photos"
         />
-      )}
 
-      {/* Profile Photo Upload */}
-      <ImageUpload
-        label="Add Profile Photo/Logo"
-        currentImagePath={profileData.profile_photo_path}
-        onUpload={(file) => handleImageUpload('profile_photo', file)}
-        onRemove={() => handleImageRemove('profile_photo')}
-        error={errors.profile_photo}
-        loading={uploading.profile_photo}
-        bucket="profile-photos"
-      />
+        {/* Show Profile Photo Toggle */}
+        <Toggle
+          label="Show Profile Photo/Logo"
+          checked={profileData.show_profile_photo}
+          onChange={(checked) => handleToggleChange('show_profile_photo', checked)}
+          disabled={updateProfileMutation.isPending}
+        />
 
-      {/* Show Profile Photo Toggle */}
-      <Toggle
-        label="Show Profile Photo/Logo"
-        checked={profileData.show_profile_photo}
-        onChange={(checked) => handleToggleChange('show_profile_photo', checked)}
-        disabled={updateProfileMutation.isPending}
-      />
+        {/* Profile Header Upload */}
+        <ImageUpload
+          label="Add Profile Header Photo"
+          currentImagePath={profileData.profile_header_path}
+          onUpload={(file) => handleImageUpload('profile_header', file)}
+          onRemove={() => handleImageRemove('profile_header')}
+          error={errors.profile_header}
+          loading={uploading.profile_header}
+          bucket="profile-headers"
+        />
 
-      {/* Profile Header Upload */}
-      <ImageUpload
-        label="Add Profile Header Photo"
-        currentImagePath={profileData.profile_header_path}
-        onUpload={(file) => handleImageUpload('profile_header', file)}
-        onRemove={() => handleImageRemove('profile_header')}
-        error={errors.profile_header}
-        loading={uploading.profile_header}
-        bucket="profile-headers"
-      />
-
-      {/* Show Profile Header Toggle */}
-      <Toggle
-        label="Show Profile Header Photo"
-        checked={profileData.show_profile_header}
-        onChange={(checked) => handleToggleChange('show_profile_header', checked)}
-        disabled={updateProfileMutation.isPending}
-      />
-    </div>
+        {/* Show Profile Header Toggle */}
+        <Toggle
+          label="Show Profile Header Photo"
+          checked={profileData.show_profile_header}
+          onChange={(checked) => handleToggleChange('show_profile_header', checked)}
+          disabled={updateProfileMutation.isPending}
+        />
+      </div>
+    </section>
   );
 };
 
