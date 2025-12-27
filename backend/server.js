@@ -8,23 +8,13 @@ const { connectDB } = require('./config/database');
 const authRoutes = require('./routes/auth');
 const portfolioRoutes = require('./routes/portfolio');
 const profileRoutes = require('./routes/profile');
+const albumRoutes = require('./routes/albums');
+const imageRoutes = require('./routes/images');
 
 const app = express();
+// In Docker, PORT is 5000 (mapped to 5002 externally)
+// For local development, default to 5002
 const PORT = process.env.PORT || 5002;
-
-// Security middleware
-app.use(helmet());
-
-// Rate limiting
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
-  message: {
-    success: false,
-    message: 'Too many requests from this IP, please try again later.'
-  }
-});
-app.use('/api/', limiter);
 
 // CORS configuration
 const corsOptions = {
@@ -44,12 +34,51 @@ const corsOptions = {
 };
 app.use(cors(corsOptions));
 
+// Security middleware (configured to allow images)
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+  crossOriginEmbedderPolicy: false,
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      imgSrc: ["'self'", "data:", "blob:", "http://localhost:5002", "https://*.supabase.co"],
+      scriptSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+    },
+  },
+}));
+
+// Rate limiting
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // limit each IP to 100 requests per windowMs
+  message: {
+    success: false,
+    message: 'Too many requests from this IP, please try again later.'
+  }
+});
+app.use('/api/', limiter);
+
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Serve static files (uploaded images)
-app.use('/uploads', express.static('uploads'));
+// Serve static files (uploaded images) with CORS headers
+app.use('/uploads', (req, res, next) => {
+  // Set CORS headers for static files
+  const origin = req.headers.origin;
+  const allowedOrigins = ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:5000', 'http://localhost:5001', 'http://localhost:5002'];
+  
+  if (origin && allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+  }
+  
+  // Cache control for images
+  res.setHeader('Cache-Control', 'public, max-age=31536000');
+  
+  next();
+}, express.static('uploads'));
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -64,6 +93,8 @@ app.get('/health', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/portfolios', portfolioRoutes);
 app.use('/api/me', profileRoutes);
+app.use('/api/albums', albumRoutes);
+app.use('/api/images', imageRoutes);
 
 // 404 handler
 app.use('*', (req, res) => {
@@ -105,8 +136,12 @@ app.use((error, req, res, next) => {
 // Initialize database and start server
 const startServer = async () => {
   try {
-    // Connect to MongoDB
-    await connectDB();
+    // Connect to MongoDB (optional - albums API uses Supabase)
+    try {
+      await connectDB();
+    } catch (dbError) {
+      console.warn('⚠️  MongoDB connection failed (albums API uses Supabase, so this is OK):', dbError.message);
+    }
     
     // Start server
     app.listen(PORT, () => {
@@ -115,6 +150,7 @@ const startServer = async () => {
       console.log(`🔗 Health check: http://localhost:${PORT}/health`);
       console.log(`🔐 Auth API: http://localhost:${PORT}/api/auth`);
       console.log(`📁 Portfolio API: http://localhost:${PORT}/api/portfolios`);
+      console.log(`🖼️  Albums API: http://localhost:${PORT}/api/albums`);
     });
     
   } catch (error) {

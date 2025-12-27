@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useProfile } from '../hooks/useProfile';
 import { getAvatarUrl, getHeaderUrl } from '../services/profileService';
+import { createAlbum, getAlbums, uploadImageToAlbum, deleteAlbum, getAlbumImages, setCoverImage, normalizeImageUrl } from '../services/albumsService';
 import ProfileSettings from './ProfileSettings';
 import './Dashboard.css';
 
@@ -19,6 +20,24 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
     imageFile: null,
     imagePreview: null
   });
+  
+  // New albums API state
+  const [albums, setAlbums] = useState([]);
+  const [albumsLoading, setAlbumsLoading] = useState(false);
+  const [isNewAlbumModalOpen, setIsNewAlbumModalOpen] = useState(false);
+  const [newAlbumFormData, setNewAlbumFormData] = useState({
+    title: '',
+    description: '',
+    imageFile: null,
+    imagePreview: null
+  });
+  const [isUploadImageModalOpen, setIsUploadImageModalOpen] = useState(false);
+  const [selectedAlbumId, setSelectedAlbumId] = useState(null);
+  const [uploadImageFile, setUploadImageFile] = useState(null);
+  const [uploadImagePreview, setUploadImagePreview] = useState(null);
+  const [albumImages, setAlbumImages] = useState({}); // albumId -> images array
+  const [isViewImagesModalOpen, setIsViewImagesModalOpen] = useState(false);
+  const [viewingAlbum, setViewingAlbum] = useState(null);
 
   // Sync with prop changes - this ensures the tab reflects the current page
   useEffect(() => {
@@ -26,6 +45,43 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
       setActiveTab(propActiveTab);
     }
   }, [propActiveTab]);
+
+  // Load albums from new API
+  useEffect(() => {
+    const loadAlbums = async () => {
+      setAlbumsLoading(true);
+      console.log('Loading albums...');
+      const result = await getAlbums();
+      console.log('Albums loaded:', result);
+      
+      if (result.success) {
+        const albumsData = result.data || [];
+        console.log('Albums data:', albumsData.length, 'albums');
+        setAlbums(albumsData);
+        
+        // Load images for each album
+        if (albumsData.length > 0) {
+          const imagesPromises = albumsData.map(async (album) => {
+            const imagesResult = await getAlbumImages(album.id);
+            return { albumId: album.id, images: imagesResult.success ? imagesResult.data : [] };
+          });
+          
+          const imagesResults = await Promise.all(imagesPromises);
+          const imagesMap = {};
+          imagesResults.forEach(({ albumId, images }) => {
+            imagesMap[albumId] = images;
+          });
+          setAlbumImages(imagesMap);
+          console.log('Images loaded for', Object.keys(imagesMap).length, 'albums');
+        }
+      } else {
+        console.error('Failed to load albums:', result.error);
+        setAlbums([]);
+      }
+      setAlbumsLoading(false);
+    };
+    loadAlbums();
+  }, []);
 
   const handleTabChange = (tab) => {
     // Immediately call onTabChange to update the page in App.js
@@ -1092,6 +1148,167 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                     <img width="50" height="Auto" alt="" src="/images/smSwitch.png" loading="lazy" />
                     <p>Show Album Description</p>
                   </div>
+                  
+                  {/* New Albums API Section */}
+                  <div className="settingssection" style={{ marginTop: '32px', paddingTop: '32px', borderTop: '1px solid #e0e0e0' }}>
+                    <div className="spacing_24"></div>
+                    <h3>Image Albums (New API)</h3>
+                    <p className="text_color_grey" style={{ marginBottom: '16px' }}>
+                      Create albums and upload multiple images to each album
+                    </p>
+                    
+                    {albumsLoading ? (
+                      <p className="text_color_grey">Loading albums...</p>
+                    ) : (
+                      <>
+                        {albums.length === 0 ? (
+                          <p className="text_color_grey" style={{ marginBottom: '24px' }}>No albums yet. Create your first album!</p>
+                        ) : (
+                          <div className="w-layout-grid blog_grid" style={{ marginBottom: '24px' }}>
+                            {albums.map((album, index) => (
+                              <div key={album.id || index} className="product_item w-inline-block" style={{ position: 'relative' }}>
+                                <a href="#" className="product_item w-inline-block">
+                                  <div className="product_image_wrapper">
+                                    <img 
+                                      src={normalizeImageUrl(album.cover_image_url) || '/images/fashion-photo.jpg'} 
+                                      alt={album.title} 
+                                      className="product_image fashionphoto"
+                                      onError={(e) => {
+                                        e.target.src = '/images/fashion-photo.jpg';
+                                      }}
+                                    />
+                                    <div className="discount_tag">Album</div>
+                                  </div>
+                                  <div className="spacing_16"></div>
+                                  <div className="font_weight_bold">{album.title || 'Untitled'}</div>
+                                  <div className="spacing_4"></div>
+                                  <p className="text_color_grey">{album.description || 'No description'}</p>
+                                </a>
+                                <div style={{ position: 'absolute', top: '8px', right: '8px', display: 'flex', gap: '4px', flexDirection: 'column' }}>
+                                  <button
+                                    onClick={async (e) => {
+                                      e.preventDefault();
+                                      setViewingAlbum(album);
+                                      // Load images if not already loaded
+                                      if (!albumImages[album.id] || albumImages[album.id].length === 0) {
+                                        const imagesResult = await getAlbumImages(album.id);
+                                        if (imagesResult.success) {
+                                          setAlbumImages(prev => ({
+                                            ...prev,
+                                            [album.id]: imagesResult.data || []
+                                          }));
+                                        }
+                                      }
+                                      setIsViewImagesModalOpen(true);
+                                    }}
+                                    style={{
+                                      background: 'rgba(40,167,69,0.8)',
+                                      border: 'none',
+                                      borderRadius: '4px',
+                                      padding: '4px 8px',
+                                      color: 'white',
+                                      cursor: 'pointer',
+                                      fontSize: '12px',
+                                      marginBottom: '4px'
+                                    }}
+                                    title="View Images"
+                                  >
+                                    👁️ View
+                                  </button>
+                                  <button
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      setSelectedAlbumId(album.id);
+                                      setUploadImageFile(null);
+                                      setUploadImagePreview(null);
+                                      setIsUploadImageModalOpen(true);
+                                    }}
+                                    style={{
+                                      background: 'rgba(0,123,255,0.8)',
+                                      border: 'none',
+                                      borderRadius: '4px',
+                                      padding: '4px 8px',
+                                      color: 'white',
+                                      cursor: 'pointer',
+                                      fontSize: '12px',
+                                      marginBottom: '4px'
+                                    }}
+                                    title="Upload Images"
+                                  >
+                                    📷 Add Images
+                                  </button>
+                                  <button
+                                    onClick={async (e) => {
+                                      e.preventDefault();
+                                      if (window.confirm('Are you sure you want to delete this album?')) {
+                                        const result = await deleteAlbum(album.id);
+                                        if (result.success) {
+                                          // Reload albums
+                                          const reloadResult = await getAlbums();
+                                          if (reloadResult.success) {
+                                            setAlbums(reloadResult.data || []);
+                                            // Remove from images map
+                                            const newImagesMap = { ...albumImages };
+                                            delete newImagesMap[album.id];
+                                            setAlbumImages(newImagesMap);
+                                          }
+                                        } else {
+                                          alert(result.error || 'Failed to delete album');
+                                        }
+                                      }
+                                    }}
+                                    style={{
+                                      background: 'rgba(220,53,69,0.8)',
+                                      border: 'none',
+                                      borderRadius: '4px',
+                                      padding: '4px 8px',
+                                      color: 'white',
+                                      cursor: 'pointer',
+                                      fontSize: '12px'
+                                    }}
+                                    title="Delete Album"
+                                  >
+                                    🗑️ Delete
+                                  </button>
+                                </div>
+                                {/* Show image count */}
+                                {albumImages[album.id] && albumImages[album.id].length > 0 && (
+                                  <div style={{ 
+                                    position: 'absolute', 
+                                    bottom: '8px', 
+                                    right: '8px',
+                                    background: 'rgba(0,0,0,0.7)',
+                                    color: 'white',
+                                    padding: '4px 8px',
+                                    borderRadius: '4px',
+                                    fontSize: '11px'
+                                  }}>
+                                    {albumImages[album.id].length} {albumImages[album.id].length === 1 ? 'image' : 'images'}
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        
+                        <button
+                          onClick={() => {
+                            setNewAlbumFormData({
+                              title: '',
+                              description: '',
+                              imageFile: null,
+                              imagePreview: null
+                            });
+                            setIsNewAlbumModalOpen(true);
+                          }}
+                          className="submit-button w-button"
+                        >
+                          + Create New Album
+                        </button>
+                      </>
+                    )}
+                  </div>
+                  
                   <div className="settingssection">
                     <div className="spacing_24"></div>
                     <h3>Book Me Button</h3>
@@ -1682,6 +1899,547 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* New Album Modal (New API) */}
+      {isNewAlbumModalOpen && (
+        <div 
+          className="modal-overlay" 
+          onClick={() => setIsNewAlbumModalOpen(false)}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0,0,0,0.7)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000
+          }}
+        >
+          <div 
+            className="modal-content" 
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: 'white',
+              borderRadius: '12px',
+              padding: '24px',
+              maxWidth: '600px',
+              width: '90%',
+              maxHeight: '90vh',
+              overflow: 'auto'
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h3>Create New Album</h3>
+              <button
+                onClick={() => setIsNewAlbumModalOpen(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '24px',
+                  cursor: 'pointer',
+                  padding: '0',
+                  width: '30px',
+                  height: '30px'
+                }}
+              >
+                ×
+              </button>
+            </div>
+
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                
+                if (!newAlbumFormData.title || newAlbumFormData.title.trim().length === 0) {
+                  alert('Please enter an album title');
+                  return;
+                }
+
+                // Step 1: Create album
+                const albumResult = await createAlbum({
+                  title: newAlbumFormData.title,
+                  description: newAlbumFormData.description || null
+                });
+
+                if (!albumResult.success) {
+                  alert(albumResult.error || 'Failed to create album');
+                  return;
+                }
+
+                const albumId = albumResult.data.id;
+                console.log('Album created with ID:', albumId);
+
+                // Step 2: Upload image if provided
+                if (newAlbumFormData.imageFile) {
+                  const imageResult = await uploadImageToAlbum(albumId, newAlbumFormData.imageFile);
+                  if (!imageResult.success) {
+                    alert(`Album created but image upload failed: ${imageResult.error}`);
+                  } else {
+                    console.log('Image uploaded successfully');
+                  }
+                }
+
+                // Reload all albums and images
+                setAlbumsLoading(true);
+                const reloadResult = await getAlbums();
+                console.log('Reload albums result:', reloadResult);
+                
+                if (reloadResult.success) {
+                  const albumsData = reloadResult.data || [];
+                  console.log('Loaded albums:', albumsData.length);
+                  setAlbums(albumsData);
+                  
+                  // Load images for all albums
+                  const imagesPromises = albumsData.map(async (album) => {
+                    const imagesResult = await getAlbumImages(album.id);
+                    return { albumId: album.id, images: imagesResult.success ? imagesResult.data : [] };
+                  });
+                  
+                  const imagesResults = await Promise.all(imagesPromises);
+                  const imagesMap = {};
+                  imagesResults.forEach(({ albumId, images }) => {
+                    imagesMap[albumId] = images;
+                  });
+                  setAlbumImages(imagesMap);
+                  console.log('Loaded images for albums:', Object.keys(imagesMap).length);
+                } else {
+                  console.error('Failed to reload albums:', reloadResult.error);
+                  alert('Album created but failed to reload list. Please refresh the page.');
+                }
+                
+                setAlbumsLoading(false);
+
+                setIsNewAlbumModalOpen(false);
+                setNewAlbumFormData({
+                  title: '',
+                  description: '',
+                  imageFile: null,
+                  imagePreview: null
+                });
+              }}
+            >
+              <div className="form-group" style={{ marginBottom: '16px' }}>
+                <label htmlFor="newAlbumTitle">Title *</label>
+                <input
+                  type="text"
+                  id="newAlbumTitle"
+                  className="w-input"
+                  value={newAlbumFormData.title}
+                  onChange={(e) => setNewAlbumFormData({ ...newAlbumFormData, title: e.target.value })}
+                  placeholder="Album Title"
+                  required
+                />
+              </div>
+
+              <div className="form-group" style={{ marginBottom: '16px' }}>
+                <label htmlFor="newAlbumDescription">Description</label>
+                <textarea
+                  id="newAlbumDescription"
+                  className="w-input"
+                  value={newAlbumFormData.description}
+                  onChange={(e) => setNewAlbumFormData({ ...newAlbumFormData, description: e.target.value })}
+                  placeholder="Album Description (optional)"
+                  rows="3"
+                />
+              </div>
+
+              <div className="form-group" style={{ marginBottom: '16px' }}>
+                <label htmlFor="newAlbumImage">Cover Image (optional - can add later)</label>
+                <input
+                  type="file"
+                  id="newAlbumImage"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                      const reader = new FileReader();
+                      reader.onloadend = () => {
+                        setNewAlbumFormData({
+                          ...newAlbumFormData,
+                          imageFile: file,
+                          imagePreview: reader.result
+                        });
+                      };
+                      reader.readAsDataURL(file);
+                    }
+                  }}
+                />
+                {newAlbumFormData.imagePreview && (
+                  <img
+                    src={newAlbumFormData.imagePreview}
+                    alt="Preview"
+                    style={{
+                      width: '100%',
+                      maxHeight: '300px',
+                      objectFit: 'cover',
+                      marginTop: '12px',
+                      borderRadius: '8px'
+                    }}
+                  />
+                )}
+              </div>
+
+              <div style={{ display: 'flex', gap: '12px', marginTop: '24px' }}>
+                <button
+                  type="button"
+                  onClick={() => setIsNewAlbumModalOpen(false)}
+                  style={{
+                    padding: '12px 24px',
+                    background: '#f5f5f5',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    flex: 1
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="submit-button w-button"
+                  style={{ flex: 1 }}
+                >
+                  Create Album
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Upload Image to Album Modal */}
+      {isUploadImageModalOpen && selectedAlbumId && (
+        <div 
+          className="modal-overlay" 
+          onClick={() => setIsUploadImageModalOpen(false)}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0,0,0,0.7)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000
+          }}
+        >
+          <div 
+            className="modal-content" 
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: 'white',
+              borderRadius: '12px',
+              padding: '24px',
+              maxWidth: '600px',
+              width: '90%',
+              maxHeight: '90vh',
+              overflow: 'auto'
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h3>Upload Image to Album</h3>
+              <button
+                onClick={() => {
+                  setIsUploadImageModalOpen(false);
+                  setSelectedAlbumId(null);
+                  setUploadImageFile(null);
+                  setUploadImagePreview(null);
+                }}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '24px',
+                  cursor: 'pointer',
+                  padding: '0',
+                  width: '30px',
+                  height: '30px'
+                }}
+              >
+                ×
+              </button>
+            </div>
+
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                
+                if (!uploadImageFile) {
+                  alert('Please select an image file');
+                  return;
+                }
+
+                const imageResult = await uploadImageToAlbum(selectedAlbumId, uploadImageFile);
+                
+                if (!imageResult.success) {
+                  alert(imageResult.error || 'Failed to upload image');
+                  return;
+                }
+
+                console.log('Image uploaded successfully to album:', selectedAlbumId);
+
+                // Reload all albums to update cover images
+                setAlbumsLoading(true);
+                const albumsResult = await getAlbums();
+                console.log('Reload albums after image upload:', albumsResult);
+                
+                if (albumsResult.success) {
+                  const albumsData = albumsResult.data || [];
+                  setAlbums(albumsData);
+                  
+                  // Reload images for all albums
+                  const imagesPromises = albumsData.map(async (album) => {
+                    const imagesResult = await getAlbumImages(album.id);
+                    return { albumId: album.id, images: imagesResult.success ? imagesResult.data : [] };
+                  });
+                  
+                  const imagesResults = await Promise.all(imagesPromises);
+                  const imagesMap = {};
+                  imagesResults.forEach(({ albumId, images }) => {
+                    imagesMap[albumId] = images;
+                  });
+                  setAlbumImages(imagesMap);
+                  console.log('Updated images map:', Object.keys(imagesMap).length, 'albums');
+                } else {
+                  console.error('Failed to reload albums:', albumsResult.error);
+                }
+                
+                setAlbumsLoading(false);
+
+                setIsUploadImageModalOpen(false);
+                setSelectedAlbumId(null);
+                setUploadImageFile(null);
+                setUploadImagePreview(null);
+              }}
+            >
+              <div className="form-group" style={{ marginBottom: '16px' }}>
+                <label htmlFor="uploadImageFile">Select Image *</label>
+                <input
+                  type="file"
+                  id="uploadImageFile"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                      // Validate file size (10MB)
+                      if (file.size > 10 * 1024 * 1024) {
+                        alert('Image size must be less than 10MB');
+                        return;
+                      }
+                      
+                      const reader = new FileReader();
+                      reader.onloadend = () => {
+                        setUploadImageFile(file);
+                        setUploadImagePreview(reader.result);
+                      };
+                      reader.readAsDataURL(file);
+                    }
+                  }}
+                  required
+                />
+                {uploadImagePreview && (
+                  <img
+                    src={uploadImagePreview}
+                    alt="Preview"
+                    style={{
+                      width: '100%',
+                      maxHeight: '300px',
+                      objectFit: 'cover',
+                      marginTop: '12px',
+                      borderRadius: '8px'
+                    }}
+                  />
+                )}
+              </div>
+
+              <div style={{ display: 'flex', gap: '12px', marginTop: '24px' }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsUploadImageModalOpen(false);
+                    setSelectedAlbumId(null);
+                    setUploadImageFile(null);
+                    setUploadImagePreview(null);
+                  }}
+                  style={{
+                    padding: '12px 24px',
+                    background: '#f5f5f5',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    flex: 1
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="submit-button w-button"
+                  style={{ flex: 1 }}
+                >
+                  Upload Image
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* View Images Modal */}
+      {isViewImagesModalOpen && viewingAlbum && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0,0,0,0.8)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 10000,
+            padding: '20px'
+          }}
+          onClick={() => {
+            setIsViewImagesModalOpen(false);
+            setViewingAlbum(null);
+          }}
+        >
+          <div
+            style={{
+              background: 'white',
+              borderRadius: '12px',
+              padding: '24px',
+              maxWidth: '900px',
+              width: '100%',
+              maxHeight: '90vh',
+              overflow: 'auto',
+              position: 'relative'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h2 style={{ margin: 0 }}>{viewingAlbum.title} - Images</h2>
+              <button
+                onClick={() => {
+                  setIsViewImagesModalOpen(false);
+                  setViewingAlbum(null);
+                }}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  fontSize: '24px',
+                  cursor: 'pointer',
+                  color: '#666'
+                }}
+              >
+                ×
+              </button>
+            </div>
+
+            {albumImages[viewingAlbum.id] && albumImages[viewingAlbum.id].length > 0 ? (
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+                gap: '16px'
+              }}>
+                {albumImages[viewingAlbum.id].map((image) => (
+                  <div
+                    key={image.id}
+                    style={{
+                      position: 'relative',
+                      borderRadius: '8px',
+                      overflow: 'hidden',
+                      border: viewingAlbum.cover_image_id === image.id ? '3px solid #007bff' : '1px solid #ddd',
+                      boxShadow: viewingAlbum.cover_image_id === image.id ? '0 0 10px rgba(0,123,255,0.5)' : 'none'
+                    }}
+                  >
+                    <img
+                      src={normalizeImageUrl(image.url) || '/images/fashion-photo.jpg'}
+                      alt="Album image"
+                      style={{
+                        width: '100%',
+                        height: '200px',
+                        objectFit: 'cover',
+                        display: 'block'
+                      }}
+                      onError={(e) => {
+                        console.error('Failed to load image:', image.url, 'Normalized:', normalizeImageUrl(image.url));
+                        e.target.src = '/images/fashion-photo.jpg';
+                      }}
+                      onLoad={() => {
+                        console.log('Image loaded successfully:', normalizeImageUrl(image.url));
+                      }}
+                    />
+                    {viewingAlbum.cover_image_id === image.id && (
+                      <div style={{
+                        position: 'absolute',
+                        top: '8px',
+                        left: '8px',
+                        background: '#007bff',
+                        color: 'white',
+                        padding: '4px 8px',
+                        borderRadius: '4px',
+                        fontSize: '11px',
+                        fontWeight: 'bold'
+                      }}>
+                        COVER
+                      </div>
+                    )}
+                    <button
+                      onClick={async () => {
+                        const result = await setCoverImage(viewingAlbum.id, image.id);
+                        if (result.success) {
+                          // Reload albums to update cover
+                          const albumsResult = await getAlbums();
+                          if (albumsResult.success) {
+                            setAlbums(albumsResult.data || []);
+                            // Update viewing album
+                            const updatedAlbum = albumsResult.data.find(a => a.id === viewingAlbum.id);
+                            if (updatedAlbum) {
+                              setViewingAlbum(updatedAlbum);
+                            }
+                            alert('Cover image updated!');
+                          }
+                        } else {
+                          alert(result.error || 'Failed to set cover image');
+                        }
+                      }}
+                      disabled={viewingAlbum.cover_image_id === image.id}
+                      style={{
+                        position: 'absolute',
+                        bottom: '8px',
+                        left: '8px',
+                        right: '8px',
+                        background: viewingAlbum.cover_image_id === image.id ? '#6c757d' : '#28a745',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        padding: '6px 12px',
+                        cursor: viewingAlbum.cover_image_id === image.id ? 'not-allowed' : 'pointer',
+                        fontSize: '12px',
+                        fontWeight: 'bold'
+                      }}
+                      title={viewingAlbum.cover_image_id === image.id ? 'This is already the cover' : 'Set as cover image'}
+                    >
+                      {viewingAlbum.cover_image_id === image.id ? '✓ Cover' : 'Set as Cover'}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text_color_grey" style={{ textAlign: 'center', padding: '40px' }}>
+                No images in this album yet. Upload images to get started!
+              </p>
+            )}
           </div>
         </div>
       )}

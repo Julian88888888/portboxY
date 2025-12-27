@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useProfile } from '../hooks/useProfile';
 import { getAvatarUrl, getHeaderUrl } from '../services/profileService';
+import { getAlbums, getAlbumImages, normalizeImageUrl } from '../services/albumsService';
 
 const days = [
   { key: "monday", label: "Mon", hours: "5 hours" },
@@ -36,6 +37,12 @@ export default function JobRequestPopup({ onEditProfile }) {
   const { user } = useAuth();
   const { data: profile } = useProfile();
   const [isPopupOpen, setIsPopupOpen] = useState(false);
+  const [albums, setAlbums] = useState([]);
+  const [albumsLoading, setAlbumsLoading] = useState(true);
+  const [isAlbumModalOpen, setIsAlbumModalOpen] = useState(false);
+  const [selectedAlbum, setSelectedAlbum] = useState(null);
+  const [albumImages, setAlbumImages] = useState([]);
+  const [imagesLoading, setImagesLoading] = useState(false);
   
   // Get profile photo from ProfileSettings (profile_photo_path)
   const getProfileImage = () => {
@@ -78,6 +85,58 @@ export default function JobRequestPopup({ onEditProfile }) {
     if (onEditProfile) {
       onEditProfile();
     }
+  };
+
+  // Load albums on component mount
+  useEffect(() => {
+    const loadAlbums = async () => {
+      setAlbumsLoading(true);
+      console.log('ModelPage: Loading albums from', `${process.env.REACT_APP_API_URL || 'http://localhost:5002/api'}/albums`);
+      try {
+        const result = await getAlbums();
+        console.log('ModelPage: Albums result:', result);
+        if (result.success) {
+          const albumsData = result.data || [];
+          console.log('ModelPage: Loaded', albumsData.length, 'albums:', albumsData);
+          setAlbums(albumsData);
+        } else {
+          console.error('ModelPage: Failed to load albums:', result.error);
+          setAlbums([]);
+        }
+      } catch (error) {
+        console.error('ModelPage: Error loading albums:', error);
+        setAlbums([]);
+      }
+      setAlbumsLoading(false);
+    };
+
+    loadAlbums();
+  }, []);
+
+  // Load images when album is selected
+  const handleAlbumClick = async (album) => {
+    console.log('ModelPage: Album clicked:', album);
+    setSelectedAlbum(album);
+    setIsAlbumModalOpen(true);
+    setImagesLoading(true);
+    setAlbumImages([]); // Clear previous images
+    
+    try {
+      const result = await getAlbumImages(album.id);
+      console.log('ModelPage: Album images result:', result);
+      if (result.success) {
+        const images = result.data || [];
+        console.log('ModelPage: Loaded', images.length, 'images for album', album.title);
+        setAlbumImages(images);
+      } else {
+        console.error('ModelPage: Failed to load album images:', result.error);
+        setAlbumImages([]);
+      }
+    } catch (error) {
+      console.error('ModelPage: Error loading album images:', error);
+      setAlbumImages([]);
+    }
+    setImagesLoading(false);
   };
 
   return (
@@ -550,80 +609,62 @@ export default function JobRequestPopup({ onEditProfile }) {
         <div className="content_wrapper">
           <h4 className="section_title">PORTFOLIO</h4>
           <div className="spacing_24"></div>
-          <div className="w-layout-grid blog_grid">
-            <a id="w-node-_2c61a3c0-5d6c-0c89-e858-5abe532a3531-7361f4cc" href="#" className="product_item w-inline-block">
-              <div className="product_image_wrapper">
-                <img 
-                  src="images/fashion-photo.jpg" 
-                  loading="lazy" 
-                  sizes="(max-width: 600px) 100vw, 600px" 
-                  srcSet="images/fashion-photo-p-500.jpg 500w, images/fashion-photo.jpg 600w" 
-                  alt="" 
-                  className="product_image fashionphoto"
-                />
-                <div className="discount_tag">Fashion</div>
+          {albumsLoading ? (
+            <div style={{ textAlign: 'center', padding: '40px' }}>
+              <p className="text_color_grey">Loading albums...</p>
+            </div>
+          ) : albums && albums.length > 0 ? (
+            <>
+              <div className="w-layout-grid blog_grid">
+                {albums.map((album, index) => (
+                  <a 
+                    key={album.id || index} 
+                    href="#" 
+                    className="product_item w-inline-block"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleAlbumClick(album);
+                    }}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    <div className="product_image_wrapper">
+                      <img 
+                        src={normalizeImageUrl(album.cover_image_url) || '/images/fashion-photo.jpg'} 
+                        loading="lazy" 
+                        sizes="(max-width: 600px) 100vw, 600px" 
+                        alt={album.title || 'Album'} 
+                        className="product_image fashionphoto"
+                        onError={(e) => {
+                          e.target.src = '/images/fashion-photo.jpg';
+                        }}
+                      />
+                      <div className="discount_tag">Album</div>
+                    </div>
+                    <div className="spacing_16"></div>
+                    <div className="font_weight_bold">{album.title || 'Untitled'}</div>
+                    <div className="spacing_4"></div>
+                    <p className="text_color_grey">{album.description || 'Portfolio Work'}</p>
+                  </a>
+                ))}
               </div>
-              <div className="spacing_16"></div>
-              <div className="font_weight_bold">Fashion</div>
-              <div className="spacing_4"></div>
-              <p className="text_color_grey">High Fashion Portfolio Work</p>
-            </a>
-            <a id="w-node-_2c61a3c0-5d6c-0c89-e858-5abe532a353c-7361f4cc" href="#" className="product_item w-inline-block">
-              <div className="product_image_wrapper">
-                <img 
-                  src="images/glamour-photo.jpg" 
-                  loading="lazy" 
-                  sizes="(max-width: 600px) 100vw, 600px" 
-                  srcSet="images/glamour-photo-p-500.jpg 500w, images/glamour-photo.jpg 600w" 
-                  alt="" 
-                  className="product_image glamourphoto"
-                />
-                <div className="discount_tag">Glamour</div>
-              </div>
-              <div className="spacing_16"></div>
-              <div className="font_weight_bold">Glamour</div>
-              <div className="spacing_4"></div>
-              <p className="text_color_grey">Creative and Artistic work</p>
-            </a>
-          </div>
-          <div className="spacing_32"></div>
-          <div className="w-layout-grid blog_grid">
-            <a id="w-node-_2c61a3c0-5d6c-0c89-e858-5abe532a3549-7361f4cc" href="#" className="product_item w-inline-block">
-              <div className="product_image_wrapper">
-                <img 
-                  src="images/swimwear-photo.jpg" 
-                  loading="lazy" 
-                  sizes="(max-width: 600px) 100vw, 600px" 
-                  srcSet="images/swimwear-photo-p-500.jpg 500w, images/swimwear-photo.jpg 600w" 
-                  alt="" 
-                  className="product_image swimwearphoto"
-                />
-                <div className="discount_tag">Swimwear</div>
-              </div>
-              <div className="spacing_16"></div>
-              <div className="font_weight_bold">Swimwear</div>
-              <div className="spacing_4"></div>
-              <p className="text_color_grey">My Swimwear Portfolio</p>
-            </a>
-            <a id="w-node-_2c61a3c0-5d6c-0c89-e858-5abe532a3554-7361f4cc" href="#" className="product_item w-inline-block">
-              <div className="product_image_wrapper">
-                <img 
-                  src="images/print-photo.jpg" 
-                  loading="lazy" 
-                  sizes="(max-width: 600px) 100vw, 600px" 
-                  srcSet="images/print-photo-p-500.jpg 500w, images/print-photo.jpg 600w" 
-                  alt="" 
-                  className="product_image printphoto"
-                />
-                <div className="discount_tag">Print</div>
-              </div>
-              <div className="spacing_16"></div>
-              <div className="font_weight_bold">Print</div>
-              <div className="spacing_4"></div>
-              <p className="text_color_grey">My Published Work</p>
-            </a>
-          </div>
-          <div className="spacing_32"></div>
+              <div className="spacing_32"></div>
+            </>
+          ) : (
+            <div style={{ textAlign: 'center', padding: '40px' }}>
+              <p className="text_color_grey">No albums available yet.</p>
+              <p className="text_color_grey" style={{ fontSize: '14px', marginTop: '8px' }}>
+                Go to Dashboard → Portfolio → Image Albums to create albums
+              </p>
+              {process.env.NODE_ENV === 'development' && (
+                <div style={{ marginTop: '16px', padding: '12px', background: '#f5f5f5', borderRadius: '8px', fontSize: '12px' }}>
+                  <p style={{ margin: 0, color: '#666' }}>Debug Info:</p>
+                  <p style={{ margin: '4px 0', color: '#666' }}>Albums count: {albums?.length || 0}</p>
+                  <p style={{ margin: '4px 0', color: '#666' }}>Loading: {albumsLoading ? 'true' : 'false'}</p>
+                  <p style={{ margin: '4px 0', color: '#666' }}>API URL: {process.env.REACT_APP_API_URL || 'http://localhost:5002/api'}</p>
+                </div>
+              )}
+            </div>
+          )}
           <div className="spacing_48">
             <a data-w-id="a31dac47-4806-1da6-f61f-71f75a9e52f5" href="#" className="button bookme_large w-button">Book Me</a>
           </div>
@@ -704,6 +745,172 @@ export default function JobRequestPopup({ onEditProfile }) {
           <div className="spacing_24"></div>
         </div>
       </div>
+
+      {/* Album Images Modal */}
+      {isAlbumModalOpen && selectedAlbum && (
+        <div 
+          className="modal-overlay" 
+          onClick={() => {
+            setIsAlbumModalOpen(false);
+            setSelectedAlbum(null);
+            setAlbumImages([]);
+          }}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0,0,0,0.9)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 10000,
+            padding: '20px',
+            overflow: 'auto'
+          }}
+        >
+          <div 
+            className="modal-content" 
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: 'white',
+              borderRadius: '12px',
+              padding: '24px',
+              maxWidth: '1200px',
+              width: '100%',
+              maxHeight: '90vh',
+              overflow: 'auto'
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+              <div>
+                <h2 style={{ margin: 0, marginBottom: '8px' }}>{selectedAlbum.title || 'Untitled Album'}</h2>
+                {selectedAlbum.description && (
+                  <p className="text_color_grey" style={{ margin: 0 }}>{selectedAlbum.description}</p>
+                )}
+              </div>
+              <button
+                onClick={() => {
+                  setIsAlbumModalOpen(false);
+                  setSelectedAlbum(null);
+                  setAlbumImages([]);
+                }}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '32px',
+                  cursor: 'pointer',
+                  padding: '0',
+                  width: '40px',
+                  height: '40px',
+                  color: '#333',
+                  lineHeight: '1'
+                }}
+              >
+                ×
+              </button>
+            </div>
+
+            {imagesLoading ? (
+              <div style={{ textAlign: 'center', padding: '40px' }}>
+                <p className="text_color_grey">Loading images...</p>
+              </div>
+            ) : albumImages.length > 0 ? (
+              <>
+                <div style={{ marginBottom: '16px', textAlign: 'center' }}>
+                  <p className="text_color_grey" style={{ margin: 0 }}>
+                    {albumImages.length} {albumImages.length === 1 ? 'image' : 'images'} in this album
+                  </p>
+                </div>
+                <div 
+                  style={{ 
+                    display: 'grid', 
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', 
+                    gap: '16px',
+                    marginBottom: '24px'
+                  }}
+                >
+                  {albumImages.map((image, index) => (
+                    <div 
+                      key={image.id || index}
+                      style={{
+                        position: 'relative',
+                        width: '100%',
+                        paddingBottom: '100%',
+                        overflow: 'hidden',
+                        borderRadius: '8px',
+                        background: '#f0f0f0',
+                        cursor: 'pointer',
+                        transition: 'transform 0.2s',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = 'scale(1.05)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = 'scale(1)';
+                      }}
+                      onClick={() => {
+                        // Open image in full screen
+                        window.open(normalizeImageUrl(image.url), '_blank');
+                      }}
+                    >
+                      <img 
+                        src={normalizeImageUrl(image.url) || '/images/fashion-photo.jpg'} 
+                        alt={`${selectedAlbum.title} - Image ${index + 1}`}
+                        style={{
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover'
+                        }}
+                        onError={(e) => {
+                          console.error('Failed to load image in ModelPage:', image.url, 'Normalized:', normalizeImageUrl(image.url));
+                          e.target.src = '/images/fashion-photo.jpg';
+                        }}
+                        onLoad={() => {
+                          console.log('Image loaded successfully in ModelPage:', normalizeImageUrl(image.url));
+                        }}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <div style={{ textAlign: 'center', padding: '40px' }}>
+                <p className="text_color_grey">No images in this album yet.</p>
+                <p className="text_color_grey" style={{ fontSize: '14px', marginTop: '8px' }}>
+                  Go to Dashboard → Portfolio → Image Albums to add images
+                </p>
+              </div>
+            )}
+
+            <div style={{ marginTop: '24px', textAlign: 'center' }}>
+              <button
+                onClick={() => {
+                  setIsAlbumModalOpen(false);
+                  setSelectedAlbum(null);
+                  setAlbumImages([]);
+                }}
+                style={{
+                  padding: '12px 24px',
+                  background: '#f5f5f5',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontSize: '16px'
+                }}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="section footer_sec">
         <div className="content_wrapper content_align_center">
           <div className="spacing_24"></div>

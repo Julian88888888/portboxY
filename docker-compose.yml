@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # MongoDB Database
   mongodb:
@@ -31,11 +29,17 @@ services:
       MONGODB_URI: mongodb://admin:password123@mongodb:27017/model_portfolio_db?authSource=admin
       JWT_SECRET: your_jwt_secret_key_here
       CORS_ORIGIN: http://localhost:3001
+      # Supabase configuration for albums API
+      SUPABASE_URL: ${SUPABASE_URL:-${REACT_APP_SUPABASE_URL:-}}
+      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY:-}
+      REACT_APP_SUPABASE_URL: ${REACT_APP_SUPABASE_URL:-}
+      REACT_APP_SUPABASE_ANON_KEY: ${REACT_APP_SUPABASE_ANON_KEY:-}
     ports:
       - "5002:5000"
     volumes:
       - ./backend:/app
       - /app/node_modules
+      - ./backend/uploads:/app/uploads
     depends_on:
       - mongodb
     networks:
@@ -55,8 +59,8 @@ services:
     environment:
       REACT_APP_API_URL: http://localhost:5002/api
       REACT_APP_ENVIRONMENT: development
-      REACT_APP_SUPABASE_URL: ${REACT_APP_SUPABASE_URL}
-      REACT_APP_SUPABASE_ANON_KEY: ${REACT_APP_SUPABASE_ANON_KEY}
+      REACT_APP_SUPABASE_URL: ${REACT_APP_SUPABASE_URL:-}
+      REACT_APP_SUPABASE_ANON_KEY: ${REACT_APP_SUPABASE_ANON_KEY:-}
     ports:
       - "3000:3000"
     volumes:
