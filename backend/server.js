@@ -22,15 +22,46 @@ const corsOptions = {
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
     
-    const allowedOrigins = ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:5000', 'http://localhost:5001', 'http://localhost:5002'];
-    if (allowedOrigins.indexOf(origin) !== -1) {
+    // Allowed origins: localhost for development + Vercel domains for production
+    const allowedOrigins = [
+      'http://localhost:3000',
+      'http://localhost:3001',
+      'http://localhost:5000',
+      'http://localhost:5001',
+      'http://localhost:5002',
+      'https://portbox-y.vercel.app',
+      'https://*.vercel.app' // Allow all Vercel preview deployments
+    ];
+    
+    // Check if origin matches any allowed origin (supports wildcards)
+    const isAllowed = allowedOrigins.some(allowed => {
+      if (allowed.includes('*')) {
+        // Handle wildcard: *.vercel.app
+        const pattern = allowed.replace('*', '.*');
+        const regex = new RegExp(`^https://${pattern}$`);
+        return regex.test(origin);
+      }
+      return allowed === origin;
+    });
+    
+    // Also allow any Vercel preview deployment
+    if (!isAllowed && origin.endsWith('.vercel.app')) {
+      return callback(null, true);
+    }
+    
+    if (isAllowed) {
       callback(null, true);
     } else {
+      console.warn('CORS blocked origin:', origin);
       callback(new Error('Not allowed by CORS'));
     }
   },
   credentials: true,
-  optionsSuccessStatus: 200
+  optionsSuccessStatus: 200,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  exposedHeaders: ['Content-Length', 'Content-Type'],
+  preflightContinue: false
 };
 app.use(cors(corsOptions));
 
@@ -41,7 +72,7 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      imgSrc: ["'self'", "data:", "blob:", "http://localhost:5002", "https://*.supabase.co"],
+      imgSrc: ["'self'", "data:", "blob:", "http://localhost:5002", "https://*.supabase.co", "https://*.vercel.app"],
       scriptSrc: ["'self'"],
       styleSrc: ["'self'", "'unsafe-inline'"],
     },
@@ -65,11 +96,52 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Serve static files (uploaded images) with CORS headers
 app.use('/uploads', (req, res, next) => {
+  // Handle preflight requests
+  if (req.method === 'OPTIONS') {
+    const origin = req.headers.origin;
+    const allowedOrigins = [
+      'http://localhost:3000',
+      'http://localhost:3001',
+      'http://localhost:5000',
+      'http://localhost:5001',
+      'http://localhost:5002',
+      'https://portbox-y.vercel.app'
+    ];
+    
+    // Check if origin is allowed (including Vercel preview deployments)
+    const isAllowed = origin && (
+      allowedOrigins.includes(origin) ||
+      origin.endsWith('.vercel.app')
+    );
+    
+    if (isAllowed) {
+      res.setHeader('Access-Control-Allow-Origin', origin);
+      res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+      res.setHeader('Access-Control-Allow-Credentials', 'true');
+      res.setHeader('Access-Control-Max-Age', '86400'); // 24 hours
+    }
+    return res.status(204).end();
+  }
+  
   // Set CORS headers for static files
   const origin = req.headers.origin;
-  const allowedOrigins = ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:5000', 'http://localhost:5001', 'http://localhost:5002'];
+  const allowedOrigins = [
+    'http://localhost:3000',
+    'http://localhost:3001',
+    'http://localhost:5000',
+    'http://localhost:5001',
+    'http://localhost:5002',
+    'https://portbox-y.vercel.app'
+  ];
   
-  if (origin && allowedOrigins.includes(origin)) {
+  // Check if origin is allowed (including Vercel preview deployments)
+  const isAllowed = origin && (
+    allowedOrigins.includes(origin) ||
+    origin.endsWith('.vercel.app')
+  );
+  
+  if (isAllowed) {
     res.setHeader('Access-Control-Allow-Origin', origin);
     res.setHeader('Access-Control-Allow-Credentials', 'true');
   }
