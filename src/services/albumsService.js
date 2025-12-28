@@ -206,7 +206,9 @@ export const uploadImageToAlbum = async (albumId, imageFile) => {
     const formData = new FormData();
     formData.append('image', imageFile);
 
-    const response = await fetch(`${API_BASE_URL}/albums/${albumId}/images`, {
+    // Add albumId to URL as query parameter for Vercel compatibility
+    // Vercel may have issues with nested dynamic routes, so we pass it in query too
+    const response = await fetch(`${API_BASE_URL}/albums/${albumId}/images?albumId=${encodeURIComponent(albumId)}`, {
       method: 'POST',
       headers: headers,
       body: formData

@@ -180,9 +180,28 @@ module.exports = async (req, res) => {
     }
 
     // Get album ID from URL
-    // In Vercel, dynamic route params are available via req.query
-    // The route is /api/albums/[id]/images, so the param name is 'id'
-    const albumId = req.query.id;
+    // In Vercel, for nested dynamic routes, we need to try multiple methods
+    // 1. Try query parameter (most reliable for Vercel)
+    // 2. Try dynamic route param
+    // 3. Parse from URL path
+    let albumId = req.query.albumId || req.query.id;
+    
+    // If not in query, parse from URL path
+    if (!albumId) {
+      const urlParts = req.url.split('/').filter(Boolean);
+      // Expected: ['api', 'albums', 'album-id', 'images']
+      const albumsIndex = urlParts.indexOf('albums');
+      if (albumsIndex >= 0 && albumsIndex < urlParts.length - 1) {
+        albumId = urlParts[albumsIndex + 1];
+      }
+    }
+    
+    // Log for debugging
+    console.log('Album ID from:', {
+      query: req.query,
+      url: req.url,
+      albumId: albumId
+    });
 
     if (!albumId) {
       return res.status(400).json({
