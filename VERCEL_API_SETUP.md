@@ -109,3 +109,4 @@ Albums API уже использует Supabase для хранения данн
 - Если используете только Supabase, backend не нужен для albums API
 
 
+

@@ -78,3 +78,4 @@ curl http://localhost:5002/api/albums
 После настройки `SUPABASE_SERVICE_ROLE_KEY` альбомы будут правильно сохраняться в базу!
 
 
+

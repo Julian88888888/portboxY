@@ -544,3 +544,4 @@ These triggers ensure data consistency without requiring application-level logic
 - Cover image selection is automatic and based on creation date
 
 
+

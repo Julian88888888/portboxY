@@ -154,3 +154,4 @@ CREATE POLICY "Allow authenticated users to manage images"
 --     WITH CHECK (auth.uid() = user_id);
 
 
+

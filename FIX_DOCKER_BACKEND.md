@@ -81,3 +81,4 @@ docker-compose logs backend | grep -i "error\|supabase\|listening"
 - ✅ Albums API доступен: "Albums API: http://localhost:5002/api/albums"
 
 
+

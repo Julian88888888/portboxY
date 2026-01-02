@@ -56,3 +56,4 @@ curl http://localhost:5002/api/albums/test
 Смотрите `DOCKER_ALBUMS_FIX.md` для подробного troubleshooting.
 
 
+
