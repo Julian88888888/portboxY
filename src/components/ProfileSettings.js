@@ -453,75 +453,8 @@ export default function ProfileSettings() {
     return 'https://d3e54v103j8qbb.cloudfront.net/plugins/Basic/assets/placeholder.60f9b1840c.svg';
   };
 
-  // Get header photo URL for background (only if toggle is ON)
-  const getHeaderBackgroundUrl = () => {
-    // Check both toggle names for compatibility
-    const showHeader = formData.show_header_photo ?? profile?.show_header_photo ?? profile?.show_profile_header ?? true;
-    if (!showHeader) return null;
-    const headerPath = profile?.header_photo_path || profile?.profile_header_path;
-    if (!headerPath) return null;
-    return getHeaderUrl(headerPath);
-  };
-
-  const headerBackgroundUrl = getHeaderBackgroundUrl();
-
   return (
     <div className="settingssection">
-      <div 
-        className="profileimg_wrapper"
-        style={{
-          backgroundImage: headerBackgroundUrl ? `url(${headerBackgroundUrl})` : 'none',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat',
-          borderRadius: headerBackgroundUrl ? '8px' : '0',
-          padding: headerBackgroundUrl ? '20px' : '0',
-          position: 'relative'
-        }}
-      >
-        {/* Optional overlay for better text readability when header photo is present */}
-        {headerBackgroundUrl && (
-          <div style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.1) 50%, rgba(0,0,0,0.4) 100%)',
-            borderRadius: '8px',
-            pointerEvents: 'none'
-          }} />
-        )}
-        <div className="profile_wrapper" style={{ position: 'relative', zIndex: 1 }}>
-          <img 
-            src={getProfileImageUrl()} 
-            alt="Profile" 
-            className="prodile_image"
-            loading="lazy"
-            onError={(e) => {
-              e.target.src = '/images/headshot_model.jpg';
-            }}
-          />
-        </div>
-        <div className="text_wrapper text_align_center" style={{ position: 'relative', zIndex: 1 }}>
-          <div className="flex_wrapper flex_center">
-            <h3 style={{ color: headerBackgroundUrl ? '#fff' : 'inherit' }}>
-              {formData.display_name || 'Your Name'}
-            </h3>
-            <a href="#" className="button_icon accent_button small_btn w-inline-block">
-              <div>{formData.job_type}</div>
-            </a>
-          </div>
-          <div className="spacing_8"></div>
-          <p className="username_txt" style={{ color: headerBackgroundUrl ? '#fff' : 'inherit' }}>
-            @{formData.username || 'username'}
-          </p>
-          <p className="text_color_grey text_width_medium" style={{ color: headerBackgroundUrl ? 'rgba(255,255,255,0.9)' : 'inherit' }}>
-            {formData.description || 'Add your profile description'}
-          </p>
-        </div>
-      </div>
-      
       <div className="spacing_24"></div>
       <h3>Profile Settings</h3>
       
