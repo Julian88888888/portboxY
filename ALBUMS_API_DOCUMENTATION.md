@@ -543,3 +543,4 @@ These triggers ensure data consistency without requiring application-level logic
 - Album deletion is permanent and cannot be undone
 - Cover image selection is automatic and based on creation date
 
+

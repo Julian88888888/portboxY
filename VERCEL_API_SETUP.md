@@ -108,3 +108,4 @@ Albums API уже использует Supabase для хранения данн
 - Если backend развернут на production сервере, просто добавьте `REACT_APP_API_URL` в Vercel
 - Если используете только Supabase, backend не нужен для albums API
 
+

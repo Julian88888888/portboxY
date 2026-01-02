@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 
-export default function EditProfile({ onBackToModel }) {
+export default function EditProfile() {
   const { user, updateProfile, uploadProfilePhotos, deleteProfilePhoto, setMainPhoto, updateLinks } = useAuth();
   const [formData, setFormData] = useState({
     name: '',
@@ -532,27 +532,6 @@ export default function EditProfile({ onBackToModel }) {
     <div className="section profile_sec">
       <div className="content_wrapper content_align_center">
         <div className="spacing_48" />
-        <div className="flex_wrapper flex_center" style={{ gap: '20px', marginBottom: '20px' }}>
-          {onBackToModel && (
-            <button 
-              onClick={onBackToModel}
-              className="button accent_button w-button"
-              style={{ 
-                background: '#783FF3', 
-                color: 'white',
-                border: 'none',
-                padding: '10px 20px',
-                borderRadius: '25px',
-                cursor: 'pointer',
-                fontWeight: 'bold'
-              }}
-            >
-              ← Back to Model Page
-            </button>
-          )}
-        </div>
-        <h2>Edit Profile</h2>
-        <div className="spacing_24" />
         
         {message.text && (
           <div className={`message ${message.type}`} style={{

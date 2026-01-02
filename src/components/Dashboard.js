@@ -310,7 +310,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
       <section>
         <div className="spacing_48"></div>
         <div className="tabs w-tabs">
-          <div className="tabs-menu w-tab-menu">
+          <div className="tabs-menu w-tab-menu" style={{ display: 'none' }}>
             <button
               type="button"
               onClick={() => handleTabChange('Tab 1')}

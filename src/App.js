@@ -5,7 +5,6 @@ import MissedDMSection from './components/MissedDMSection';
 import Footer from './components/Footer';
 import HomeSection from './components/HomeSection';
 import ModelPage from './components/ModelPage';
-import EditProfile from './components/EditProfile';
 import Dashboard from './components/Dashboard';
 import Sidebar from './components/Sidebar';
 import './components/index.css';
@@ -15,7 +14,7 @@ import { AuthProvider } from './contexts/AuthContext';
 
 function App() {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [currentPage, setCurrentPage] = useState('main'); // 'main', 'model', 'edit-profile', or 'dashboard'
+  const [currentPage, setCurrentPage] = useState('main'); // 'main', 'model', or 'dashboard'
   const [dashboardTab, setDashboardTab] = useState('Tab 1'); // Dashboard tab state
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
@@ -44,9 +43,7 @@ function App() {
 
         <div className={`main-content ${sidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
           {currentPage === 'model' ? (
-            <ModelPage onEditProfile={() => handlePageChange('edit-profile')} />
-          ) : currentPage === 'edit-profile' ? (
-            <EditProfile onBackToModel={() => handlePageChange('model')} />
+            <ModelPage />
           ) : currentPage === 'dashboard' || currentPage === 'dashboard-profile' || currentPage === 'dashboard-portfolio' || currentPage === 'dashboard-bookings' || currentPage === 'dashboard-links' || currentPage === 'dashboard-settings' ? (
             <Dashboard 
               activeTab={

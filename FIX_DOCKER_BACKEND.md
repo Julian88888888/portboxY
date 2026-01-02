@@ -80,3 +80,4 @@ docker-compose logs backend | grep -i "error\|supabase\|listening"
 - ✅ Сервер запущен: "Server running on port 5000"
 - ✅ Albums API доступен: "Albums API: http://localhost:5002/api/albums"
 
+

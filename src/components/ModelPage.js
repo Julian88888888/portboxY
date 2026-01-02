@@ -33,7 +33,7 @@ const travels = [
   },
 ];
 
-export default function JobRequestPopup({ onEditProfile }) {
+export default function JobRequestPopup() {
   const { user } = useAuth();
   const { data: profile } = useProfile();
   const [isPopupOpen, setIsPopupOpen] = useState(false);
@@ -79,12 +79,6 @@ export default function JobRequestPopup({ onEditProfile }) {
   const handleOpenPopup = (e) => {
     e.preventDefault();
     setIsPopupOpen(true);
-  };
-
-  const handleEditProfile = () => {
-    if (onEditProfile) {
-      onEditProfile();
-    }
   };
 
   // Load albums on component mount

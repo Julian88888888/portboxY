@@ -43,14 +43,6 @@ const HamburgerMenu = ({ currentPage, onPageChange }) => {
               Model Page
             </button>
           </li>
-          <li>
-            <button 
-              className={`nav-item ${currentPage === 'edit-profile' ? 'active' : ''}`}
-              onClick={() => handlePageChange('edit-profile')}
-            >
-              Edit Profile
-            </button>
-          </li>
         </ul>
       </nav>
       

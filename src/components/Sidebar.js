@@ -52,20 +52,47 @@ const Sidebar = ({ currentPage, onPageChange, onToggle }) => {
             </li>
             <li>
               <button 
-                className={`nav-item ${currentPage === 'edit-profile' ? 'active' : ''}`}
-                onClick={() => handlePageChange('edit-profile')}
+                className={`nav-item ${currentPage === 'dashboard-profile' ? 'active' : ''}`}
+                onClick={() => handlePageChange('dashboard-profile')}
               >
-                <span className="nav-icon">✏️</span>
-                {isOpen && <span className="nav-text">Edit Profile</span>}
+                <span className="nav-icon">👤</span>
+                {isOpen && <span className="nav-text">Profile</span>}
               </button>
             </li>
             <li>
               <button 
-                className={`nav-item ${currentPage === 'dashboard' || (currentPage && currentPage.startsWith('dashboard-')) ? 'active' : ''}`}
-                onClick={() => handlePageChange('dashboard-profile')}
+                className={`nav-item ${currentPage === 'dashboard-portfolio' ? 'active' : ''}`}
+                onClick={() => handlePageChange('dashboard-portfolio')}
+              >
+                <span className="nav-icon">📁</span>
+                {isOpen && <span className="nav-text">Portfolio</span>}
+              </button>
+            </li>
+            <li>
+              <button 
+                className={`nav-item ${currentPage === 'dashboard-bookings' ? 'active' : ''}`}
+                onClick={() => handlePageChange('dashboard-bookings')}
+              >
+                <span className="nav-icon">📅</span>
+                {isOpen && <span className="nav-text">Bookings</span>}
+              </button>
+            </li>
+            <li>
+              <button 
+                className={`nav-item ${currentPage === 'dashboard-links' ? 'active' : ''}`}
+                onClick={() => handlePageChange('dashboard-links')}
+              >
+                <span className="nav-icon">🔗</span>
+                {isOpen && <span className="nav-text">Custom Links</span>}
+              </button>
+            </li>
+            <li>
+              <button 
+                className={`nav-item ${currentPage === 'dashboard-settings' ? 'active' : ''}`}
+                onClick={() => handlePageChange('dashboard-settings')}
               >
                 <span className="nav-icon">⚙️</span>
-                {isOpen && <span className="nav-text">Dashboard</span>}
+                {isOpen && <span className="nav-text">Settings</span>}
               </button>
             </li>
           </ul>
