@@ -3,6 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useProfile } from '../hooks/useProfile';
 import { getAvatarUrl, getHeaderUrl } from '../services/profileService';
 import { getAlbums, getAlbumImages, normalizeImageUrl } from '../services/albumsService';
+import { getCustomLinks } from '../services/customLinksService';
 
 const days = [
   { key: "monday", label: "Mon", hours: "5 hours" },
@@ -43,6 +44,8 @@ export default function JobRequestPopup() {
   const [selectedAlbum, setSelectedAlbum] = useState(null);
   const [albumImages, setAlbumImages] = useState([]);
   const [imagesLoading, setImagesLoading] = useState(false);
+  const [customLinks, setCustomLinks] = useState([]);
+  const [customLinksLoading, setCustomLinksLoading] = useState(false);
   
   // Get profile photo from ProfileSettings (profile_photo_path)
   const getProfileImage = () => {
@@ -105,6 +108,33 @@ export default function JobRequestPopup() {
     };
 
     loadAlbums();
+  }, []);
+
+  // Load custom links on component mount
+  useEffect(() => {
+    const loadCustomLinks = async () => {
+      setCustomLinksLoading(true);
+      try {
+        const result = await getCustomLinks();
+        if (result.success) {
+          // Filter only enabled links and sort by display_order
+          const enabledLinks = (result.data || [])
+            .filter(link => link.enabled)
+            .sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
+          console.log('ModelPage: Loaded', enabledLinks.length, 'custom links');
+          setCustomLinks(enabledLinks);
+        } else {
+          console.error('ModelPage: Failed to load custom links:', result.error);
+          setCustomLinks([]);
+        }
+      } catch (error) {
+        console.error('ModelPage: Error loading custom links:', error);
+        setCustomLinks([]);
+      }
+      setCustomLinksLoading(false);
+    };
+
+    loadCustomLinks();
   }, []);
 
   // Load images when album is selected
@@ -534,33 +564,47 @@ export default function JobRequestPopup() {
           <div className="spacing_48"></div>
           <h4 className="section_title links_headinng">My Links</h4>
           <div className="spacing_24"></div>
-          <div className="w-layout-grid link_cloud_grid">
-            {user?.links && user.links.length > 0 ? (
-              user.links.map((link, index) => (
-                <a
-                  key={link.id || index}
-                  href={link.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex_wrapper flex_distribute link_block w-inline-block"
-                >
-                  {link.iconUrl && (
-                    <img src={link.iconUrl} loading="lazy" alt="" className="icon_32x32" />
-                  )}
-                  <div>{link.title}</div>
-                  <div className="icon_24x24 w-embed">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                      <path d="M10 5H7.8C6.11984 5 5.27976 5 4.63803 5.32698C4.07354 5.6146 3.6146 6.07354 3.32698 6.63803C3 7.27976 3 8.11984 3 9.8V16.2C3 17.8802 3 18.7202 3.32698 19.362C3.6146 19.9265 4.07354 20.3854 4.63803 20.673C5.27976 21 6.11984 21 7.8 21H14.2C15.8802 21 16.7202 21 17.362 20.673C17.9265 20.3854 18.3854 19.9265 18.673 19.362C19 18.7202 19 17.8802 19 16.2V14M21 9V3V9ZM21 3H15H21ZM21 3L13 11L21 3Z" stroke="#783FF3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  </div>
-                </a>
-              ))
-            ) : (
-              <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '40px', color: '#6c757d' }}>
-                <p>No links added yet.</p>
-              </div>
-            )}
-          </div>
+          {customLinksLoading ? (
+            <div style={{ textAlign: 'center', padding: '40px', color: '#6c757d' }}>
+              <p>Loading links...</p>
+            </div>
+          ) : (
+            <div className="w-layout-grid link_cloud_grid">
+              {customLinks.length > 0 ? (
+                customLinks.map((link, index) => (
+                  <a
+                    key={link.id || index}
+                    href={link.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex_wrapper flex_distribute link_block w-inline-block"
+                  >
+                    {link.icon_url && (
+                      <img 
+                        src={link.icon_url} 
+                        loading="lazy" 
+                        alt="" 
+                        className="icon_32x32"
+                        onError={(e) => {
+                          e.target.style.display = 'none';
+                        }}
+                      />
+                    )}
+                    <div>{link.title}</div>
+                    <div className="icon_24x24 w-embed">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                        <path d="M10 5H7.8C6.11984 5 5.27976 5 4.63803 5.32698C4.07354 5.6146 3.6146 6.07354 3.32698 6.63803C3 7.27976 3 8.11984 3 9.8V16.2C3 17.8802 3 18.7202 3.32698 19.362C3.6146 19.9265 4.07354 20.3854 4.63803 20.673C5.27976 21 6.11984 21 7.8 21H14.2C15.8802 21 16.7202 21 17.362 20.673C17.9265 20.3854 18.3854 19.9265 18.673 19.362C19 18.7202 19 17.8802 19 16.2V14M21 9V3V9ZM21 3H15H21ZM21 3L13 11L21 3Z" stroke="#783FF3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </div>
+                  </a>
+                ))
+              ) : (
+                <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '40px', color: '#6c757d' }}>
+                  <p>No links added yet.</p>
+                </div>
+              )}
+            </div>
+          )}
           <div className="spacing_24"></div>
           {/* <div className="w-layout-grid _3_col_grid">
             <a href="#" className="flex_wrapper flex_vertical card_link photo_blk w-inline-block">

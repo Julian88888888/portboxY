@@ -10,6 +10,7 @@ const portfolioRoutes = require('./routes/portfolio');
 const profileRoutes = require('./routes/profile');
 const albumRoutes = require('./routes/albums');
 const imageRoutes = require('./routes/images');
+const customLinksRoutes = require('./routes/customLinks');
 
 const app = express();
 // In Docker, PORT is 5000 (mapped to 5002 externally)
@@ -167,6 +168,7 @@ app.use('/api/portfolios', portfolioRoutes);
 app.use('/api/me', profileRoutes);
 app.use('/api/albums', albumRoutes);
 app.use('/api/images', imageRoutes);
+app.use('/api/custom-links', customLinksRoutes);
 
 // 404 handler
 app.use('*', (req, res) => {

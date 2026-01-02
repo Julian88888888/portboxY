@@ -3,6 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useProfile } from '../hooks/useProfile';
 import { getAvatarUrl, getHeaderUrl } from '../services/profileService';
 import { createAlbum, getAlbums, uploadImageToAlbum, deleteAlbum, getAlbumImages, setCoverImage, normalizeImageUrl } from '../services/albumsService';
+import { getCustomLinks, createCustomLink, updateCustomLink, deleteCustomLink } from '../services/customLinksService';
 import ProfileSettings from './ProfileSettings';
 import './Dashboard.css';
 
@@ -38,6 +39,18 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
   const [albumImages, setAlbumImages] = useState({}); // albumId -> images array
   const [isViewImagesModalOpen, setIsViewImagesModalOpen] = useState(false);
   const [viewingAlbum, setViewingAlbum] = useState(null);
+  
+  // Custom Links state
+  const [customLinks, setCustomLinks] = useState([]);
+  const [customLinksLoading, setCustomLinksLoading] = useState(false);
+  const [isCustomLinkModalOpen, setIsCustomLinkModalOpen] = useState(false);
+  const [editingCustomLink, setEditingCustomLink] = useState(null);
+  const [customLinkFormData, setCustomLinkFormData] = useState({
+    title: '',
+    url: '',
+    icon_url: '',
+    enabled: true
+  });
 
   // Sync with prop changes - this ensures the tab reflects the current page
   useEffect(() => {
@@ -81,6 +94,22 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
       setAlbumsLoading(false);
     };
     loadAlbums();
+  }, []);
+
+  // Load custom links
+  useEffect(() => {
+    const loadCustomLinks = async () => {
+      setCustomLinksLoading(true);
+      const result = await getCustomLinks();
+      if (result.success) {
+        setCustomLinks(result.data || []);
+      } else {
+        console.error('Failed to load custom links:', result.error);
+        setCustomLinks([]);
+      }
+      setCustomLinksLoading(false);
+    };
+    loadCustomLinks();
   }, []);
 
   const handleTabChange = (tab) => {
@@ -1423,59 +1452,139 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                     </div>
                   </div>
                   <div className="spacing_24"></div>
-                  <div className="linkpanel">
-                    <div className="w-layout-hflex flex-block-9">
-                      <img width="50" height="Auto" alt="" src="/images/smSwitch.png" loading="lazy" />
-                      <p>Enable Link</p>
-                    </div>
-                    <div className="w-form">
-                      <div className="spacing_24"></div>
-                      <form onSubmit={(e) => handleSubmit(e, 'custom-link')}>
-                        <label htmlFor="linkIcon">Icon</label>
-                        <img 
-                          loading="lazy" 
-                          src="https://d3e54v103j8qbb.cloudfront.net/plugins/Basic/assets/placeholder.60f9b1840c.svg" 
-                          alt="" 
-                          className="linkphoto"
-                        />
-                        <label htmlFor="linkTitle">Title</label>
-                        <input 
-                          className="w-input" 
-                          maxLength="256" 
-                          name="linkTitle" 
-                          placeholder="Add Link Title" 
-                          type="text" 
-                          id="linkTitle"
-                        />
-                        <label htmlFor="linkUrl">URL</label>
-                        <input 
-                          className="w-input" 
-                          maxLength="256" 
-                          name="linkUrl" 
-                          placeholder="Add Link" 
-                          type="url" 
-                          id="linkUrl"
-                          required
-                        />
-                        <input type="submit" className="submit-button w-button" value="Save" />
-                      </form>
-                      <div className="w-form-done" tabIndex="-1" role="region" aria-label="Email Form success">
-                        <div>Thank you! Your submission has been received!</div>
+                  
+                  {/* Existing Links List */}
+                  {customLinksLoading ? (
+                    <p className="text_color_grey">Loading links...</p>
+                  ) : (
+                    <>
+                      {customLinks.length === 0 ? (
+                        <div className="settingssection" style={{ marginBottom: '24px', textAlign: 'center', padding: '40px' }}>
+                          <h4 style={{ marginBottom: '16px' }}>My Links</h4>
+                          <p className="text_color_grey">No links added yet.</p>
+                        </div>
+                      ) : (
+                        <div className="settingssection" style={{ marginBottom: '24px' }}>
+                          <h4>My Links</h4>
+                          <div className="spacing_16"></div>
+                          {customLinks.map((link) => (
+                            <div 
+                              key={link.id} 
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                padding: '12px',
+                                marginBottom: '8px',
+                                background: '#f5f5f5',
+                                borderRadius: '8px'
+                              }}
+                            >
+                              <div style={{ flex: 1 }}>
+                                <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>
+                                  {link.icon_url && (
+                                    <img 
+                                      src={link.icon_url} 
+                                      alt="" 
+                                      style={{ width: '20px', height: '20px', marginRight: '8px', verticalAlign: 'middle' }}
+                                      onError={(e) => { e.target.style.display = 'none'; }}
+                                    />
+                                  )}
+                                  {link.title}
+                                </div>
+                                <div style={{ fontSize: '12px', color: '#666' }}>
+                                  <a href={link.url} target="_blank" rel="noopener noreferrer" style={{ color: '#007bff' }}>
+                                    {link.url}
+                                  </a>
+                                </div>
+                                <div style={{ fontSize: '11px', color: '#999', marginTop: '4px' }}>
+                                  {link.enabled ? '✓ Enabled' : '✗ Disabled'}
+                                </div>
+                              </div>
+                              <div style={{ display: 'flex', gap: '8px' }}>
+                                <button
+                                  onClick={() => {
+                                    setEditingCustomLink(link);
+                                    setCustomLinkFormData({
+                                      title: link.title,
+                                      url: link.url,
+                                      icon_url: link.icon_url || '',
+                                      enabled: link.enabled
+                                    });
+                                    setIsCustomLinkModalOpen(true);
+                                  }}
+                                  style={{
+                                    padding: '6px 12px',
+                                    background: '#007bff',
+                                    color: 'white',
+                                    border: 'none',
+                                    borderRadius: '4px',
+                                    cursor: 'pointer',
+                                    fontSize: '12px'
+                                  }}
+                                >
+                                  Edit
+                                </button>
+                                <button
+                                  onClick={async () => {
+                                    if (window.confirm('Are you sure you want to delete this link?')) {
+                                      const result = await deleteCustomLink(link.id);
+                                      if (result.success) {
+                                        // Reload links
+                                        const reloadResult = await getCustomLinks();
+                                        if (reloadResult.success) {
+                                          setCustomLinks(reloadResult.data || []);
+                                        }
+                                      } else {
+                                        alert(result.error || 'Failed to delete link');
+                                      }
+                                    }
+                                  }}
+                                  style={{
+                                    padding: '6px 12px',
+                                    background: '#dc3545',
+                                    color: 'white',
+                                    border: 'none',
+                                    borderRadius: '4px',
+                                    cursor: 'pointer',
+                                    fontSize: '12px'
+                                  }}
+                                >
+                                  Delete
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      
+                      <div className="linkpanel">
+                        <div className="w-layout-hflex flex-block-9">
+                          <img width="50" height="Auto" alt="" src="/images/smSwitch.png" loading="lazy" />
+                          <p>Enable Link</p>
+                        </div>
+                        <div className="w-form">
+                          <div className="spacing_24"></div>
+                          <button
+                            onClick={() => {
+                              setEditingCustomLink(null);
+                              setCustomLinkFormData({
+                                title: '',
+                                url: '',
+                                icon_url: '',
+                                enabled: true
+                              });
+                              setIsCustomLinkModalOpen(true);
+                            }}
+                            className="submit-button w-button"
+                            style={{ marginBottom: '24px' }}
+                          >
+                            {customLinks.length === 0 ? 'Add Your First Link' : '+ Add New Link'}
+                          </button>
+                        </div>
                       </div>
-                      <div className="w-form-fail" tabIndex="-1" role="region" aria-label="Email Form failure">
-                        <div>Oops! Something went wrong while submitting the form.</div>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="spacing_24"></div>
-                  <div className="w-layout-hflex flex-block-9">
-                    <div className="w-embed">
-                      <svg className="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
-                        <path fillRule="evenodd" d="M2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10S2 17.523 2 12Zm11-4.243a1 1 0 1 0-2 0V11H7.757a1 1 0 1 0 0 2H11v3.243a1 1 0 1 0 2 0V13h3.243a1 1 0 1 0 0-2H13V7.757Z" clipRule="evenodd"></path>
-                      </svg>
-                    </div>
-                    <p>Add More Links</p>
-                  </div>
+                    </>
+                  )}
                 </div>
               </div>
             )}
@@ -2288,6 +2397,207 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                 No images in this album yet. Upload images to get started!
               </p>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Custom Link Modal */}
+      {isCustomLinkModalOpen && (
+        <div 
+          className="modal-overlay" 
+          onClick={() => setIsCustomLinkModalOpen(false)}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0,0,0,0.7)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000
+          }}
+        >
+          <div 
+            className="modal-content" 
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: 'white',
+              borderRadius: '12px',
+              padding: '24px',
+              maxWidth: '600px',
+              width: '90%',
+              maxHeight: '90vh',
+              overflow: 'auto'
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h3>{editingCustomLink ? 'Edit Link' : 'Add New Link'}</h3>
+              <button
+                onClick={() => {
+                  setIsCustomLinkModalOpen(false);
+                  setEditingCustomLink(null);
+                  setCustomLinkFormData({
+                    title: '',
+                    url: '',
+                    icon_url: '',
+                    enabled: true
+                  });
+                }}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '24px',
+                  cursor: 'pointer',
+                  padding: '0',
+                  width: '30px',
+                  height: '30px'
+                }}
+              >
+                ×
+              </button>
+            </div>
+
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                
+                if (!customLinkFormData.title || !customLinkFormData.title.trim()) {
+                  alert('Please enter a title');
+                  return;
+                }
+
+                if (!customLinkFormData.url || !customLinkFormData.url.trim()) {
+                  alert('Please enter a URL');
+                  return;
+                }
+
+                let result;
+                if (editingCustomLink) {
+                  result = await updateCustomLink(editingCustomLink.id, customLinkFormData);
+                } else {
+                  result = await createCustomLink(customLinkFormData);
+                }
+
+                if (result.success) {
+                  // Reload links
+                  const reloadResult = await getCustomLinks();
+                  if (reloadResult.success) {
+                    setCustomLinks(reloadResult.data || []);
+                  }
+                  
+                  setIsCustomLinkModalOpen(false);
+                  setEditingCustomLink(null);
+                  setCustomLinkFormData({
+                    title: '',
+                    url: '',
+                    icon_url: '',
+                    enabled: true
+                  });
+                } else {
+                  alert(result.error || 'Failed to save link');
+                }
+              }}
+            >
+              <div className="form-group" style={{ marginBottom: '16px' }}>
+                <label htmlFor="customLinkTitle">Title *</label>
+                <input
+                  type="text"
+                  id="customLinkTitle"
+                  className="w-input"
+                  value={customLinkFormData.title}
+                  onChange={(e) => setCustomLinkFormData({ ...customLinkFormData, title: e.target.value })}
+                  placeholder="Link Title"
+                  required
+                />
+              </div>
+
+              <div className="form-group" style={{ marginBottom: '16px' }}>
+                <label htmlFor="customLinkUrl">URL *</label>
+                <input
+                  type="url"
+                  id="customLinkUrl"
+                  className="w-input"
+                  value={customLinkFormData.url}
+                  onChange={(e) => setCustomLinkFormData({ ...customLinkFormData, url: e.target.value })}
+                  placeholder="https://example.com"
+                  required
+                />
+              </div>
+
+              <div className="form-group" style={{ marginBottom: '16px' }}>
+                <label htmlFor="customLinkIcon">Icon URL (optional)</label>
+                <input
+                  type="url"
+                  id="customLinkIcon"
+                  className="w-input"
+                  value={customLinkFormData.icon_url}
+                  onChange={(e) => setCustomLinkFormData({ ...customLinkFormData, icon_url: e.target.value })}
+                  placeholder="https://example.com/icon.png"
+                />
+                {customLinkFormData.icon_url && (
+                  <img
+                    src={customLinkFormData.icon_url}
+                    alt="Icon preview"
+                    style={{
+                      width: '40px',
+                      height: '40px',
+                      marginTop: '8px',
+                      borderRadius: '4px',
+                      objectFit: 'cover'
+                    }}
+                    onError={(e) => {
+                      e.target.style.display = 'none';
+                    }}
+                  />
+                )}
+              </div>
+
+              <div className="form-group" style={{ marginBottom: '16px' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <input
+                    type="checkbox"
+                    checked={customLinkFormData.enabled}
+                    onChange={(e) => setCustomLinkFormData({ ...customLinkFormData, enabled: e.target.checked })}
+                  />
+                  Enable this link
+                </label>
+              </div>
+
+              <div style={{ display: 'flex', gap: '12px', marginTop: '24px' }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsCustomLinkModalOpen(false);
+                    setEditingCustomLink(null);
+                    setCustomLinkFormData({
+                      title: '',
+                      url: '',
+                      icon_url: '',
+                      enabled: true
+                    });
+                  }}
+                  style={{
+                    padding: '12px 24px',
+                    background: '#f5f5f5',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    flex: 1
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="submit-button w-button"
+                  style={{ flex: 1 }}
+                >
+                  {editingCustomLink ? 'Update Link' : 'Create Link'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
