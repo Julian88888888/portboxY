@@ -468,6 +468,67 @@ export default function JobRequestPopup() {
           <div className="line_divider"></div>
         </div>
       </div>
+
+      {/* Portfolio Albums Section */}
+      <div className="section portfolio_sec">
+        <div className="content_wrapper">
+          <div className="spacing_48"></div>
+          <h4 className="section_title">Portfolio</h4>
+          <div className="spacing_24"></div>
+          
+          {albumsLoading ? (
+            <div style={{ textAlign: 'center', padding: '40px' }}>
+              <p className="text_color_grey">Loading portfolio...</p>
+            </div>
+          ) : albums.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '40px' }}>
+              <p className="text_color_grey">No albums yet.</p>
+            </div>
+          ) : (
+            <div className="w-layout-grid blog_grid" style={{ marginBottom: '24px' }}>
+              {albums.map((album, index) => (
+                <div 
+                  key={album.id || index} 
+                  className="product_item w-inline-block" 
+                  style={{ 
+                    position: 'relative',
+                    cursor: 'pointer'
+                  }}
+                  onClick={() => handleAlbumClick(album)}
+                >
+                  <a 
+                    href="#" 
+                    className="product_item w-inline-block"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleAlbumClick(album);
+                    }}
+                  >
+                    <div className="product_image_wrapper">
+                      <img 
+                        src={normalizeImageUrl(album.cover_image_url) || '/images/fashion-photo.jpg'} 
+                        alt={album.title} 
+                        className="product_image fashionphoto"
+                        onError={(e) => {
+                          e.target.src = '/images/fashion-photo.jpg';
+                        }}
+                      />
+                      <div className="discount_tag">Album</div>
+                    </div>
+                    <div className="spacing_16"></div>
+                    <div className="font_weight_bold">{album.title || 'Untitled'}</div>
+                    <div className="spacing_4"></div>
+                    <p className="text_color_grey">{album.description || 'No description'}</p>
+                  </a>
+                </div>
+              ))}
+            </div>
+          )}
+          <div className="spacing_48"></div>
+          <div className="line_divider"></div>
+        </div>
+      </div>
+
       <div className="section links_sec">
         <div className="content_wrapper largebanner_btn">
           <div className="spacing_48"></div>
