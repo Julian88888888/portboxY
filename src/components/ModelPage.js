@@ -113,6 +113,14 @@ export default function JobRequestPopup() {
   // Load custom links on component mount
   useEffect(() => {
     const loadCustomLinks = async () => {
+      // Only load if user is authenticated
+      if (!user) {
+        console.log('ModelPage: User not authenticated, skipping custom links load');
+        setCustomLinks([]);
+        setCustomLinksLoading(false);
+        return;
+      }
+
       setCustomLinksLoading(true);
       try {
         const result = await getCustomLinks();
@@ -125,6 +133,9 @@ export default function JobRequestPopup() {
           setCustomLinks(enabledLinks);
         } else {
           console.error('ModelPage: Failed to load custom links:', result.error);
+          if (result.requiresAuth) {
+            console.warn('Custom links require authentication - user may need to log in again');
+          }
           setCustomLinks([]);
         }
       } catch (error) {
@@ -135,7 +146,7 @@ export default function JobRequestPopup() {
     };
 
     loadCustomLinks();
-  }, []);
+  }, [user]);
 
   // Load images when album is selected
   const handleAlbumClick = async (album) => {

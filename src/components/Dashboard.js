@@ -99,18 +99,29 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
   // Load custom links
   useEffect(() => {
     const loadCustomLinks = async () => {
+      // Only load if user is authenticated
+      if (!user) {
+        console.log('Dashboard: User not authenticated, skipping custom links load');
+        setCustomLinks([]);
+        setCustomLinksLoading(false);
+        return;
+      }
+
       setCustomLinksLoading(true);
       const result = await getCustomLinks();
       if (result.success) {
         setCustomLinks(result.data || []);
       } else {
         console.error('Failed to load custom links:', result.error);
+        if (result.requiresAuth) {
+          console.warn('Custom links require authentication - user may need to log in again');
+        }
         setCustomLinks([]);
       }
       setCustomLinksLoading(false);
     };
     loadCustomLinks();
-  }, []);
+  }, [user]);
 
   const handleTabChange = (tab) => {
     // Immediately call onTabChange to update the page in App.js

@@ -10,21 +10,42 @@ const getAuthHeaders = async () => {
     const { data, error } = await supabase.auth.getSession();
     
     if (error) {
-      console.error('Error getting session:', error);
+      console.error('CustomLinks: Error getting session:', error);
       return {
         'Content-Type': 'application/json'
       };
     }
     
     const session = data?.session;
+    
+    if (!session) {
+      console.warn('CustomLinks: No session found - user may not be logged in');
+      return {
+        'Content-Type': 'application/json'
+      };
+    }
+    
     const token = session?.access_token;
+    
+    if (!token) {
+      console.warn('CustomLinks: No access token found in session');
+      return {
+        'Content-Type': 'application/json'
+      };
+    }
+    
+    // Log token info (first/last 10 chars for debugging, not full token)
+    const tokenPreview = token.length > 20 
+      ? `${token.substring(0, 10)}...${token.substring(token.length - 10)}`
+      : 'short';
+    console.log('CustomLinks: Token found, length:', token.length, 'preview:', tokenPreview);
     
     return {
       'Content-Type': 'application/json',
-      ...(token && { Authorization: `Bearer ${token}` })
+      'Authorization': `Bearer ${token}`
     };
   } catch (error) {
-    console.error('Error in getAuthHeaders:', error);
+    console.error('CustomLinks: Error in getAuthHeaders:', error);
     return {
       'Content-Type': 'application/json'
     };
@@ -37,6 +58,7 @@ const getAuthHeaders = async () => {
 export const getCustomLinks = async () => {
   try {
     const headers = await getAuthHeaders();
+    
     const response = await fetch(`${API_BASE_URL}/custom-links`, {
       method: 'GET',
       headers
@@ -45,6 +67,14 @@ export const getCustomLinks = async () => {
     const data = await response.json();
     
     if (!response.ok) {
+      if (response.status === 401) {
+        console.error('CustomLinks: 401 Unauthorized - Token may be missing or invalid');
+        return {
+          success: false,
+          error: 'Authentication required. Please log in again.',
+          requiresAuth: true
+        };
+      }
       return {
         success: false,
         error: data.message || data.error || 'Failed to get custom links'
