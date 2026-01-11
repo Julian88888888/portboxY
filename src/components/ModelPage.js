@@ -46,6 +46,16 @@ export default function JobRequestPopup() {
   const [imagesLoading, setImagesLoading] = useState(false);
   const [customLinks, setCustomLinks] = useState([]);
   const [customLinksLoading, setCustomLinksLoading] = useState(false);
+
+  // Helper function to get value from profile, user, or user_metadata
+  const getUserValue = (field, defaultValue = '') => {
+    // First check profile (from database, cached via React Query)
+    if (profile?.[field] !== undefined && profile[field] !== null && profile[field] !== '') {
+      return profile[field];
+    }
+    // Fallback to user.user_metadata (from Supabase auth)
+    return user?.[field] || user?.user_metadata?.[field] || defaultValue;
+  };
   
   // Get profile photo from ProfileSettings (profile_photo_path)
   const getProfileImage = () => {
@@ -414,21 +424,21 @@ export default function JobRequestPopup() {
           <div className="industry_stats">
             <div className="stat_item">
               <div className="stat_label" style={{fontWeight: '700'}}>INDUSTRY</div>
-              <div className="stat_value" style={{fontWeight: '400'}}>{user?.industry || user?.user_metadata?.industry || 'Fashion'}</div>
+              <div className="stat_value" style={{fontWeight: '400'}}>{getUserValue('industry', 'Fashion')}</div>
             </div>
             <div className="stat_item">
               <div className="stat_label" style={{fontWeight: '700'}}>STATUS</div>
-              <div className="stat_value" style={{fontWeight: '400'}}>{user?.status || user?.user_metadata?.status || 'Professional'}</div>
+              <div className="stat_value" style={{fontWeight: '400'}}>{getUserValue('status', 'Professional')}</div>
             </div>
             <div className="stat_item">
               <div className="stat_label" style={{fontWeight: '700'}}>MARKETS</div>
-              {((user?.markets || user?.user_metadata?.markets || 'Miami, Los Angeles, New York').split(',').map((market, idx) => (
+              {(getUserValue('markets', 'Miami, Los Angeles, New York').split(',').map((market, idx) => (
                 <div key={idx} className="stat_value" style={{fontWeight: '400'}}>{market.trim()}</div>
               )))}
             </div>
             <div className="stat_item">
               <div className="stat_label" style={{fontWeight: '700'}}>AVAILABLE FOR</div>
-              <div className="stat_value" style={{fontWeight: '400'}}>{user?.availableFor || user?.user_metadata?.availableFor || 'Beauty, Editorial, Glamour, Print'}</div>
+              <div className="stat_value" style={{fontWeight: '400'}}>{getUserValue('availableFor', 'Beauty, Editorial, Glamour, Print')}</div>
             </div>
           </div>
           <div className="spacing_24" />
@@ -437,74 +447,74 @@ export default function JobRequestPopup() {
               <div className="stat_item">
                 <div className="stat_label" style={{fontWeight: '700'}}>HEIGHT</div>
                 <div className="stat_value" style={{fontWeight: '400'}}>
-                  {(user?.heightFeet || user?.user_metadata?.heightFeet) && (user?.heightInches || user?.user_metadata?.heightInches)
-                    ? `${user?.heightFeet || user?.user_metadata?.heightFeet}'${user?.heightInches || user?.user_metadata?.heightInches}"`
+                  {getUserValue('heightFeet') && getUserValue('heightInches')
+                    ? `${getUserValue('heightFeet')}'${getUserValue('heightInches')}"`
                     : "5'11\""}
                 </div>
               </div>
               <div className="stat_item">
                 <div className="stat_label" style={{fontWeight: '700'}}>WEIGHT</div>
                 <div className="stat_value" style={{fontWeight: '400'}}>
-                  {user?.weight || user?.user_metadata?.weight 
-                    ? `${user?.weight || user?.user_metadata?.weight} ${(user?.weightUnit || user?.user_metadata?.weightUnit) || 'lbs'}`
+                  {getUserValue('weight') 
+                    ? `${getUserValue('weight')} ${getUserValue('weightUnit', 'lbs')}`
                     : '135 lbs'}
                 </div>
               </div>
               <div className="stat_item">
                 <div className="stat_label" style={{fontWeight: '700'}}>BUST</div>
                 <div className="stat_value" style={{fontWeight: '400'}}>
-                  {user?.bust || user?.user_metadata?.bust 
-                    ? `${user?.bust || user?.user_metadata?.bust}${user?.bustSize || user?.user_metadata?.bustSize || ''}`
+                  {getUserValue('bust') 
+                    ? `${getUserValue('bust')}${getUserValue('bustSize', '')}`
                     : '23A'}
                 </div>
               </div>
               <div className="stat_item">
                 <div className="stat_label" style={{fontWeight: '700'}}>WAIST</div>
                 <div className="stat_value" style={{fontWeight: '400'}}>
-                  {user?.waist || user?.user_metadata?.waist 
-                    ? `${user?.waist || user?.user_metadata?.waist} ${(user?.waistUnit || user?.user_metadata?.waistUnit) || 'in'}`
+                  {getUserValue('waist') 
+                    ? `${getUserValue('waist')} ${getUserValue('waistUnit', 'in')}`
                     : '26 in'}
                 </div>
               </div>
               <div className="stat_item">
                 <div className="stat_label" style={{fontWeight: '700'}}>HIPS</div>
                 <div className="stat_value" style={{fontWeight: '400'}}>
-                  {user?.hips || user?.user_metadata?.hips 
-                    ? `${user?.hips || user?.user_metadata?.hips} ${(user?.hipsUnit || user?.user_metadata?.hipsUnit) || 'in'}`
+                  {getUserValue('hips') 
+                    ? `${getUserValue('hips')} ${getUserValue('hipsUnit', 'in')}`
                     : '36 in'}
                 </div>
               </div>
               <div className="stat_item">
                 <div className="stat_label" style={{fontWeight: '700'}}>SHOE</div>
                 <div className="stat_value" style={{fontWeight: '400'}}>
-                  {user?.shoe || user?.user_metadata?.shoe 
-                    ? `${user?.shoe || user?.user_metadata?.shoe} ${(user?.shoeUnit || user?.user_metadata?.shoeUnit) || 'US'}`
+                  {getUserValue('shoe') 
+                    ? `${getUserValue('shoe')} ${getUserValue('shoeUnit', 'US')}`
                     : '7 US'}
                 </div>
               </div>
               <div className="stat_item">
                 <div className="stat_label" style={{fontWeight: '700'}}>HAIR COLOR</div>
-                <div className="stat_value" style={{fontWeight: '400'}}>{user?.hairColor || user?.user_metadata?.hairColor || 'Black'}</div>
+                <div className="stat_value" style={{fontWeight: '400'}}>{getUserValue('hairColor', 'Black')}</div>
               </div>
               <div className="stat_item">
                 <div className="stat_label" style={{fontWeight: '700'}}>HAIR LENGTH</div>
-                <div className="stat_value" style={{fontWeight: '400'}}>{user?.hairLength || user?.user_metadata?.hairLength || 'Long'}</div>
+                <div className="stat_value" style={{fontWeight: '400'}}>{getUserValue('hairLength', 'Long')}</div>
               </div>
               <div className="stat_item">
                 <div className="stat_label" style={{fontWeight: '700'}}>EYE COLOR</div>
-                <div className="stat_value" style={{fontWeight: '400'}}>{user?.eyeColor || user?.user_metadata?.eyeColor || 'Brown'}</div>
+                <div className="stat_value" style={{fontWeight: '400'}}>{getUserValue('eyeColor', 'Brown')}</div>
               </div>
               <div className="stat_item">
                 <div className="stat_label" style={{fontWeight: '700'}}>AGE</div>
-                <div className="stat_value" style={{fontWeight: '400'}}>{user?.age || user?.user_metadata?.age || '26'}</div>
+                <div className="stat_value" style={{fontWeight: '400'}}>{getUserValue('age', '26')}</div>
               </div>
               <div className="stat_item">
                 <div className="stat_label" style={{fontWeight: '700'}}>GENDER</div>
-                <div className="stat_value" style={{fontWeight: '400'}}>{user?.gender || user?.user_metadata?.gender || 'Female'}</div>
+                <div className="stat_value" style={{fontWeight: '400'}}>{getUserValue('gender', 'Female')}</div>
               </div>
               <div className="stat_item">
                 <div className="stat_label" style={{fontWeight: '700'}}>ETHNICITY</div>
-                <div className="stat_value" style={{fontWeight: '400'}}>{user?.ethnicity || user?.user_metadata?.ethnicity || 'White'}</div>
+                <div className="stat_value" style={{fontWeight: '400'}}>{getUserValue('ethnicity', 'White')}</div>
               </div>
             </div>
           </div>

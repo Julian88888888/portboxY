@@ -200,6 +200,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
         status: user.status || '',
         markets: user.markets || '',
         availableFor: user.availableFor || '',
+        showModelStats: user.showModelStats !== undefined ? user.showModelStats : (user.user_metadata?.showModelStats !== undefined ? user.user_metadata.showModelStats : true),
         heightFeet: user.heightFeet || '',
         heightInches: user.heightInches || '',
         heightUnit: user.heightUnit || '',
@@ -213,8 +214,12 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
         hipsUnit: user.hipsUnit || '',
         shoe: user.shoe || '',
         shoeUnit: user.shoeUnit || '',
-        age: user.age || '',
-        gender: user.gender || '',
+        hairColor: user.hairColor || user.user_metadata?.hairColor || '',
+        hairLength: user.hairLength || user.user_metadata?.hairLength || '',
+        eyeColor: user.eyeColor || user.user_metadata?.eyeColor || '',
+        age: user.age || user.user_metadata?.age || '',
+        gender: user.gender || user.user_metadata?.gender || '',
+        ethnicity: user.ethnicity || user.user_metadata?.ethnicity || '',
         email: user.email || '',
         instagram: user.socialLinks?.instagram || '',
         twitter: user.socialLinks?.twitter || '',
@@ -658,65 +663,102 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                     <div className="spacing_24"></div>
                     <h3>Model Stats</h3>
                     <div className="spacing_24"></div>
-                    <div className="w-layout-hflex flex-block-9">
-                      <img width="50" height="Auto" alt="" src="/images/smSwitch.png" loading="lazy" />
-                      <p>Show Model Stats</p>
+                    <div 
+                      className="w-layout-hflex flex-block-9" 
+                      style={{ cursor: 'pointer', alignItems: 'center' }}
+                      onClick={() => {
+                        const newValue = !formData.showModelStats;
+                        setFormData(prev => ({ ...prev, showModelStats: newValue }));
+                        updateProfile({ ...formData, showModelStats: newValue }).then(result => {
+                          if (result.success) {
+                            console.log('Show Model Stats toggle saved');
+                          }
+                        });
+                      }}
+                    >
+                      <img 
+                        width="50" 
+                        height="Auto" 
+                        alt="" 
+                        src="/images/smSwitch.png" 
+                        loading="lazy"
+                        style={{ opacity: formData.showModelStats ? 1 : 0.5 }}
+                      />
+                      <p style={{ marginLeft: '12px', margin: 0 }}>Show Model Stats</p>
                     </div>
-                    <div className="w-layout-blockcontainer stat_container w-container">
-                      <div className="columns personal_stats w-row">
-                        <div className="w-col w-col-2 w-col-small-2 w-col-tiny-6">
-                          <div className="text_heading">HEIGHT</div>
-                          <div className="text_paragraph">
-                            {formData.heightFeet && formData.heightInches 
-                              ? `${formData.heightFeet}'${formData.heightInches}"` 
+                    <div className="stat_container">
+                      <div className="personal_stats">
+                        <div className="stat_item">
+                          <div className="stat_label" style={{fontWeight: '700'}}>HEIGHT</div>
+                          <div className="stat_value" style={{fontWeight: '400'}}>
+                            {formData.heightFeet && formData.heightInches
+                              ? `${formData.heightFeet}'${formData.heightInches}"`
                               : "5'11\""}
                           </div>
                         </div>
-                        <div className="w-col w-col-2 w-col-small-2 w-col-tiny-6">
-                          <div className="text_heading">WEIGHT</div>
-                          <div className="text_paragraph">{formData.weight || '135 lbs'}</div>
+                        <div className="stat_item">
+                          <div className="stat_label" style={{fontWeight: '700'}}>WEIGHT</div>
+                          <div className="stat_value" style={{fontWeight: '400'}}>
+                            {formData.weight
+                              ? `${formData.weight} ${formData.weightUnit || 'lbs'}`
+                              : '135 lbs'}
+                          </div>
                         </div>
-                        <div className="w-col w-col-2 w-col-small-2 w-col-tiny-6">
-                          <div className="text_heading">BUST</div>
-                          <div className="text_paragraph">{formData.bust || '23A'}</div>
+                        <div className="stat_item">
+                          <div className="stat_label" style={{fontWeight: '700'}}>BUST</div>
+                          <div className="stat_value" style={{fontWeight: '400'}}>
+                            {formData.bust
+                              ? `${formData.bust}${formData.bustSize || ''}`
+                              : '23A'}
+                          </div>
                         </div>
-                        <div className="w-col w-col-2 w-col-small-2 w-col-tiny-6">
-                          <div className="text_heading">WAIST</div>
-                          <div className="text_paragraph">{formData.waist || '26 in'}</div>
+                        <div className="stat_item">
+                          <div className="stat_label" style={{fontWeight: '700'}}>WAIST</div>
+                          <div className="stat_value" style={{fontWeight: '400'}}>
+                            {formData.waist
+                              ? `${formData.waist} ${formData.waistUnit || 'in'}`
+                              : '26 in'}
+                          </div>
                         </div>
-                        <div className="w-col w-col-2 w-col-small-2 w-col-tiny-6">
-                          <div className="text_heading">HIPS</div>
-                          <div className="text_paragraph">{formData.hips || '36 in'}</div>
+                        <div className="stat_item">
+                          <div className="stat_label" style={{fontWeight: '700'}}>HIPS</div>
+                          <div className="stat_value" style={{fontWeight: '400'}}>
+                            {formData.hips
+                              ? `${formData.hips} ${formData.hipsUnit || 'in'}`
+                              : '36 in'}
+                          </div>
                         </div>
-                        <div className="w-col w-col-2 w-col-small-2 w-col-tiny-6">
-                          <div className="text_heading">SHOE</div>
-                          <div className="text_paragraph">{formData.shoe || '7 US'}</div>
+                        <div className="stat_item">
+                          <div className="stat_label" style={{fontWeight: '700'}}>SHOE</div>
+                          <div className="stat_value" style={{fontWeight: '400'}}>
+                            {formData.shoe
+                              ? `${formData.shoe} ${formData.shoeUnit || 'US'}`
+                              : '7 US'}
+                          </div>
                         </div>
-                      </div>
-                      <div className="columns personal_stats w-row">
-                        <div className="w-col w-col-2 w-col-small-2 w-col-tiny-6">
-                          <div className="text_heading">HAIR COLOR</div>
-                          <div className="text_paragraph">{formData.hairColor || 'Black'}</div>
+                        <div className="stat_item">
+                          <div className="stat_label" style={{fontWeight: '700'}}>HAIR COLOR</div>
+                          <div className="stat_value" style={{fontWeight: '400'}}>{formData.hairColor || 'Black'}</div>
                         </div>
-                        <div className="w-col w-col-2 w-col-small-2 w-col-tiny-6">
-                          <div className="text_heading">HAIR LENGTH</div>
-                          <div className="text_paragraph">{formData.hairLength || 'Long'}</div>
+                        <div className="stat_item">
+                          <div className="stat_label" style={{fontWeight: '700'}}>HAIR LENGTH</div>
+                          <div className="stat_value" style={{fontWeight: '400'}}>{formData.hairLength || 'Long'}</div>
                         </div>
-                        <div className="w-col w-col-2 w-col-small-2 w-col-tiny-6">
-                          <div className="text_heading">EYE COLOR</div>
-                          <div className="text_paragraph">{formData.eyeColor || 'Brown'}</div>
+                        <div className="stat_item">
+                          <div className="stat_label" style={{fontWeight: '700'}}>EYE COLOR</div>
+                          <div className="stat_value" style={{fontWeight: '400'}}>{formData.eyeColor || 'Brown'}</div>
                         </div>
-                        <div className="w-col w-col-2 w-col-small-2 w-col-tiny-6">
-                          <div className="text_heading">AGE</div>
-                          <div className="text_paragraph">{formData.age || '26'}</div>
+                        <div className="stat_item">
+                          <div className="stat_label" style={{fontWeight: '700'}}>AGE</div>
+                          <div className="stat_value" style={{fontWeight: '400'}}>{formData.age || '26'}</div>
                         </div>
-                        <div className="w-col w-col-2 w-col-small-2 w-col-tiny-6">
-                          <div className="text_heading">GENDER</div>
-                          <div className="text_paragraph">{formData.gender || 'Female'}</div>
+                        <div className="stat_item">
+                          <div className="stat_label" style={{fontWeight: '700'}}>GENDER</div>
+                          <div className="stat_value" style={{fontWeight: '400'}}>{formData.gender || 'Female'}</div>
                         </div>
-                        <div className="w-col w-col-2 w-col-small-2 w-col-tiny-6">
-                          <div className="text_heading">ETHNICITY</div>
-                          <div className="text_paragraph">{formData.ethnicity || 'White'}</div>
+                        <div className="stat_item">
+                          <div className="stat_label" style={{fontWeight: '700'}}>ETHNICITY</div>
+                          <div className="stat_value" style={{fontWeight: '400'}}>{formData.ethnicity || 'White'}</div>
                         </div>
                       </div>
                     </div>
