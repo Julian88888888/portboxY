@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { NavLink } from 'react-router-dom';
 import './Sidebar.css';
 
-const Sidebar = ({ currentPage, onPageChange, onToggle }) => {
+const Sidebar = ({ onToggle }) => {
   const [isOpen, setIsOpen] = useState(true);
 
   // Sync state with parent on mount and when isOpen changes
@@ -13,10 +14,6 @@ const Sidebar = ({ currentPage, onPageChange, onToggle }) => {
 
   const toggleSidebar = () => {
     setIsOpen(!isOpen);
-  };
-
-  const handlePageChange = (page) => {
-    onPageChange(page);
   };
 
   return (
@@ -33,67 +30,67 @@ const Sidebar = ({ currentPage, onPageChange, onToggle }) => {
         <nav className="sidebar-nav">
           <ul className="sidebar-nav-list">
             <li>
-              <button 
-                className={`nav-item ${currentPage === 'main' ? 'active' : ''}`}
-                onClick={() => handlePageChange('main')}
+              <NavLink 
+                to="/"
+                className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
               >
                 <span className="nav-icon">🏠</span>
                 {isOpen && <span className="nav-text">Main Page</span>}
-              </button>
+              </NavLink>
             </li>
             <li>
-              <button 
-                className={`nav-item ${currentPage === 'model' ? 'active' : ''}`}
-                onClick={() => handlePageChange('model')}
+              <NavLink 
+                to="/model"
+                className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
               >
                 <span className="nav-icon">👤</span>
                 {isOpen && <span className="nav-text">Model Page</span>}
-              </button>
+              </NavLink>
             </li>
             <li>
-              <button 
-                className={`nav-item ${currentPage === 'dashboard-profile' ? 'active' : ''}`}
-                onClick={() => handlePageChange('dashboard-profile')}
+              <NavLink 
+                to="/profile"
+                className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
               >
                 <span className="nav-icon">👤</span>
                 {isOpen && <span className="nav-text">Profile</span>}
-              </button>
+              </NavLink>
             </li>
             <li>
-              <button 
-                className={`nav-item ${currentPage === 'dashboard-portfolio' ? 'active' : ''}`}
-                onClick={() => handlePageChange('dashboard-portfolio')}
+              <NavLink 
+                to="/portfolio"
+                className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
               >
                 <span className="nav-icon">📁</span>
                 {isOpen && <span className="nav-text">Portfolio</span>}
-              </button>
+              </NavLink>
             </li>
             <li>
-              <button 
-                className={`nav-item ${currentPage === 'dashboard-bookings' ? 'active' : ''}`}
-                onClick={() => handlePageChange('dashboard-bookings')}
+              <NavLink 
+                to="/bookings"
+                className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
               >
                 <span className="nav-icon">📅</span>
                 {isOpen && <span className="nav-text">Bookings</span>}
-              </button>
+              </NavLink>
             </li>
             <li>
-              <button 
-                className={`nav-item ${currentPage === 'dashboard-links' ? 'active' : ''}`}
-                onClick={() => handlePageChange('dashboard-links')}
+              <NavLink 
+                to="/links"
+                className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
               >
                 <span className="nav-icon">🔗</span>
                 {isOpen && <span className="nav-text">Custom Links</span>}
-              </button>
+              </NavLink>
             </li>
             <li>
-              <button 
-                className={`nav-item ${currentPage === 'dashboard-settings' ? 'active' : ''}`}
-                onClick={() => handlePageChange('dashboard-settings')}
+              <NavLink 
+                to="/settings"
+                className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
               >
                 <span className="nav-icon">⚙️</span>
                 {isOpen && <span className="nav-text">Settings</span>}
-              </button>
+              </NavLink>
             </li>
           </ul>
         </nav>
