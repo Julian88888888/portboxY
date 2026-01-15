@@ -3077,6 +3077,62 @@ a {
   font-weight: 400;
 }
 
+.profile_sec .stat_label {
+  font-size: 10px !important;
+  margin-bottom: 4px !important;
+  line-height: 1.2 !important;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.profile_sec .stat_value {
+  font-size: 13px !important;
+  margin-bottom: 0 !important;
+  line-height: 1.4 !important;
+  word-wrap: break-word !important;
+}
+
+.profile_sec .industry_stats {
+  display: grid !important;
+  grid-template-columns: repeat(4, 1fr) !important;
+  gap: 12px !important;
+  margin: 16px 0 !important;
+}
+
+.profile_sec .industry_stats .stat_item {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  margin-bottom: 0 !important;
+  min-width: 0;
+}
+
+.profile_sec .industry_stats .stat_value {
+  width: 100% !important;
+}
+
+.profile_sec .personal_stats {
+  gap: 12px !important;
+  margin-bottom: 16px !important;
+}
+
+.profile_sec .personal_stats .stat_item {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  margin-bottom: 0 !important;
+}
+
+.profile_sec .personal_stats .stat_label {
+  font-size: 10px !important;
+  margin-bottom: 4px !important;
+}
+
+.profile_sec .personal_stats .stat_value {
+  font-size: 13px !important;
+  margin-bottom: 0 !important;
+}
+
 .image {
   -webkit-text-fill-color: inherit;
   mix-blend-mode: normal;

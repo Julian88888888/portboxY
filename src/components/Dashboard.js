@@ -569,61 +569,160 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                     <div className="spacing_24"></div>
                     <h3>Profile Stats</h3>
                     <div className="spacing_24"></div>
-                    <div className="w-layout-hflex flex-block-9">
+                    <div style={{display: 'flex', alignItems: 'center', gap: '12px'}}>
                       <img width="50" height="Auto" alt="" src="/images/smSwitch.png" loading="lazy" />
                       <p>Show Profile Stats</p>
                     </div>
                     <div className="w-form">
-                      <div className="spacing_24">
-                        <div className="columns industry_stats w-row">
-                          <div className="w-col w-col-3 w-col-small-6 w-col-tiny-tiny-stack">
-                            <div className="text_heading">INDUSTRY</div>
-                            <div className="text_paragraph">{formData.industry || 'Fashion'}</div>
+                      <div style={{marginBottom: '12px'}}>
+                        <div className="industry_stats" style={{
+                          display: 'grid',
+                          gridTemplateColumns: 'repeat(4, 1fr)',
+                          gap: '8px',
+                          margin: '8px 0'
+                        }}>
+                          <div className="stat_item" style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'flex-start',
+                            marginBottom: 0,
+                            padding: '0'
+                          }}>
+                            <div className="stat_label" style={{
+                              fontWeight: '600',
+                              fontSize: '9px',
+                              marginBottom: '2px',
+                              lineHeight: '1.1',
+                              textTransform: 'uppercase',
+                              letterSpacing: '0.3px',
+                              color: '#666'
+                            }}>INDUSTRY</div>
+                            <div className="stat_value" style={{
+                              fontWeight: '400',
+                              fontSize: '12px',
+                              marginBottom: 0,
+                              lineHeight: '1.3',
+                              wordWrap: 'break-word',
+                              width: '100%',
+                              color: '#333'
+                            }}>{formData.industry || 'Fashion'}</div>
                           </div>
-                          <div className="w-col w-col-3 w-col-small-6 w-col-tiny-tiny-stack">
-                            <div className="text_heading">STATUS</div>
-                            <div className="text_paragraph">{formData.status || 'Professional'}</div>
+                          <div className="stat_item" style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'flex-start',
+                            marginBottom: 0,
+                            padding: '0'
+                          }}>
+                            <div className="stat_label" style={{
+                              fontWeight: '600',
+                              fontSize: '9px',
+                              marginBottom: '2px',
+                              lineHeight: '1.1',
+                              textTransform: 'uppercase',
+                              letterSpacing: '0.3px',
+                              color: '#666'
+                            }}>STATUS</div>
+                            <div className="stat_value" style={{
+                              fontWeight: '400',
+                              fontSize: '12px',
+                              marginBottom: 0,
+                              lineHeight: '1.3',
+                              wordWrap: 'break-word',
+                              width: '100%',
+                              color: '#333'
+                            }}>{formData.status || 'Professional'}</div>
                           </div>
-                          <div className="w-col w-col-3 w-col-small-6 w-col-tiny-tiny-stack">
-                            <div className="text_heading">MARKETS</div>
-                            {(formData.markets || 'Miami, Los Angeles, New York').split(',').map((market, idx) => (
-                              <div key={idx} className="text_paragraph">{market.trim()}</div>
-                            ))}
+                          <div className="stat_item" style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'flex-start',
+                            marginBottom: 0,
+                            padding: '0'
+                          }}>
+                            <div className="stat_label" style={{
+                              fontWeight: '600',
+                              fontSize: '9px',
+                              marginBottom: '2px',
+                              lineHeight: '1.1',
+                              textTransform: 'uppercase',
+                              letterSpacing: '0.3px',
+                              color: '#666'
+                            }}>MARKETS</div>
+                            <div className="stat_value" style={{
+                              fontWeight: '400',
+                              fontSize: '12px',
+                              marginBottom: 0,
+                              lineHeight: '1.3',
+                              wordWrap: 'break-word',
+                              width: '100%',
+                              color: '#333'
+                            }}>
+                              {(formData.markets || 'Miami, Los Angeles, New York').split(',').map((market, idx, arr) => (
+                                <div key={idx} style={{marginBottom: idx < arr.length - 1 ? '1px' : '0', fontSize: '12px'}}>
+                                  {market.trim()}
+                                </div>
+                              ))}
+                            </div>
                           </div>
-                          <div className="w-col w-col-3 w-col-small-6 w-col-tiny-tiny-stack">
-                            <div className="text_heading">AVAILABLE FOR</div>
-                            <div className="text_paragraph">{formData.availableFor || 'Beauty, Editorial, Glamour, Print'}</div>
+                          <div className="stat_item" style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'flex-start',
+                            marginBottom: 0,
+                            padding: '0'
+                          }}>
+                            <div className="stat_label" style={{
+                              fontWeight: '600',
+                              fontSize: '9px',
+                              marginBottom: '2px',
+                              lineHeight: '1.1',
+                              textTransform: 'uppercase',
+                              letterSpacing: '0.3px',
+                              color: '#666'
+                            }}>AVAILABLE FOR</div>
+                            <div className="stat_value" style={{
+                              fontWeight: '400',
+                              fontSize: '12px',
+                              marginBottom: 0,
+                              lineHeight: '1.3',
+                              wordWrap: 'break-word',
+                              width: '100%',
+                              color: '#333'
+                            }}>{formData.availableFor || 'Beauty, Editorial, Glamour, Print'}</div>
                           </div>
                         </div>
                       </div>
-                      <form onSubmit={(e) => handleSubmit(e, 'stats')}>
-                        <label htmlFor="industry">Industry</label>
+                      <form onSubmit={(e) => handleSubmit(e, 'stats')} style={{marginTop: '12px'}}>
+                        <label htmlFor="industry" style={{fontSize: '12px', fontWeight: '500', marginBottom: '4px', display: 'block'}}>Industry</label>
                         <select 
                           id="industry" 
                           name="industry" 
                           className="dropdowntxt w-select"
                           value={formData.industry}
                           onChange={handleInputChange}
+                          style={{fontSize: '13px', padding: '8px', marginBottom: '12px'}}
                         >
                           <option value="">Select one...</option>
                           <option value="Fashion">Fashion</option>
                           <option value="Glamour">Glamour</option>
                           <option value="Commercial">Commercial</option>
                         </select>
-                        <label htmlFor="status">Status</label>
+                        <label htmlFor="status" style={{fontSize: '12px', fontWeight: '500', marginBottom: '4px', display: 'block'}}>Status</label>
                         <select 
                           id="status" 
                           name="status" 
                           className="dropdowntxt w-select"
                           value={formData.status}
                           onChange={handleInputChange}
+                          style={{fontSize: '13px', padding: '8px', marginBottom: '12px'}}
                         >
                           <option value="">Select one...</option>
                           <option value="Amateur">Amateur</option>
                           <option value="Semi-Professional">Semi-Professional</option>
                           <option value="Professional">Professional</option>
                         </select>
-                        <label htmlFor="markets">Markets</label>
+                        <label htmlFor="markets" style={{fontSize: '12px', fontWeight: '500', marginBottom: '4px', display: 'block'}}>Markets</label>
                         <input 
                           className="w-input" 
                           maxLength="256" 
@@ -633,21 +732,23 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                           id="markets"
                           value={formData.markets}
                           onChange={handleInputChange}
+                          style={{fontSize: '13px', padding: '8px', marginBottom: '12px'}}
                         />
-                        <label htmlFor="availableFor">Available For</label>
+                        <label htmlFor="availableFor" style={{fontSize: '12px', fontWeight: '500', marginBottom: '4px', display: 'block'}}>Available For</label>
                         <select 
                           id="availableFor" 
                           name="availableFor" 
                           className="dropdowntxt w-select"
                           value={formData.availableFor}
                           onChange={handleInputChange}
+                          style={{fontSize: '13px', padding: '8px', marginBottom: '12px'}}
                         >
                           <option value="">Select one...</option>
                           <option value="Beauty">Beauty</option>
                           <option value="Commercial">Commercial</option>
                           <option value="Film">Film</option>
                         </select>
-                        <input type="submit" className="submit-button w-button" value="Save" />
+                        <input type="submit" className="submit-button w-button" value="Save" style={{fontSize: '14px', padding: '10px 20px', marginTop: '8px'}} />
                       </form>
                       <div className="w-form-done" tabIndex="-1" role="region" aria-label="Email Form success">
                         <div>Thank you! Your submission has been received!</div>

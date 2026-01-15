@@ -421,24 +421,111 @@ export default function JobRequestPopup() {
               </svg></div>
             </a>
           </div>
-          <div className="industry_stats">
-            <div className="stat_item">
-              <div className="stat_label" style={{fontWeight: '700'}}>INDUSTRY</div>
-              <div className="stat_value" style={{fontWeight: '400'}}>{getUserValue('industry', 'Fashion')}</div>
+          <div className="industry_stats" style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(4, 1fr)',
+            gap: '12px',
+            margin: '16px 0'
+          }}>
+            <div className="stat_item" style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'flex-start',
+              marginBottom: 0
+            }}>
+              <div className="stat_label" style={{
+                fontWeight: '700',
+                fontSize: '10px',
+                marginBottom: '4px',
+                lineHeight: '1.2',
+                textTransform: 'uppercase',
+                letterSpacing: '0.5px'
+              }}>INDUSTRY</div>
+              <div className="stat_value" style={{
+                fontWeight: '400',
+                fontSize: '13px',
+                marginBottom: 0,
+                lineHeight: '1.4',
+                wordWrap: 'break-word',
+                width: '100%'
+              }}>{getUserValue('industry', 'Fashion')}</div>
             </div>
-            <div className="stat_item">
-              <div className="stat_label" style={{fontWeight: '700'}}>STATUS</div>
-              <div className="stat_value" style={{fontWeight: '400'}}>{getUserValue('status', 'Professional')}</div>
+            <div className="stat_item" style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'flex-start',
+              marginBottom: 0
+            }}>
+              <div className="stat_label" style={{
+                fontWeight: '700',
+                fontSize: '10px',
+                marginBottom: '4px',
+                lineHeight: '1.2',
+                textTransform: 'uppercase',
+                letterSpacing: '0.5px'
+              }}>STATUS</div>
+              <div className="stat_value" style={{
+                fontWeight: '400',
+                fontSize: '13px',
+                marginBottom: 0,
+                lineHeight: '1.4',
+                wordWrap: 'break-word',
+                width: '100%'
+              }}>{getUserValue('status', 'Professional')}</div>
             </div>
-            <div className="stat_item">
-              <div className="stat_label" style={{fontWeight: '700'}}>MARKETS</div>
-              {(getUserValue('markets', 'Miami, Los Angeles, New York').split(',').map((market, idx) => (
-                <div key={idx} className="stat_value" style={{fontWeight: '400'}}>{market.trim()}</div>
-              )))}
+            <div className="stat_item" style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'flex-start',
+              marginBottom: 0
+            }}>
+              <div className="stat_label" style={{
+                fontWeight: '700',
+                fontSize: '10px',
+                marginBottom: '4px',
+                lineHeight: '1.2',
+                textTransform: 'uppercase',
+                letterSpacing: '0.5px'
+              }}>MARKETS</div>
+              <div className="stat_value" style={{
+                fontWeight: '400',
+                fontSize: '13px',
+                marginBottom: 0,
+                lineHeight: '1.4',
+                wordWrap: 'break-word',
+                width: '100%'
+              }}>
+                {getUserValue('markets', 'Miami, Los Angeles, New York').split(',').map((market, idx, arr) => (
+                  <div key={idx} style={{marginBottom: idx < arr.length - 1 ? '2px' : '0'}}>
+                    {market.trim()}
+                  </div>
+                ))}
+              </div>
             </div>
-            <div className="stat_item">
-              <div className="stat_label" style={{fontWeight: '700'}}>AVAILABLE FOR</div>
-              <div className="stat_value" style={{fontWeight: '400'}}>{getUserValue('availableFor', 'Beauty, Editorial, Glamour, Print')}</div>
+            <div className="stat_item" style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'flex-start',
+              marginBottom: 0
+            }}>
+              <div className="stat_label" style={{
+                fontWeight: '700',
+                fontSize: '10px',
+                marginBottom: '4px',
+                lineHeight: '1.2',
+                textTransform: 'uppercase',
+                letterSpacing: '0.5px'
+              }}>AVAILABLE FOR</div>
+              <div className="stat_value" style={{
+                fontWeight: '400',
+                fontSize: '13px',
+                marginBottom: 0,
+                lineHeight: '1.4',
+                wordWrap: 'break-word',
+                width: '100%'
+              }}>
+                {getUserValue('availableFor', 'Beauty, Editorial, Glamour, Print')}
+              </div>
             </div>
           </div>
           <div className="spacing_24" />
