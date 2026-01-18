@@ -161,12 +161,57 @@ export const createCustomLink = async (linkData) => {
       })
     });
 
-    const data = await response.json();
-    
-    if (!response.ok) {
+    // Handle 429 Too Many Requests
+    if (response.status === 429) {
+      console.warn('CustomLinks: 429 Too Many Requests - Rate limit exceeded');
       return {
         success: false,
-        error: data.message || data.error || 'Failed to create custom link'
+        error: 'Too many requests. Please wait a moment and try again.',
+        rateLimited: true
+      };
+    }
+
+    // Parse response body
+    let data;
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+      try {
+        data = await response.json();
+      } catch (parseError) {
+        console.error('Error parsing JSON response:', parseError);
+        const text = await response.text();
+        console.error('Response text:', text);
+        return {
+          success: false,
+          error: `Server error: Failed to parse response (Status: ${response.status})`,
+          rawResponse: text
+        };
+      }
+    } else {
+      const text = await response.text();
+      console.error('Non-JSON response received:', text);
+      return {
+        success: false,
+        error: `Server error: Invalid response format (Status: ${response.status})`,
+        rawResponse: text
+      };
+    }
+    
+    if (!response.ok) {
+      // Check for RLS error specifically
+      if (data.code === '42501') {
+        return {
+          success: false,
+          error: data.details || data.hint || 'Row Level Security policy violation. Please contact administrator.',
+          rlsError: true
+        };
+      }
+      
+      return {
+        success: false,
+        error: data.message || data.error || `Failed to create custom link (Status: ${response.status})`,
+        code: data.code,
+        details: data.details
       };
     }
 
