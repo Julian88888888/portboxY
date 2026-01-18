@@ -121,7 +121,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
       setCustomLinksLoading(false);
     };
     loadCustomLinks();
-  }, [user]);
+  }, [user?.id]); // Use user.id instead of user object to prevent unnecessary re-renders
 
   const handleTabChange = (tab) => {
     // Immediately call onTabChange to update the page in App.js

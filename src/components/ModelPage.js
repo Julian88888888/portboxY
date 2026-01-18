@@ -156,7 +156,7 @@ export default function JobRequestPopup() {
     };
 
     loadCustomLinks();
-  }, [user]);
+  }, [user?.id]); // Use user.id instead of user object to prevent unnecessary re-renders
 
   // Load images when album is selected
   const handleAlbumClick = async (album) => {

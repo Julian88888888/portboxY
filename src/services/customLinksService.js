@@ -78,6 +78,16 @@ export const getCustomLinks = async () => {
       headers
     });
 
+    // Handle 429 Too Many Requests
+    if (response.status === 429) {
+      console.warn('CustomLinks: 429 Too Many Requests - Rate limit exceeded');
+      return {
+        success: false,
+        error: 'Too many requests. Please wait a moment and try again.',
+        rateLimited: true
+      };
+    }
+
     const data = await response.json();
     
     if (!response.ok) {

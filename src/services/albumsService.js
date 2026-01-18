@@ -21,8 +21,6 @@ const getApiBaseUrl = () => {
   return 'http://localhost:5002/api';
 };
 
-const API_BASE_URL = getApiBaseUrl();
-
 /**
  * Normalize image URL
  * Converts relative URLs to absolute URLs using the backend server
@@ -42,19 +40,21 @@ export const normalizeImageUrl = (url) => {
   
   // If relative URL starting with /uploads, convert to absolute using backend
   if (cleanUrl.startsWith('/uploads/')) {
-    // If API_BASE_URL is already a full URL (production), use it
-    if (API_BASE_URL.startsWith('http://') || API_BASE_URL.startsWith('https://')) {
-      const backendBaseUrl = API_BASE_URL.replace('/api', '');
+    const apiBaseUrl = getApiBaseUrl();
+    // If API base URL is already a full URL (production), use it
+    if (apiBaseUrl.startsWith('http://') || apiBaseUrl.startsWith('https://')) {
+      const backendBaseUrl = apiBaseUrl.replace('/api', '');
       return `${backendBaseUrl}${cleanUrl}`;
     }
     // For localhost, use as is
-    const backendBaseUrl = API_BASE_URL.replace('/api', '');
+    const backendBaseUrl = apiBaseUrl.replace('/api', '');
     return `${backendBaseUrl}${cleanUrl}`;
   }
   
   // If relative URL without leading slash, assume it's relative to backend
   if (!cleanUrl.startsWith('/')) {
-    const backendBaseUrl = API_BASE_URL.replace('/api', '');
+    const apiBaseUrl = getApiBaseUrl();
+    const backendBaseUrl = apiBaseUrl.replace('/api', '');
     return `${backendBaseUrl}/uploads/${cleanUrl}`;
   }
   
@@ -110,7 +110,7 @@ export const createAlbum = async (albumData) => {
 
     const headers = await getAuthHeaders();
     
-    const response = await fetch(`${API_BASE_URL}/albums`, {
+    const response = await fetch(`${getApiBaseUrl()}/albums`, {
       method: 'POST',
       headers: headers,
       body: JSON.stringify({
@@ -146,7 +146,7 @@ export const createAlbum = async (albumData) => {
  */
 export const getAlbums = async () => {
   try {
-    const response = await fetch(`${API_BASE_URL}/albums`, {
+    const response = await fetch(`${getApiBaseUrl()}/albums`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json'
@@ -208,7 +208,7 @@ export const uploadImageToAlbum = async (albumId, imageFile) => {
 
     // Add albumId to URL as query parameter for Vercel compatibility
     // Vercel may have issues with nested dynamic routes, so we pass it in query too
-    const response = await fetch(`${API_BASE_URL}/albums/${albumId}/images?albumId=${encodeURIComponent(albumId)}`, {
+    const response = await fetch(`${getApiBaseUrl()}/albums/${albumId}/images?albumId=${encodeURIComponent(albumId)}`, {
       method: 'POST',
       headers: headers,
       body: formData
@@ -242,7 +242,7 @@ export const uploadImageToAlbum = async (albumId, imageFile) => {
  */
 export const getAlbumImages = async (albumId) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/albums/${albumId}/images`, {
+    const response = await fetch(`${getApiBaseUrl()}/albums/${albumId}/images`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json'
@@ -285,7 +285,7 @@ export const setCoverImage = async (albumId, imageId) => {
 
     const headers = await getAuthHeaders();
 
-    const response = await fetch(`${API_BASE_URL}/albums/${albumId}/cover`, {
+    const response = await fetch(`${getApiBaseUrl()}/albums/${albumId}/cover`, {
       method: 'PUT',
       headers: headers,
       body: JSON.stringify({
@@ -324,7 +324,7 @@ export const deleteImage = async (imageId) => {
   try {
     const headers = await getAuthHeaders();
 
-    const response = await fetch(`${API_BASE_URL}/images/${imageId}`, {
+    const response = await fetch(`${getApiBaseUrl()}/images/${imageId}`, {
       method: 'DELETE',
       headers: headers
     });
@@ -359,7 +359,7 @@ export const deleteAlbum = async (albumId) => {
   try {
     const headers = await getAuthHeaders();
 
-    const response = await fetch(`${API_BASE_URL}/albums/${albumId}`, {
+    const response = await fetch(`${getApiBaseUrl()}/albums/${albumId}`, {
       method: 'DELETE',
       headers: headers
     });
