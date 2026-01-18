@@ -1,6 +1,22 @@
 import supabase from './supabase';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5002/api';
+// Auto-detect API URL based on environment
+const getApiBaseUrl = () => {
+  // If REACT_APP_API_URL is explicitly set, use it
+  if (process.env.REACT_APP_API_URL) {
+    return process.env.REACT_APP_API_URL;
+  }
+  
+  // In production (Vercel), use the same domain
+  if (typeof window !== 'undefined' && window.location.origin.includes('vercel.app')) {
+    return `${window.location.origin}/api`;
+  }
+  
+  // Default to localhost for development
+  return 'http://localhost:5002/api';
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 class ApiService {
   constructor() {

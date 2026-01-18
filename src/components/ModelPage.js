@@ -421,187 +421,106 @@ export default function JobRequestPopup() {
               </svg></div>
             </a>
           </div>
-          <div className="industry_stats" style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(4, 1fr)',
-            gap: '12px',
-            margin: '16px 0'
-          }}>
-            <div className="stat_item" style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'flex-start',
-              marginBottom: 0
-            }}>
-              <div className="stat_label" style={{
-                fontWeight: '700',
-                fontSize: '10px',
-                marginBottom: '4px',
-                lineHeight: '1.2',
-                textTransform: 'uppercase',
-                letterSpacing: '0.5px'
-              }}>INDUSTRY</div>
-              <div className="stat_value" style={{
-                fontWeight: '400',
-                fontSize: '13px',
-                marginBottom: 0,
-                lineHeight: '1.4',
-                wordWrap: 'break-word',
-                width: '100%'
-              }}>{getUserValue('industry', 'Fashion')}</div>
+          <div className="stats_wrap">
+            <div className="stat_item">
+              <div className="stat_title">INDUSTRY</div>
+              <div className="stat_descript">{getUserValue('industry', 'Fashion')}</div>
             </div>
-            <div className="stat_item" style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'flex-start',
-              marginBottom: 0
-            }}>
-              <div className="stat_label" style={{
-                fontWeight: '700',
-                fontSize: '10px',
-                marginBottom: '4px',
-                lineHeight: '1.2',
-                textTransform: 'uppercase',
-                letterSpacing: '0.5px'
-              }}>STATUS</div>
-              <div className="stat_value" style={{
-                fontWeight: '400',
-                fontSize: '13px',
-                marginBottom: 0,
-                lineHeight: '1.4',
-                wordWrap: 'break-word',
-                width: '100%'
-              }}>{getUserValue('status', 'Professional')}</div>
+            <div className="stat_item">
+              <div className="stat_title">STATUS</div>
+              <div className="stat_descript">{getUserValue('status', 'Professional')}</div>
             </div>
-            <div className="stat_item" style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'flex-start',
-              marginBottom: 0
-            }}>
-              <div className="stat_label" style={{
-                fontWeight: '700',
-                fontSize: '10px',
-                marginBottom: '4px',
-                lineHeight: '1.2',
-                textTransform: 'uppercase',
-                letterSpacing: '0.5px'
-              }}>MARKETS</div>
-              <div className="stat_value" style={{
-                fontWeight: '400',
-                fontSize: '13px',
-                marginBottom: 0,
-                lineHeight: '1.4',
-                wordWrap: 'break-word',
-                width: '100%'
-              }}>
+            <div className="stat_item">
+              <div className="stat_title">MARKETS</div>
+              <div className="stat_descript">
                 {getUserValue('markets', 'Miami, Los Angeles, New York').split(',').map((market, idx, arr) => (
-                  <div key={idx} style={{marginBottom: idx < arr.length - 1 ? '2px' : '0'}}>
+                  <div key={idx}>
                     {market.trim()}
                   </div>
                 ))}
               </div>
             </div>
-            <div className="stat_item" style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'flex-start',
-              marginBottom: 0
-            }}>
-              <div className="stat_label" style={{
-                fontWeight: '700',
-                fontSize: '10px',
-                marginBottom: '4px',
-                lineHeight: '1.2',
-                textTransform: 'uppercase',
-                letterSpacing: '0.5px'
-              }}>AVAILABLE FOR</div>
-              <div className="stat_value" style={{
-                fontWeight: '400',
-                fontSize: '13px',
-                marginBottom: 0,
-                lineHeight: '1.4',
-                wordWrap: 'break-word',
-                width: '100%'
-              }}>
+            <div className="stat_item">
+              <div className="stat_title">AVAILABLE FOR</div>
+              <div className="stat_descript">
                 {getUserValue('availableFor', 'Beauty, Editorial, Glamour, Print')}
               </div>
             </div>
           </div>
           <div className="spacing_24" />
           <div className="stat_container">
-            <div className="personal_stats">
+            <div className="stats_wrap_bottom">
               <div className="stat_item">
-                <div className="stat_label" style={{fontWeight: '700'}}>HEIGHT</div>
-                <div className="stat_value" style={{fontWeight: '400'}}>
+                <div className="stat_title">HEIGHT</div>
+                <div className="stat_descript">
                   {getUserValue('heightFeet') && getUserValue('heightInches')
                     ? `${getUserValue('heightFeet')}'${getUserValue('heightInches')}"`
                     : "5'11\""}
                 </div>
               </div>
               <div className="stat_item">
-                <div className="stat_label" style={{fontWeight: '700'}}>WEIGHT</div>
-                <div className="stat_value" style={{fontWeight: '400'}}>
+                <div className="stat_title">WEIGHT</div>
+                <div className="stat_descript">
                   {getUserValue('weight') 
                     ? `${getUserValue('weight')} ${getUserValue('weightUnit', 'lbs')}`
                     : '135 lbs'}
                 </div>
               </div>
               <div className="stat_item">
-                <div className="stat_label" style={{fontWeight: '700'}}>BUST</div>
-                <div className="stat_value" style={{fontWeight: '400'}}>
+                <div className="stat_title">BUST</div>
+                <div className="stat_descript">
                   {getUserValue('bust') 
                     ? `${getUserValue('bust')}${getUserValue('bustSize', '')}`
                     : '23A'}
                 </div>
               </div>
               <div className="stat_item">
-                <div className="stat_label" style={{fontWeight: '700'}}>WAIST</div>
-                <div className="stat_value" style={{fontWeight: '400'}}>
+                <div className="stat_title">WAIST</div>
+                <div className="stat_descript">
                   {getUserValue('waist') 
                     ? `${getUserValue('waist')} ${getUserValue('waistUnit', 'in')}`
                     : '26 in'}
                 </div>
               </div>
               <div className="stat_item">
-                <div className="stat_label" style={{fontWeight: '700'}}>HIPS</div>
-                <div className="stat_value" style={{fontWeight: '400'}}>
+                <div className="stat_title">HIPS</div>
+                <div className="stat_descript">
                   {getUserValue('hips') 
                     ? `${getUserValue('hips')} ${getUserValue('hipsUnit', 'in')}`
                     : '36 in'}
                 </div>
               </div>
               <div className="stat_item">
-                <div className="stat_label" style={{fontWeight: '700'}}>SHOE</div>
-                <div className="stat_value" style={{fontWeight: '400'}}>
+                <div className="stat_title">SHOE</div>
+                <div className="stat_descript">
                   {getUserValue('shoe') 
                     ? `${getUserValue('shoe')} ${getUserValue('shoeUnit', 'US')}`
                     : '7 US'}
                 </div>
               </div>
               <div className="stat_item">
-                <div className="stat_label" style={{fontWeight: '700'}}>HAIR COLOR</div>
-                <div className="stat_value" style={{fontWeight: '400'}}>{getUserValue('hairColor', 'Black')}</div>
+                <div className="stat_title">HAIR COLOR</div>
+                <div className="stat_descript">{getUserValue('hairColor', 'Black')}</div>
               </div>
               <div className="stat_item">
-                <div className="stat_label" style={{fontWeight: '700'}}>HAIR LENGTH</div>
-                <div className="stat_value" style={{fontWeight: '400'}}>{getUserValue('hairLength', 'Long')}</div>
+                <div className="stat_title">HAIR LENGTH</div>
+                <div className="stat_descript">{getUserValue('hairLength', 'Long')}</div>
               </div>
               <div className="stat_item">
-                <div className="stat_label" style={{fontWeight: '700'}}>EYE COLOR</div>
-                <div className="stat_value" style={{fontWeight: '400'}}>{getUserValue('eyeColor', 'Brown')}</div>
+                <div className="stat_title">EYE COLOR</div>
+                <div className="stat_descript">{getUserValue('eyeColor', 'Brown')}</div>
               </div>
               <div className="stat_item">
-                <div className="stat_label" style={{fontWeight: '700'}}>AGE</div>
-                <div className="stat_value" style={{fontWeight: '400'}}>{getUserValue('age', '26')}</div>
+                <div className="stat_title">AGE</div>
+                <div className="stat_descript">{getUserValue('age', '26')}</div>
               </div>
               <div className="stat_item">
-                <div className="stat_label" style={{fontWeight: '700'}}>GENDER</div>
-                <div className="stat_value" style={{fontWeight: '400'}}>{getUserValue('gender', 'Female')}</div>
+                <div className="stat_title">GENDER</div>
+                <div className="stat_descript">{getUserValue('gender', 'Female')}</div>
               </div>
               <div className="stat_item">
-                <div className="stat_label" style={{fontWeight: '700'}}>ETHNICITY</div>
-                <div className="stat_value" style={{fontWeight: '400'}}>{getUserValue('ethnicity', 'White')}</div>
+                <div className="stat_title">ETHNICITY</div>
+                <div className="stat_descript">{getUserValue('ethnicity', 'White')}</div>
               </div>
             </div>
           </div>
@@ -782,7 +701,7 @@ export default function JobRequestPopup() {
                           e.target.src = '/images/fashion-photo.jpg';
                         }}
                       />
-                      <div className="discount_tag">Album</div>
+                      <div className="discount_tag-top">Album</div>
                     </div>
                     <div className="spacing_16"></div>
                     <div className="font_weight_bold">{album.title || 'Untitled'}</div>

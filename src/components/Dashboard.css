@@ -257,7 +257,7 @@
 
 .w-select {
   width: 100%;
-  padding: 12px 16px;
+  padding: 6px 16px;
   border: 2px solid #e5e5e5;
   border-radius: 8px;
   font-size: 16px;
@@ -348,17 +348,15 @@
 }
 
 .product_item {
-  background-color: #fff;
   border-radius: 12px;
   overflow: hidden;
   text-decoration: none;
   color: var(--black, #070707);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transition: transform 0.3s ease;
 }
 
 .product_item:hover {
   transform: translateY(-4px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .product_image_wrapper {

@@ -575,121 +575,32 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                     </div>
                     <div className="w-form">
                       <div style={{marginBottom: '12px'}}>
-                        <div className="industry_stats" style={{
+                        <div className="stats_wrap" style={{
                           display: 'grid',
-                          gridTemplateColumns: 'repeat(4, 1fr)',
-                          gap: '8px',
-                          margin: '8px 0'
+                          maxWidth: '500px',
+                          margin: '0 auto'
                         }}>
-                          <div className="stat_item" style={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'flex-start',
-                            marginBottom: 0,
-                            padding: '0'
-                          }}>
-                            <div className="stat_label" style={{
-                              fontWeight: '600',
-                              fontSize: '9px',
-                              marginBottom: '2px',
-                              lineHeight: '1.1',
-                              textTransform: 'uppercase',
-                              letterSpacing: '0.3px',
-                              color: '#666'
-                            }}>INDUSTRY</div>
-                            <div className="stat_value" style={{
-                              fontWeight: '400',
-                              fontSize: '12px',
-                              marginBottom: 0,
-                              lineHeight: '1.3',
-                              wordWrap: 'break-word',
-                              width: '100%',
-                              color: '#333'
-                            }}>{formData.industry || 'Fashion'}</div>
+                          <div className="stat_item">
+                            <div className="stat_label">INDUSTRY</div>
+                            <div className="stat_value">{formData.industry || 'Fashion'}</div>
                           </div>
-                          <div className="stat_item" style={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'flex-start',
-                            marginBottom: 0,
-                            padding: '0'
-                          }}>
-                            <div className="stat_label" style={{
-                              fontWeight: '600',
-                              fontSize: '9px',
-                              marginBottom: '2px',
-                              lineHeight: '1.1',
-                              textTransform: 'uppercase',
-                              letterSpacing: '0.3px',
-                              color: '#666'
-                            }}>STATUS</div>
-                            <div className="stat_value" style={{
-                              fontWeight: '400',
-                              fontSize: '12px',
-                              marginBottom: 0,
-                              lineHeight: '1.3',
-                              wordWrap: 'break-word',
-                              width: '100%',
-                              color: '#333'
-                            }}>{formData.status || 'Professional'}</div>
+                          <div className="stat_item">
+                            <div className="stat_label">STATUS</div>
+                            <div className="stat_value">{formData.status || 'Professional'}</div>
                           </div>
-                          <div className="stat_item" style={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'flex-start',
-                            marginBottom: 0,
-                            padding: '0'
-                          }}>
-                            <div className="stat_label" style={{
-                              fontWeight: '600',
-                              fontSize: '9px',
-                              marginBottom: '2px',
-                              lineHeight: '1.1',
-                              textTransform: 'uppercase',
-                              letterSpacing: '0.3px',
-                              color: '#666'
-                            }}>MARKETS</div>
-                            <div className="stat_value" style={{
-                              fontWeight: '400',
-                              fontSize: '12px',
-                              marginBottom: 0,
-                              lineHeight: '1.3',
-                              wordWrap: 'break-word',
-                              width: '100%',
-                              color: '#333'
-                            }}>
+                          <div className="stat_item">
+                            <div className="stat_label">MARKETS</div>
+                            <div className="stat_value">
                               {(formData.markets || 'Miami, Los Angeles, New York').split(',').map((market, idx, arr) => (
-                                <div key={idx} style={{marginBottom: idx < arr.length - 1 ? '1px' : '0', fontSize: '12px'}}>
+                                <div key={idx}>
                                   {market.trim()}
                                 </div>
                               ))}
                             </div>
                           </div>
-                          <div className="stat_item" style={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'flex-start',
-                            marginBottom: 0,
-                            padding: '0'
-                          }}>
-                            <div className="stat_label" style={{
-                              fontWeight: '600',
-                              fontSize: '9px',
-                              marginBottom: '2px',
-                              lineHeight: '1.1',
-                              textTransform: 'uppercase',
-                              letterSpacing: '0.3px',
-                              color: '#666'
-                            }}>AVAILABLE FOR</div>
-                            <div className="stat_value" style={{
-                              fontWeight: '400',
-                              fontSize: '12px',
-                              marginBottom: 0,
-                              lineHeight: '1.3',
-                              wordWrap: 'break-word',
-                              width: '100%',
-                              color: '#333'
-                            }}>{formData.availableFor || 'Beauty, Editorial, Glamour, Print'}</div>
+                          <div className="stat_item">
+                            <div className="stat_label">AVAILABLE FOR</div>
+                            <div className="stat_value">{formData.availableFor || 'Beauty, Editorial, Glamour, Print'}</div>
                           </div>
                         </div>
                       </div>
