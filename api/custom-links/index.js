@@ -101,7 +101,19 @@ module.exports = async (req, res) => {
 
     // POST /api/custom-links - Create a new custom link
     if (req.method === 'POST') {
-      const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+      // Parse request body
+      let body;
+      try {
+        body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+      } catch (parseError) {
+        console.error('Error parsing request body:', parseError);
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid JSON in request body',
+          error: parseError.message
+        });
+      }
+
       const { title, url, icon_url, enabled } = body || {};
 
       // Validate required fields
@@ -122,24 +134,36 @@ module.exports = async (req, res) => {
       // Validate URL format
       try {
         new URL(url);
-      } catch {
+      } catch (urlError) {
         return res.status(400).json({
           success: false,
-          message: 'Invalid URL format'
+          message: 'Invalid URL format',
+          error: urlError.message
         });
       }
 
       // Get current max display_order for this user
-      const { data: existingLinks } = await supabase
-        .from('custom_links')
-        .select('display_order')
-        .eq('user_id', userId)
-        .order('display_order', { ascending: false })
-        .limit(1);
+      let nextOrder = 0;
+      try {
+        const { data: existingLinks, error: selectError } = await supabase
+          .from('custom_links')
+          .select('display_order')
+          .eq('user_id', userId)
+          .order('display_order', { ascending: false })
+          .limit(1);
 
-      const nextOrder = existingLinks && existingLinks.length > 0
-        ? (existingLinks[0].display_order || 0) + 1
-        : 0;
+        if (selectError) {
+          console.error('Error fetching existing links:', selectError);
+          // Continue with nextOrder = 0 if there's an error
+        } else {
+          nextOrder = existingLinks && existingLinks.length > 0
+            ? (existingLinks[0].display_order || 0) + 1
+            : 0;
+        }
+      } catch (orderError) {
+        console.error('Error calculating display order:', orderError);
+        // Continue with nextOrder = 0
+      }
 
       const { data, error } = await supabase
         .from('custom_links')
@@ -155,11 +179,22 @@ module.exports = async (req, res) => {
         .single();
 
       if (error) {
-        console.error('Database error:', error);
+        console.error('Database error creating custom link:', error);
+        console.error('Error details:', JSON.stringify(error, null, 2));
         return res.status(500).json({
           success: false,
           message: 'Failed to create custom link',
-          error: error.message
+          error: error.message || 'Database error',
+          details: error.details || null,
+          code: error.code || null
+        });
+      }
+
+      if (!data) {
+        console.error('No data returned from insert operation');
+        return res.status(500).json({
+          success: false,
+          message: 'Failed to create custom link - no data returned'
         });
       }
 
@@ -316,9 +351,17 @@ module.exports = async (req, res) => {
 
   } catch (error) {
     console.error('Handler error:', error);
+    console.error('Error stack:', error.stack);
+    console.error('Request details:', {
+      method: req.method,
+      url: req.url,
+      headers: req.headers,
+      body: req.body
+    });
     return res.status(500).json({
       success: false,
-      error: error.message || 'Internal server error'
+      error: error.message || 'Internal server error',
+      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
 };
