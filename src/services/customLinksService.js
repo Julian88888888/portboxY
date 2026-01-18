@@ -16,8 +16,6 @@ const getApiBaseUrl = () => {
   return 'http://localhost:5002/api';
 };
 
-const API_BASE_URL = getApiBaseUrl();
-
 /**
  * Get auth headers with Supabase token
  */
@@ -75,7 +73,7 @@ export const getCustomLinks = async () => {
   try {
     const headers = await getAuthHeaders();
     
-    const response = await fetch(`${API_BASE_URL}/custom-links`, {
+    const response = await fetch(`${getApiBaseUrl()}/custom-links`, {
       method: 'GET',
       headers
     });
@@ -142,7 +140,7 @@ export const createCustomLink = async (linkData) => {
     }
 
     const headers = await getAuthHeaders();
-    const response = await fetch(`${API_BASE_URL}/custom-links`, {
+    const response = await fetch(`${getApiBaseUrl()}/custom-links`, {
       method: 'POST',
       headers,
       body: JSON.stringify({
@@ -226,7 +224,7 @@ export const updateCustomLink = async (linkId, linkData) => {
     }
 
     const headers = await getAuthHeaders();
-    const response = await fetch(`${API_BASE_URL}/custom-links/${linkId}`, {
+    const response = await fetch(`${getApiBaseUrl()}/custom-links/${linkId}`, {
       method: 'PUT',
       headers,
       body: JSON.stringify(updateData)
@@ -260,7 +258,7 @@ export const updateCustomLink = async (linkId, linkData) => {
 export const deleteCustomLink = async (linkId) => {
   try {
     const headers = await getAuthHeaders();
-    const response = await fetch(`${API_BASE_URL}/custom-links/${linkId}`, {
+    const response = await fetch(`${getApiBaseUrl()}/custom-links/${linkId}`, {
       method: 'DELETE',
       headers
     });
