@@ -20,6 +20,7 @@ const supabase = supabaseUrl && dbKey
 
 /**
  * Verify Supabase token from Authorization header
+ * Uses service role key for token verification (needed for getUser)
  */
 async function verifyToken(req) {
   const authHeader = req.headers['authorization'];
@@ -34,12 +35,16 @@ async function verifyToken(req) {
   }
 
   try {
+    // For getUser, we can use service role or anon key - both work
+    // But service role is preferred for reliability
     const { data: { user }, error } = await supabase.auth.getUser(token);
     if (error || !user) {
+      console.error('Token verification error:', error);
       return { error: 'Invalid or expired token', user: null };
     }
     return { error: null, user };
   } catch (error) {
+    console.error('Token verification exception:', error);
     return { error: 'Token verification failed', user: null };
   }
 }
@@ -63,10 +68,22 @@ module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
   if (!supabase) {
+    console.error('Supabase not initialized:', {
+      supabaseUrl: supabaseUrl ? 'SET' : 'NOT SET',
+      serviceRoleKey: serviceRoleKey ? 'SET' : 'NOT SET',
+      anonKey: anonKey ? 'SET' : 'NOT SET'
+    });
     return res.status(500).json({
       success: false,
       error: 'Supabase not configured. Please set REACT_APP_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY (or REACT_APP_SUPABASE_ANON_KEY) environment variables.'
     });
+  }
+
+  // Log which key is being used (for debugging)
+  if (!serviceRoleKey && anonKey) {
+    console.warn('⚠️  Using ANON_KEY - RLS policies will be enforced. Consider using SUPABASE_SERVICE_ROLE_KEY.');
+  } else if (serviceRoleKey) {
+    console.log('✅ Using SERVICE_ROLE_KEY - RLS policies will be bypassed.');
   }
 
   try {
@@ -80,6 +97,7 @@ module.exports = async (req, res) => {
     }
 
     const userId = user.id;
+    console.log('User authenticated:', userId);
 
     // GET /api/custom-links - Get all custom links for current user
     if (req.method === 'GET') {
@@ -172,6 +190,14 @@ module.exports = async (req, res) => {
 
       // Use Service Role Key for database operations (bypasses RLS)
       // We've already verified the user is authenticated, so it's safe to bypass RLS
+      
+      console.log('Attempting to insert custom link:', {
+        userId,
+        title: title.trim(),
+        usingServiceRole: !!serviceRoleKey,
+        usingAnonKey: !serviceRoleKey && !!anonKey
+      });
+      
       const { data, error } = await supabase
         .from('custom_links')
         .insert({
@@ -187,7 +213,22 @@ module.exports = async (req, res) => {
 
       if (error) {
         console.error('Database error creating custom link:', error);
-        console.error('Error details:', JSON.stringify(error, null, 2));
+        console.error('Error code:', error.code);
+        console.error('Error message:', error.message);
+        console.error('Using key:', serviceRoleKey ? 'SERVICE_ROLE_KEY' : (anonKey ? 'ANON_KEY' : 'NONE'));
+        
+        // Special handling for RLS errors
+        if (error.code === '42501') {
+          return res.status(500).json({
+            success: false,
+            message: 'Failed to create custom link - RLS policy violation',
+            error: error.message || 'Row-level security policy violation',
+            details: 'Row Level Security policy is blocking this operation. SUPABASE_SERVICE_ROLE_KEY is required to bypass RLS.',
+            code: '42501',
+            hint: 'Set SUPABASE_SERVICE_ROLE_KEY in Vercel Dashboard → Settings → Environment Variables and redeploy'
+          });
+        }
+        
         return res.status(500).json({
           success: false,
           message: 'Failed to create custom link',
