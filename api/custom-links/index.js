@@ -5,12 +5,17 @@
 
 const { createClient } = require('@supabase/supabase-js');
 
-// Initialize Supabase client
+// Initialize Supabase clients
 const supabaseUrl = process.env.REACT_APP_SUPABASE_URL || process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.REACT_APP_SUPABASE_ANON_KEY;
+const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const anonKey = process.env.REACT_APP_SUPABASE_ANON_KEY;
 
-const supabase = supabaseUrl && supabaseKey
-  ? createClient(supabaseUrl, supabaseKey)
+// Use Service Role Key for database operations (bypasses RLS)
+// If not available, fall back to anon key (will be subject to RLS policies)
+const dbKey = serviceRoleKey || anonKey;
+
+const supabase = supabaseUrl && dbKey
+  ? createClient(supabaseUrl, dbKey)
   : null;
 
 /**
@@ -165,6 +170,8 @@ module.exports = async (req, res) => {
         // Continue with nextOrder = 0
       }
 
+      // Use Service Role Key for database operations (bypasses RLS)
+      // We've already verified the user is authenticated, so it's safe to bypass RLS
       const { data, error } = await supabase
         .from('custom_links')
         .insert({
