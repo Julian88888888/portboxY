@@ -745,7 +745,28 @@ export default function ProfileSettings() {
                 href="#"
                 onClick={(e) => {
                   e.preventDefault();
-                  setFormData(prev => ({ ...prev, job_type: job.id }));
+                  const newJobType = job.id;
+                  setFormData(prev => ({ ...prev, job_type: newJobType }));
+                  // Save immediately when job type is selected
+                  updateProfile.mutate({ job_type: newJobType }, {
+                    onSuccess: () => {
+                      setSaveStatus('saved');
+                      setTimeout(() => setSaveStatus(''), 2000);
+                      setErrors(prev => {
+                        const newErrors = { ...prev };
+                        delete newErrors.job_type;
+                        return newErrors;
+                      });
+                    },
+                    onError: (error) => {
+                      console.error('Error updating job_type:', error);
+                      setFormData(prev => ({ ...prev, job_type: formData.job_type }));
+                      setErrors(prev => ({ 
+                        ...prev, 
+                        job_type: error.message || 'Failed to update job type' 
+                      }));
+                    }
+                  });
                 }}
                 className={`flex_wrapper flex_distribute link_block small_choice w-inline-block ${formData.job_type === job.id ? 'highlight_type' : ''}`}
                 style={{minWidth: '140px'}}
@@ -782,6 +803,27 @@ export default function ProfileSettings() {
           </div>
           {errors.username && (
             <p style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>{errors.username}</p>
+          )}
+          {formData.username && (
+            <div style={{ marginTop: '8px', marginBottom: '16px' }}>
+              <label style={{ fontSize: '12px', color: '#666', display: 'block', marginBottom: '4px' }}>
+                Your Profile URL:
+              </label>
+              <div style={{ 
+                padding: '8px 12px', 
+                backgroundColor: '#f5f5f5', 
+                borderRadius: '4px',
+                border: '1px solid #e0e0e0',
+                fontFamily: 'monospace',
+                fontSize: '14px',
+                color: '#333',
+                display: 'inline-block',
+                width: '100%',
+                boxSizing: 'border-box'
+              }}>
+                {window.location.origin}/model/{formData.username}
+              </div>
+            </div>
           )}
           
           <label htmlFor="display_name">Name</label>

@@ -30,7 +30,7 @@ function AppContent() {
       <div className={`main-content ${sidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
         <Routes>
           <Route path="/" element={<MainPage />} />
-          <Route path="/model" element={<ModelPage />} />
+          <Route path="/model/:username?" element={<ModelPage />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/portfolio" element={<PortfolioPage />} />
           <Route path="/bookings" element={<BookingsPage />} />

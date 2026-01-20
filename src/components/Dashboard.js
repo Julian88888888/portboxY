@@ -501,16 +501,20 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                       </div>
                       <div className="text_wrapper text_align_center">
                         <div className="flex_wrapper flex_center">
-                          <h3>{formData.name || 'Mary Adams'} </h3>
+                          <h3>{profile?.display_name || formData.name || 'User Name'}</h3>
                           <a href="#" className="button_icon accent_button small_btn w-inline-block">
-                            <div>{formData.jobType}</div>
+                            <div>{profile?.job_type || formData.jobType || 'Model'}</div>
                           </a>
                         </div>
                         <div className="spacing_8"></div>
-                        <p className="username_txt">@{formData.username || 'maryadams'}</p>
-                        <p className="text_color_grey text_width_medium">
-                          {formData.bio || 'I am a professional model with many years of experience working for top brands all over the world.'}
-                        </p>
+                        {(profile?.username || formData.username) && (
+                          <p className="username_txt">@{profile?.username || formData.username}</p>
+                        )}
+                        {profile?.show_description !== false && (profile?.description || formData.bio) && (
+                          <p className="text_color_grey text_width_medium">
+                            {profile?.description || formData.bio || 'I am a professional model with many years of experience working for top brands all over the world.'}
+                          </p>
+                        )}
                       </div>
                     </div>
                     <div className="spacing_24"></div>

@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../contexts/AuthContext';
 import {
   getProfile,
+  getProfileByUsername,
   upsertProfile,
   checkUsernameAvailability,
   uploadAvatar,
@@ -22,6 +23,18 @@ export const useProfile = () => {
     queryKey: ['profile'],
     queryFn: getProfile,
     enabled: isAuthenticated && !!user,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
+};
+
+/**
+ * React Query hook to get profile by username (public profile)
+ */
+export const useProfileByUsername = (username) => {
+  return useQuery({
+    queryKey: ['publicProfile', username],
+    queryFn: () => getProfileByUsername(username),
+    enabled: !!username,
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 };

@@ -34,6 +34,64 @@ export const getProfile = async () => {
 };
 
 /**
+ * Get profile by username (public, no authentication required)
+ */
+export const getProfileByUsername = async (username) => {
+  try {
+    if (!username || typeof username !== 'string') {
+      throw new Error('Username is required');
+    }
+
+    // Clean username (remove @ if present)
+    const cleanedUsername = username.trim().replace(/^@+/, '');
+
+    // Use direct REST API call with proper headers for public access
+    const supabaseUrl = process.env.REACT_APP_SUPABASE_URL;
+    const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY;
+
+    if (!supabaseUrl || !supabaseAnonKey) {
+      throw new Error('Supabase configuration is missing');
+    }
+
+    const response = await fetch(
+      `${supabaseUrl}/rest/v1/profiles?username=eq.${encodeURIComponent(cleanedUsername)}&select=*`,
+      {
+        method: 'GET',
+        headers: {
+          'apikey': supabaseAnonKey,
+          'Authorization': `Bearer ${supabaseAnonKey}`,
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'Prefer': 'return=representation'
+        }
+      }
+    );
+
+    if (!response.ok) {
+      if (response.status === 404 || response.status === 406) {
+        // Profile not found or no data
+        const text = await response.text();
+        console.log('Profile not found response:', text);
+        return null;
+      }
+      throw new Error(`Failed to fetch profile: ${response.status} ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    
+    // Supabase REST API returns an array, we need the first item
+    if (Array.isArray(data) && data.length > 0) {
+      return data[0];
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('Error getting profile by username:', error);
+    throw error;
+  }
+};
+
+/**
  * Upsert (insert or update) profile
  */
 export const upsertProfile = async (payload) => {
@@ -44,11 +102,60 @@ export const upsertProfile = async (payload) => {
       throw new Error('User not authenticated');
     }
 
+    // List of allowed fields in profiles table
+    const allowedFields = [
+      'username',
+      'display_name',
+      'job_type',
+      'description',
+      'profile_photo_path',
+      'profile_header_path',
+      'header_photo_path', // Support both names for compatibility
+      'show_profile_photo',
+      'show_profile_header',
+      'show_header_photo', // Support both names for compatibility
+      'show_description'
+    ];
+
+    // Filter payload to only include allowed fields and handle field name mapping
+    const cleanedPayload = {};
+    
+    for (const key in payload) {
+      if (allowedFields.includes(key)) {
+        let value = payload[key];
+        
+        // Handle field name mapping for compatibility
+        if (key === 'header_photo_path') {
+          cleanedPayload.profile_header_path = value || null;
+          continue;
+        } else if (key === 'show_header_photo') {
+          cleanedPayload.show_profile_header = value;
+          continue;
+        }
+        
+        // Include all values (including empty strings and null for optional fields)
+        // Only skip undefined values
+        if (value !== undefined) {
+          // Convert empty strings to null for optional text fields
+          if (value === '' && (key === 'display_name' || key === 'description')) {
+            cleanedPayload[key] = null;
+          } else {
+            cleanedPayload[key] = value;
+          }
+        }
+      }
+    }
+
+    // Build final payload - include all non-undefined values
+    const finalPayload = {
+      ...cleanedPayload
+    };
+
     const { data, error } = await supabase
       .from('profiles')
       .upsert({
         id: user.id,
-        ...payload,
+        ...finalPayload,
         updated_at: new Date().toISOString(),
       }, {
         onConflict: 'id',
@@ -57,6 +164,7 @@ export const upsertProfile = async (payload) => {
       .single();
 
     if (error) {
+      console.error('Supabase upsert error:', error);
       throw error;
     }
 
