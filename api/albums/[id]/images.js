@@ -143,7 +143,7 @@ module.exports = async (req, res) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
     res.setHeader('Access-Control-Max-Age', '86400');
     return res.status(200).end();
@@ -151,7 +151,7 @@ module.exports = async (req, res) => {
 
   // Set CORS headers for all responses
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
   if (!supabase) {
@@ -161,30 +161,65 @@ module.exports = async (req, res) => {
     });
   }
 
-  // Only allow POST
-  if (req.method !== 'POST') {
-    return res.status(405).json({
-      success: false,
-      error: 'Method not allowed'
-    });
-  }
-
   try {
-    // Verify authentication
-    const { error: authError, user } = await verifyToken(req);
-    if (authError || !user) {
-      return res.status(401).json({
-        success: false,
-        error: authError || 'Unauthorized'
+    // GET /api/albums/:id/images - Get all images of an album
+    if (req.method === 'GET') {
+      // Get album ID from URL
+      let albumId = req.query.id || req.query.albumId;
+      
+      // If not in query, parse from URL path
+      if (!albumId) {
+        const urlParts = req.url.split('/').filter(Boolean);
+        const albumsIndex = urlParts.indexOf('albums');
+        if (albumsIndex >= 0 && albumsIndex < urlParts.length - 1) {
+          albumId = urlParts[albumsIndex + 1];
+        }
+      }
+
+      if (!albumId) {
+        return res.status(400).json({
+          success: false,
+          error: 'Album ID is required'
+        });
+      }
+
+      // Get all images for the album
+      const { data: images, error: imagesError } = await supabase
+        .from('images')
+        .select('id, album_id, url, created_at')
+        .eq('album_id', albumId)
+        .order('created_at', { ascending: false });
+
+      if (imagesError) {
+        console.error('Database error:', imagesError);
+        return res.status(500).json({
+          success: false,
+          error: imagesError.message || 'Failed to fetch images'
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        data: images || []
       });
     }
 
-    // Get album ID from URL
-    // In Vercel, for nested dynamic routes, we need to try multiple methods
-    // 1. Try query parameter (most reliable for Vercel)
-    // 2. Try dynamic route param
-    // 3. Parse from URL path
-    let albumId = req.query.albumId || req.query.id;
+    // POST /api/albums/:id/images - Upload image to album
+    if (req.method === 'POST') {
+      // Verify authentication
+      const { error: authError, user } = await verifyToken(req);
+      if (authError || !user) {
+        return res.status(401).json({
+          success: false,
+          error: authError || 'Unauthorized'
+        });
+      }
+
+      // Get album ID from URL
+    // In Vercel, for nested dynamic routes like /api/albums/[id]/images.js
+    // The [id] parameter is available in req.query.id
+    // Also check query parameter albumId as fallback
+    let albumId = req.query.id || req.query.albumId;
     
     // If not in query, parse from URL path
     if (!albumId) {
@@ -303,8 +338,14 @@ module.exports = async (req, res) => {
       }
     });
 
+    // Method not allowed
+    return res.status(405).json({
+      success: false,
+      error: 'Method not allowed'
+    });
+
   } catch (error) {
-    console.error('Upload image error:', error);
+    console.error('Handler error:', error);
     return res.status(500).json({
       success: false,
       error: error.message || 'Internal server error'
