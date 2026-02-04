@@ -169,10 +169,17 @@ module.exports = async (req, res) => {
       
       // If not in query, parse from URL path
       if (!albumId) {
-        const urlParts = req.url.split('/').filter(Boolean);
-        const albumsIndex = urlParts.indexOf('albums');
-        if (albumsIndex >= 0 && albumsIndex < urlParts.length - 1) {
-          albumId = urlParts[albumsIndex + 1];
+        // Try parsing from req.url using regex
+        const urlMatch = req.url.match(/\/albums\/([^\/]+)\/images/);
+        if (urlMatch) {
+          albumId = urlMatch[1];
+        } else {
+          // Fallback: parse from URL parts
+          const urlParts = req.url.split('/').filter(Boolean);
+          const albumsIndex = urlParts.indexOf('albums');
+          if (albumsIndex >= 0 && albumsIndex < urlParts.length - 1) {
+            albumId = urlParts[albumsIndex + 1];
+          }
         }
       }
 
@@ -216,27 +223,34 @@ module.exports = async (req, res) => {
       }
 
       // Get album ID from URL
-    // In Vercel, for nested dynamic routes like /api/albums/[id]/images.js
-    // The [id] parameter is available in req.query.id
-    // Also check query parameter albumId as fallback
-    let albumId = req.query.id || req.query.albumId;
-    
-    // If not in query, parse from URL path
-    if (!albumId) {
-      const urlParts = req.url.split('/').filter(Boolean);
-      // Expected: ['api', 'albums', 'album-id', 'images']
-      const albumsIndex = urlParts.indexOf('albums');
-      if (albumsIndex >= 0 && albumsIndex < urlParts.length - 1) {
-        albumId = urlParts[albumsIndex + 1];
+      // In Vercel, for nested dynamic routes like /api/albums/[id]/images.js
+      // The [id] parameter is available in req.query.id
+      // Also check query parameter albumId as fallback
+      let albumId = req.query.id || req.query.albumId;
+      
+      // If not in query, parse from URL path
+      if (!albumId) {
+        // Try parsing from req.url
+        const urlMatch = req.url.match(/\/albums\/([^\/]+)\/images/);
+        if (urlMatch) {
+          albumId = urlMatch[1];
+        } else {
+          // Fallback: parse from URL parts
+          const urlParts = req.url.split('/').filter(Boolean);
+          const albumsIndex = urlParts.indexOf('albums');
+          if (albumsIndex >= 0 && albumsIndex < urlParts.length - 1) {
+            albumId = urlParts[albumsIndex + 1];
+          }
+        }
       }
-    }
-    
-    // Log for debugging
-    console.log('Album ID from:', {
-      query: req.query,
-      url: req.url,
-      albumId: albumId
-    });
+      
+      // Log for debugging
+      console.log('Album ID from:', {
+        query: req.query,
+        url: req.url,
+        path: req.url?.split('?')[0],
+        albumId: albumId
+      });
 
     if (!albumId) {
       return res.status(400).json({
@@ -327,16 +341,17 @@ module.exports = async (req, res) => {
       .eq('id', albumId)
       .single();
 
-    return res.status(201).json({
-      success: true,
-      data: {
-        id: image.id,
-        album_id: image.album_id,
-        url: image.url,
-        is_cover: updatedAlbum?.cover_image_id === image.id,
-        created_at: image.created_at
-      }
-    });
+      return res.status(201).json({
+        success: true,
+        data: {
+          id: image.id,
+          album_id: image.album_id,
+          url: image.url,
+          is_cover: updatedAlbum?.cover_image_id === image.id,
+          created_at: image.created_at
+        }
+      });
+    }
 
     // Method not allowed
     return res.status(405).json({
