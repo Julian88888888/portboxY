@@ -66,6 +66,26 @@ export default function JobRequestPopup() {
     // Fallback to user.user_metadata (from Supabase auth)
     return user?.[field] || user?.user_metadata?.[field] || defaultValue;
   };
+
+  // Check if model stats should be shown
+  const shouldShowModelStats = () => {
+    // Check profile first (from database)
+    if (profile?.showModelStats !== undefined) {
+      return profile.showModelStats;
+    }
+    if (profile?.show_model_stats !== undefined) {
+      return profile.show_model_stats;
+    }
+    // Fallback to user metadata
+    if (user?.showModelStats !== undefined) {
+      return user.showModelStats;
+    }
+    if (user?.user_metadata?.showModelStats !== undefined) {
+      return user.user_metadata.showModelStats;
+    }
+    // Default to true if not set
+    return true;
+  };
   
   // Get profile photo from ProfileSettings (profile_photo_path)
   const getProfileImage = () => {
@@ -485,83 +505,85 @@ export default function JobRequestPopup() {
             </div>
           </div>
           <div className="spacing_24" />
-          <div className="stat_container">
-            <div className="stats_wrap_bottom">
-              <div className="stat_item">
-                <div className="stat_title">HEIGHT</div>
-                <div className="stat_descript">
-                  {getUserValue('heightFeet') && getUserValue('heightInches')
-                    ? `${getUserValue('heightFeet')}'${getUserValue('heightInches')}"`
-                    : "5'11\""}
+          {shouldShowModelStats() && (
+            <div className="stat_container">
+              <div className="stats_wrap_bottom">
+                <div className="stat_item">
+                  <div className="stat_title">HEIGHT</div>
+                  <div className="stat_descript">
+                    {getUserValue('heightFeet') && getUserValue('heightInches')
+                      ? `${getUserValue('heightFeet')}'${getUserValue('heightInches')}"`
+                      : "5'11\""}
+                  </div>
                 </div>
-              </div>
-              <div className="stat_item">
-                <div className="stat_title">WEIGHT</div>
-                <div className="stat_descript">
-                  {getUserValue('weight') 
-                    ? `${getUserValue('weight')} ${getUserValue('weightUnit', 'lbs')}`
-                    : '135 lbs'}
+                <div className="stat_item">
+                  <div className="stat_title">WEIGHT</div>
+                  <div className="stat_descript">
+                    {getUserValue('weight') 
+                      ? `${getUserValue('weight')} ${getUserValue('weightUnit', 'lbs')}`
+                      : '135 lbs'}
+                  </div>
                 </div>
-              </div>
-              <div className="stat_item">
-                <div className="stat_title">BUST</div>
-                <div className="stat_descript">
-                  {getUserValue('bust') 
-                    ? `${getUserValue('bust')}${getUserValue('bustSize', '')}`
-                    : '23A'}
+                <div className="stat_item">
+                  <div className="stat_title">BUST</div>
+                  <div className="stat_descript">
+                    {getUserValue('bust') 
+                      ? `${getUserValue('bust')}${getUserValue('bustSize', '')}`
+                      : '23A'}
+                  </div>
                 </div>
-              </div>
-              <div className="stat_item">
-                <div className="stat_title">WAIST</div>
-                <div className="stat_descript">
-                  {getUserValue('waist') 
-                    ? `${getUserValue('waist')} ${getUserValue('waistUnit', 'in')}`
-                    : '26 in'}
+                <div className="stat_item">
+                  <div className="stat_title">WAIST</div>
+                  <div className="stat_descript">
+                    {getUserValue('waist') 
+                      ? `${getUserValue('waist')} ${getUserValue('waistUnit', 'in')}`
+                      : '26 in'}
+                  </div>
                 </div>
-              </div>
-              <div className="stat_item">
-                <div className="stat_title">HIPS</div>
-                <div className="stat_descript">
-                  {getUserValue('hips') 
-                    ? `${getUserValue('hips')} ${getUserValue('hipsUnit', 'in')}`
-                    : '36 in'}
+                <div className="stat_item">
+                  <div className="stat_title">HIPS</div>
+                  <div className="stat_descript">
+                    {getUserValue('hips') 
+                      ? `${getUserValue('hips')} ${getUserValue('hipsUnit', 'in')}`
+                      : '36 in'}
+                  </div>
                 </div>
-              </div>
-              <div className="stat_item">
-                <div className="stat_title">SHOE</div>
-                <div className="stat_descript">
-                  {getUserValue('shoe') 
-                    ? `${getUserValue('shoe')} ${getUserValue('shoeUnit', 'US')}`
-                    : '7 US'}
+                <div className="stat_item">
+                  <div className="stat_title">SHOE</div>
+                  <div className="stat_descript">
+                    {getUserValue('shoe') 
+                      ? `${getUserValue('shoe')} ${getUserValue('shoeUnit', 'US')}`
+                      : '7 US'}
+                  </div>
                 </div>
-              </div>
-              <div className="stat_item">
-                <div className="stat_title">HAIR COLOR</div>
-                <div className="stat_descript">{getUserValue('hairColor', 'Black')}</div>
-              </div>
-              <div className="stat_item">
-                <div className="stat_title">HAIR LENGTH</div>
-                <div className="stat_descript">{getUserValue('hairLength', 'Long')}</div>
-              </div>
-              <div className="stat_item">
-                <div className="stat_title">EYE COLOR</div>
-                <div className="stat_descript">{getUserValue('eyeColor', 'Brown')}</div>
-              </div>
-              <div className="stat_item">
-                <div className="stat_title">AGE</div>
-                <div className="stat_descript">{getUserValue('age', '26')}</div>
-              </div>
-              <div className="stat_item">
-                <div className="stat_title">GENDER</div>
-                <div className="stat_descript">{getUserValue('gender', 'Female')}</div>
-              </div>
-              <div className="stat_item">
-                <div className="stat_title">ETHNICITY</div>
-                <div className="stat_descript">{getUserValue('ethnicity', 'White')}</div>
+                <div className="stat_item">
+                  <div className="stat_title">HAIR COLOR</div>
+                  <div className="stat_descript">{getUserValue('hairColor', 'Black')}</div>
+                </div>
+                <div className="stat_item">
+                  <div className="stat_title">HAIR LENGTH</div>
+                  <div className="stat_descript">{getUserValue('hairLength', 'Long')}</div>
+                </div>
+                <div className="stat_item">
+                  <div className="stat_title">EYE COLOR</div>
+                  <div className="stat_descript">{getUserValue('eyeColor', 'Brown')}</div>
+                </div>
+                <div className="stat_item">
+                  <div className="stat_title">AGE</div>
+                  <div className="stat_descript">{getUserValue('age', '26')}</div>
+                </div>
+                <div className="stat_item">
+                  <div className="stat_title">GENDER</div>
+                  <div className="stat_descript">{getUserValue('gender', 'Female')}</div>
+                </div>
+                <div className="stat_item">
+                  <div className="stat_title">ETHNICITY</div>
+                  <div className="stat_descript">{getUserValue('ethnicity', 'White')}</div>
+                </div>
               </div>
             </div>
-          </div>
-          <div className="spacing_24" />
+          )}
+          {shouldShowModelStats() && <div className="spacing_24" />}
           <div className="spacing_24" />
       <a data-w-id="ee47a855-7715-a4cf-bb17-0acb8cc29f1d" href="#" className="button bookme_large w-button" onClick={handleOpenPopup}>
         Book Me
@@ -571,129 +593,6 @@ export default function JobRequestPopup() {
       <div className="spacing_48" />
         </div>
       </div>
-      <div data-w-id="c75f6ea3-6352-a477-d455-b928501a0b27" className="section booking_sec">
-        <div className="content_wrapper">
-          {/* Availability */}
-          <div data-w-id="585a1cc3-ae85-d2f1-6c2e-069e3e9fce14" className="availability_sec">
-            <div className="content_wrapper">
-              <h4 className="section_title">Weekly Availability (overview)</h4>
-              <div className="spacing_24"></div>
-              <div className="w-layout-grid availability_grid">
-                {days.map((day, idx) => (
-                  <div className="availability_column" key={day.key}>
-                    <div className="availability_graph_item">
-                      <div className="graph_bar"></div>
-                      <div className={`graph_bar available ${day.key}`}>
-                        <div className="graph_text">{day.hours}</div>
-                      </div>
-                    </div>
-                    <div className="small_text font_weight_bold">{day.label}</div>
-                  </div>
-                ))}
-              </div>
-              <div className="spacing_24"></div>
-              <p className="text_color_muted">* Gray areas indicate unavailability</p>
-              <div className="spacing_24"></div>
-              <div className="line_divider"></div>
-            </div>
-          </div>
-          <div className="spacing_24"></div>
-          {/* Travel */}
-          {/* <h4 className="section_title">Upcoming Travel Dates</h4> */}
-          <div className="spacing_24"></div>
-          {/* <div className="w-layout-grid _3_col_grid">
-            {travels.map((t) => (
-              <a href="#" className="flex_wrapper flex_vertical card_link w-inline-block" key={t.city}>
-                <div className="w-layout-hflex flex-block-2">
-                  <div className="dates_travel">{t.city}</div>
-                  <img
-                    src={t.img}
-                    loading="lazy"
-                    sizes="(max-width: 512px) 100vw, 512px"
-                    srcSet={t.imgset}
-                    alt=""
-                    className="icon_32x32"
-                  />
-                </div>
-                <div className="w-layout-hflex flex-block-2">
-                  <div className="dates_travel">{t.date}</div>
-                </div>
-              </a>
-            ))}
-          </div> */}
-          <div className="spacing_24"></div>
-          <div className="line_divider"></div>
-          <div className="spacing_24"></div>
-          {/* City */}
-          <h4 className="section_title">Current City</h4>
-          <p className="text_color_grey booking_des">Miami, USA</p>
-          <div className="spacing_24"></div>
-          {/* Available For */}
-          <h4 className="section_title">Currently Available For</h4>
-          <div className="spacing_24"></div>
-          <div className="w-layout-hflex flex-block-4">
-            <a href="#" className="flex_wrapper flex_distribute link_block small_choice w-inline-block">
-              <div>Photoshoots</div>
-              <div className="icon_24x24 w-embed">
-                {/* SVG ICON */}
-                <svg className="w-6 h-6 text-gray-800 dark:text-white" width="24" height="24" fill="none" viewBox="0 0 24 24">
-                  <path stroke="currentColor" strokeLinejoin="round" strokeWidth="2" d="M4 18V8a1 1 0 0 1 1-1h1.5l1.707-1.707A1 1 0 0 1 8.914 5h6.172a1 1 0 0 1 .707.293L17.5 7H19a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1Z"></path>
-                  <path stroke="currentColor" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"></path>
-                </svg>
-              </div>
-            </a>
-            <a href="#" className="flex_wrapper flex_distribute link_block small_choice w-inline-block">
-              <div>Acting</div>
-              <div className="icon_24x24 w-embed">
-                <svg className="w-6 h-6 text-gray-800 dark:text-white" width="24" height="24" fill="none" viewBox="0 0 24 24">
-                  <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 6H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1Zm7 11-6-2V9l6-2v10Z"></path>
-                </svg>
-              </div>
-            </a>
-            <a href="#" className="flex_wrapper flex_distribute link_block small_choice w-inline-block">
-              <div>Runway</div>
-              <div className="icon_24x24 w-embed">
-                <svg className="w-6 h-6 text-gray-800 dark:text-white" width="24" height="24" fill="none" viewBox="0 0 24 24">
-                  <path stroke="currentColor" strokeLinejoin="round" strokeWidth="2" d="M9 5h-.16667c-.86548 0-1.70761.28071-2.4.8L3.5 8l2 3.5L8 10v9h8v-9l2.5 1.5 2-3.5-2.9333-2.2c-.6924-.51929-1.5346-.8-2.4-.8H15M9 5c0 1.5 1.5 3 3 3s3-1.5 3-3M9 5h6"></path>
-                </svg>
-              </div>
-            </a>
-            <a href="#" className="flex_wrapper flex_distribute link_block small_choice w-inline-block">
-              <div>Promos</div>
-              <div className="icon_24x24 w-embed">
-                <svg className="w-6 h-6 text-gray-800 dark:text-white" width="24" height="24" fill="none" viewBox="0 0 24 24">
-                  <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 9H5a1 1 0 0 0-1 1v4a1 1 0 0 0 1 1h6m0-6v6m0-6 5.419-3.87A1 1 0 0 1 18 5.942v12.114a1 1 0 0 1-1.581.814L11 15m7 0a3 3 0 0 0 0-6M6 15h3v5H6v-5Z"></path>
-                </svg>
-              </div>
-            </a>
-          </div>
-          <div className="spacing_24"></div>
-        </div>
-        {/* Job Request */}
-        <div className="content_wrapper">
-          <h4 className="section_title">Send Job Request</h4>
-          <div className="spacing_24"></div>
-          <p className="text_color_grey booking_des">Currently accepting all paid job bookings.</p>
-          <a data-w-id="809c8fa7-34ba-ce84-d31a-5cbb0d721232" href="#" className="link_btn_large w-inline-block">
-            <div className="highlight_card white bookme_card">
-              <h3 className="bookme_btnheading">BOOK ME+</h3>
-              <div className="spacing_16"></div>
-              <div className="flex_wrapper flex_distribute">
-                <div>Usually responds ~2 hours</div>
-                <div className="icon_24x24 w-embed">
-                  <svg className="w-6 h-6 text-gray-800 dark:text-white" width="24" height="24" fill="none" viewBox="0 0 24 24">
-                    <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 10h16m-8-3V4M7 7V4m10 3V4M5 20h14a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1Zm3-7h.01v.01H8V13Zm4 0h.01v.01H12V13Zm4 0h.01v.01H16V13Zm-8 4h.01v.01H8V17Zm4 0h.01v.01H12V17Zm4 0h.01v.01H16V17Z"></path>
-                  </svg>
-                </div>
-              </div>
-              <div className="spacing_4"></div>
-            </div>
-          </a>
-          <div className="spacing_48"></div>
-          <div className="line_divider"></div>
-        </div>
-      </div>
-
       {/* Portfolio Albums Section */}
       <div className="section portfolio_sec">
         <div className="content_wrapper">
@@ -738,7 +637,7 @@ export default function JobRequestPopup() {
                           e.target.src = '/images/fashion-photo.jpg';
                         }}
                       />
-                      <div className="discount_tag-top">Album</div>
+                      <div className="discount_tag-top">{album.title || 'Album'}</div>
                     </div>
                     <div className="spacing_16"></div>
                     <div className="font_weight_bold">{album.title || 'Untitled'}</div>
@@ -751,6 +650,9 @@ export default function JobRequestPopup() {
           )}
           <div className="spacing_48"></div>
           <div className="line_divider"></div>
+          <a data-w-id="ee47a855-7715-a4cf-bb17-0acb8cc29f1d" href="#" className="button bookme_large w-button" onClick={handleOpenPopup}>
+        Book Me
+      </a>
         </div>
       </div>
 
@@ -800,51 +702,38 @@ export default function JobRequestPopup() {
               )}
             </div>
           )}
+        </div>
+      </div>
+
+      <div className="section footer_sec">
+        <div className="content_wrapper content_align_center">
           <div className="spacing_24"></div>
-          {/* <div className="w-layout-grid _3_col_grid">
-            <a href="#" className="flex_wrapper flex_vertical card_link photo_blk w-inline-block">
-              <img src="images/Spotify_icon.png" loading="lazy" alt="" className="icon_32x32" />
-              <div className="link_des">My New Song</div>
-            </a>
-            <a href="#" className="flex_wrapper flex_vertical card_link photo_blk w-inline-block">
-              <img src="images/vimeo-logo.png" loading="lazy" alt="" className="icon_32x32" />
-              <div className="link_des">Daily Videos</div>
-            </a>
-            <a href="#" className="flex_wrapper flex_vertical card_link photo_blk w-inline-block">
-              <img src="images/Square_Cash_app_logo.png" loading="lazy" alt="" className="icon_32x32" />
-              <div className="link_des">Gift Me</div>
-            </a>
-          </div> */}
+          <div className="line_divider"></div>
+          <div className="spacing_24"></div>
+          <a href="#">Create A Free Model Link Portfolio</a>
           <div className="spacing_48"></div>
-          {/* <a href="#" className="flex_wrapper flex_vertical card_link photo_blk largelink w-inline-block">
-            <img src="images/Spotify_icon.png" loading="lazy" alt="" className="icon_32x32" />
-            <div className="link_des">My New Song</div>
-          </a> */}
-          <div className="spacing_24"></div>
-          {/* <div style={{ paddingTop: "56.17021276595745%" }} className="w-embed-youtubevideo youtube">
-            <iframe
-              src="https://www.youtube.com/embed/uV2BhlTnG8A?rel=0&amp;controls=1&amp;autoplay=0&amp;mute=0&amp;start=0"
-              frameBorder="0"
-              style={{
-                position: "absolute",
-                left: 0,
-                top: 0,
-                width: "100%",
-                height: "100%",
-                pointerEvents: "auto",
-              }}
-              allow="autoplay; encrypted-media"
-              allowFullScreen
-              title="Get To Know Me! Photoshoot BTS"
-            />
-          </div> */}
+
+          <div className="w-layout-hflex flex-block-5 profilepage">
+            <div className="text_color_muted">portfolio.link/@</div>
+            <a href="#" className="flex_wrapper flex_distribute link_block small_choice home_choice signupbtn w-inline-block">
+              <div>Sign Up Free</div>
+              <div className="icon_24x24 w-embed"><svg className="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                  <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M10.779 17.779 4.36 19.918 6.5 13.5m4.279 4.279 8.364-8.643a3.027 3.027 0 0 0-2.14-5.165 3.03 3.03 0 0 0-2.14.886L6.5 13.5m4.279 4.279L6.499 13.5m2.14 2.14 6.213-6.504M12.75 7.04 17 11.28"></path>
+                </svg></div>
+            </a>
+          </div>
+
+          <div className="text_wrapper text_align_center">
+            <p className="text_color_grey text_width_medium"><strong>©</strong>2025 Model Link Portfolio</p>
+          </div>
+          <div className="spacing_48"></div>
           <div className="spacing_24"></div>
         </div>
       </div>
 
       {/* Album Images Modal */}
       {isAlbumModalOpen && selectedAlbum && (
-        <div 
+        <div
           className="modal-overlay" 
           onClick={() => {
             setIsAlbumModalOpen(false);
@@ -857,35 +746,30 @@ export default function JobRequestPopup() {
             left: 0,
             right: 0,
             bottom: 0,
-            background: 'rgba(0,0,0,0.9)',
+            background: 'rgba(0,0,0,0.8)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             zIndex: 10000,
-            padding: '20px',
-            overflow: 'auto'
+            padding: '20px'
           }}
         >
-          <div 
+          <div
             className="modal-content" 
             onClick={(e) => e.stopPropagation()}
             style={{
               background: 'white',
               borderRadius: '12px',
               padding: '24px',
-              maxWidth: '1200px',
+              maxWidth: '900px',
               width: '100%',
               maxHeight: '90vh',
-              overflow: 'auto'
+              overflow: 'auto',
+              position: 'relative'
             }}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-              <div>
-                <h2 style={{ margin: 0, marginBottom: '8px' }}>{selectedAlbum.title || 'Untitled Album'}</h2>
-                {selectedAlbum.description && (
-                  <p className="text_color_grey" style={{ margin: 0 }}>{selectedAlbum.description}</p>
-                )}
-              </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h2 style={{ margin: 0 }}>{selectedAlbum.title} - Images</h2>
               <button
                 onClick={() => {
                   setIsAlbumModalOpen(false);
@@ -893,15 +777,17 @@ export default function JobRequestPopup() {
                   setAlbumImages([]);
                 }}
                 style={{
-                  background: 'none',
+                  background: 'transparent',
                   border: 'none',
-                  fontSize: '32px',
+                  fontSize: '28px',
                   cursor: 'pointer',
+                  color: '#666',
                   padding: '0',
-                  width: '40px',
-                  height: '40px',
-                  color: '#333',
-                  lineHeight: '1'
+                  width: '32px',
+                  height: '32px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
                 }}
               >
                 ×
@@ -912,115 +798,52 @@ export default function JobRequestPopup() {
               <div style={{ textAlign: 'center', padding: '40px' }}>
                 <p className="text_color_grey">Loading images...</p>
               </div>
-            ) : albumImages.length > 0 ? (
-              <>
-                <div style={{ marginBottom: '16px', textAlign: 'center' }}>
-                  <p className="text_color_grey" style={{ margin: 0 }}>
-                    {albumImages.length} {albumImages.length === 1 ? 'image' : 'images'} in this album
-                  </p>
-                </div>
-                <div 
-                  style={{ 
-                    display: 'grid', 
-                    gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', 
-                    gap: '16px',
-                    marginBottom: '24px'
-                  }}
-                >
-                  {albumImages.map((image, index) => (
-                    <div 
-                      key={image.id || index}
-                      style={{
-                        position: 'relative',
-                        width: '100%',
-                        paddingBottom: '100%',
-                        overflow: 'hidden',
-                        borderRadius: '8px',
-                        background: '#f0f0f0',
-                        cursor: 'pointer',
-                        transition: 'transform 0.2s',
-                        boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.transform = 'scale(1.05)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.transform = 'scale(1)';
-                      }}
-                      onClick={() => {
-                        // Open image in full screen
-                        window.open(normalizeImageUrl(image.url), '_blank');
-                      }}
-                    >
-                      <img 
-                        src={normalizeImageUrl(image.url) || '/images/fashion-photo.jpg'} 
-                        alt={`${selectedAlbum.title} - Image ${index + 1}`}
-                        style={{
-                          position: 'absolute',
-                          top: 0,
-                          left: 0,
-                          width: '100%',
-                          height: '100%',
-                          objectFit: 'cover'
-                        }}
-                        onError={(e) => {
-                          console.error('Failed to load image in ModelPage:', image.url, 'Normalized:', normalizeImageUrl(image.url));
-                          e.target.src = '/images/fashion-photo.jpg';
-                        }}
-                        onLoad={() => {
-                          console.log('Image loaded successfully in ModelPage:', normalizeImageUrl(image.url));
-                        }}
-                      />
-                    </div>
-                  ))}
-                </div>
-              </>
-            ) : (
+            ) : albumImages.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '40px' }}>
                 <p className="text_color_grey">No images in this album yet.</p>
-                <p className="text_color_grey" style={{ fontSize: '14px', marginTop: '8px' }}>
-                  Go to Dashboard → Portfolio → Image Albums to add images
-                </p>
+              </div>
+            ) : (
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+                gap: '16px'
+              }}>
+                {albumImages.map((image, index) => (
+                  <div
+                    key={image.id || index}
+                    style={{
+                      position: 'relative',
+                      borderRadius: '8px',
+                      overflow: 'hidden',
+                      border: '1px solid #ddd',
+                      boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                    }}
+                  >
+                    <img
+                      src={normalizeImageUrl(image.url) || '/images/fashion-photo.jpg'}
+                      alt={`${selectedAlbum.title} - Image ${index + 1}`}
+                      style={{
+                        width: '100%',
+                        height: '200px',
+                        objectFit: 'cover',
+                        display: 'block',
+                        cursor: 'pointer'
+                      }}
+                      onError={(e) => {
+                        e.target.src = '/images/fashion-photo.jpg';
+                      }}
+                      onClick={() => {
+                        // Open image in full size (optional - can be enhanced with lightbox)
+                        window.open(normalizeImageUrl(image.url), '_blank');
+                      }}
+                    />
+                  </div>
+                ))}
               </div>
             )}
-
-            <div style={{ marginTop: '24px', textAlign: 'center' }}>
-              <button
-                onClick={() => {
-                  setIsAlbumModalOpen(false);
-                  setSelectedAlbum(null);
-                  setAlbumImages([]);
-                }}
-                style={{
-                  padding: '12px 24px',
-                  background: '#f5f5f5',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontSize: '16px'
-                }}
-              >
-                Close
-              </button>
-            </div>
           </div>
         </div>
       )}
-
-      <div className="section footer_sec">
-        <div className="content_wrapper content_align_center">
-          <div className="spacing_24"></div>
-          <div className="line_divider"></div>
-          <div className="spacing_24"></div>
-          <a href="#">Create A Free Model Link Portfolio</a>
-          <div className="spacing_48"></div>
-          <div className="text_wrapper text_align_center">
-            <p className="text_color_grey text_width_medium"><strong>©</strong>2025 Model Link Portfolio</p>
-          </div>
-          <div className="spacing_48"></div>
-          <div className="spacing_24"></div>
-        </div>
-      </div>
 
     </>
   );

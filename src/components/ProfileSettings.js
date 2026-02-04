@@ -456,7 +456,7 @@ export default function ProfileSettings() {
   return (
     <div className="settingssection"> 
       <div className="spacing_24"></div>
-      <h3>Profile Settings</ h3>
+      {/* <h3>Profile Settings</ h3> */}
       
       {!profile && (
         <div style={{ 

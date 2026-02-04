@@ -679,28 +679,55 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                     <div className="spacing_24"></div>
                     <h3>Model Stats</h3>
                     <div className="spacing_24"></div>
-                    <div 
-                      className="w-layout-hflex flex-block-9" 
-                      style={{ cursor: 'pointer', alignItems: 'center' }}
-                      onClick={() => {
-                        const newValue = !formData.showModelStats;
-                        setFormData(prev => ({ ...prev, showModelStats: newValue }));
-                        updateProfile({ ...formData, showModelStats: newValue }).then(result => {
-                          if (result.success) {
-                            console.log('Show Model Stats toggle saved');
-                          }
-                        });
-                      }}
-                    >
-                      <img 
-                        width="50" 
-                        height="Auto" 
-                        alt="" 
-                        src="/images/smSwitch.png" 
-                        loading="lazy"
-                        style={{ opacity: formData.showModelStats ? 1 : 0.5 }}
-                      />
-                      <p style={{ marginLeft: '12px', margin: 0 }}>Show Model Stats</p>
+                    <div className="w-layout-hflex flex-block-9" style={{ alignItems: 'center', gap: '12px' }}>
+                      <label 
+                        style={{ 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          cursor: 'pointer', 
+                          gap: '10px',
+                          userSelect: 'none',
+                          flex: '0 0 auto'
+                        }}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          const newValue = !formData.showModelStats;
+                          setFormData(prev => ({ ...prev, showModelStats: newValue }));
+                          updateProfile({ ...formData, showModelStats: newValue }).then(result => {
+                            if (result.success) {
+                              console.log('Show Model Stats toggle saved');
+                            }
+                          });
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: '44px',
+                            height: '24px',
+                            borderRadius: '12px',
+                            backgroundColor: (formData.showModelStats ?? true) ? '#783FF3' : '#ccc',
+                            position: 'relative',
+                            cursor: 'pointer',
+                            transition: 'background-color 0.2s',
+                            flexShrink: 0
+                          }}
+                        >
+                          <div
+                            style={{
+                              width: '20px',
+                              height: '20px',
+                              borderRadius: '50%',
+                              backgroundColor: 'white',
+                              position: 'absolute',
+                              top: '2px',
+                              left: (formData.showModelStats ?? true) ? '22px' : '2px',
+                              transition: 'left 0.2s',
+                              boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                            }}
+                          />
+                        </div>
+                      </label>
+                      <p style={{ margin: 0 }}>Show Model Stats</p>
                     </div>
                     <div className="stat_container">
                       <div className="personal_stats">

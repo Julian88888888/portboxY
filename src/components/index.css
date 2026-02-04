@@ -2294,10 +2294,6 @@ a {
 
 .section.links_sec {
   mix-blend-mode: normal;
-  background-image: url('../../images/482501273_1120428213150003_400414.jpg');
-  background-position: 50%;
-  background-repeat: no-repeat;
-  background-size: cover;
 }
 
 .section.full_sec {
@@ -2459,6 +2455,11 @@ a {
 .flex_wrapper.flex_distribute.link_block.small_choice.home_choice {
   background-color: var(--blue-violet);
   color: var(--white);
+  text-align: left;
+}
+
+.flex_wrapper.flex_distribute.link_block.small_choice.home_choice.signupbtn {
+  justify-content: center;
 }
 
 .flex_wrapper.flex_left {
@@ -3020,7 +3021,7 @@ a {
 }
 
 .section_title.links_headinng {
-  color: var(--white);
+  color: black;
 }
 
 .switch {
@@ -3343,6 +3344,10 @@ a {
   min-width: 600px;
   padding: 40px 24px 24px;
   position: relative;
+  max-height: 70vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
 }
 
 .link-block {
@@ -3421,11 +3426,18 @@ a {
 .flex-block-5 {
   background-color: #fff;
   border-radius: 18px;
+  justify-content: space-between;
+  align-items: center;
   height: 60px;
   padding-top: 20px;
   padding-bottom: 20px;
   padding-left: 20px;
-  display: block;
+  display: flex;
+}
+
+.flex-block-5.profilepage {
+  min-width: 400px;
+  margin-bottom: 30px;
 }
 
 .text-block-4 {
@@ -3696,6 +3708,12 @@ a {
     grid-template-columns: 1fr;
     grid-auto-flow: row;
     place-items: start stretch;
+  }
+}
+
+@media (min-width: 992px) {
+  .section_title {
+    text-transform: uppercase;
   }
 }
 

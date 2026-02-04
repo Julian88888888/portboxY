@@ -863,6 +863,10 @@ a {
   color: var(--white);
 }
 
+.section_title {
+  text-transform: uppercase;
+}
+
 .switch {
   z-index: 10;
   grid-column-gap: 4px;
@@ -1385,6 +1389,8 @@ a {
 
   .section_title {
     text-align: center;
+    font-weight: bold;
+    text-transform: uppercase;
   }
 
   .portfolio_menu {
