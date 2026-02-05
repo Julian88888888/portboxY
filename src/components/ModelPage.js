@@ -5,6 +5,7 @@ import { useProfile, useProfileByUsername } from '../hooks/useProfile';
 import { getAvatarUrl, getHeaderUrl } from '../services/profileService';
 import { getAlbums, getAlbumImages, normalizeImageUrl } from '../services/albumsService';
 import { getCustomLinks } from '../services/customLinksService';
+import BookingModal from './BookingModal';
 
 const days = [
   { key: "monday", label: "Mon", hours: "5 hours" },
@@ -48,6 +49,7 @@ export default function JobRequestPopup() {
   const isPublicProfile = !!urlUsername;
   
   const [isPopupOpen, setIsPopupOpen] = useState(false);
+  const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
   const [albums, setAlbums] = useState([]);
   const [albumsLoading, setAlbumsLoading] = useState(true);
   const [isAlbumModalOpen, setIsAlbumModalOpen] = useState(false);
@@ -122,6 +124,27 @@ export default function JobRequestPopup() {
   const handleOpenPopup = (e) => {
     e.preventDefault();
     setIsPopupOpen(true);
+  };
+
+  const handleOpenBookingModal = (e) => {
+    e.preventDefault();
+    setIsBookingModalOpen(true);
+  };
+
+  const handleCloseBookingModal = () => {
+    setIsBookingModalOpen(false);
+  };
+
+  // Get profile data for BookingModal
+  const getProfileDataForModal = () => {
+    if (!profile) return null;
+    return {
+      displayName: getUserValue('display_name', 'User Name'),
+      username: getUserValue('username'),
+      jobType: getUserValue('job_type', 'Model'),
+      description: getUserValue('description'),
+      profileImage: getProfileImage()
+    };
   };
 
   // Load albums on component mount
@@ -585,7 +608,7 @@ export default function JobRequestPopup() {
           )}
           {shouldShowModelStats() && <div className="spacing_24" />}
           <div className="spacing_24" />
-      <a data-w-id="ee47a855-7715-a4cf-bb17-0acb8cc29f1d" href="#" className="button bookme_large w-button" onClick={handleOpenPopup}>
+      <a data-w-id="ee47a855-7715-a4cf-bb17-0acb8cc29f1d" href="#" className="button bookme_large w-button" onClick={handleOpenBookingModal}>
         Book Me
       </a>
       <div className="spacing_24" />
@@ -650,7 +673,7 @@ export default function JobRequestPopup() {
           )}
           <div className="spacing_48"></div>
           <div className="line_divider"></div>
-          <a data-w-id="ee47a855-7715-a4cf-bb17-0acb8cc29f1d" href="#" className="button bookme_large w-button" onClick={handleOpenPopup}>
+          <a data-w-id="ee47a855-7715-a4cf-bb17-0acb8cc29f1d" href="#" className="button bookme_large w-button" onClick={handleOpenBookingModal}>
         Book Me
       </a>
         </div>
@@ -844,6 +867,13 @@ export default function JobRequestPopup() {
           </div>
         </div>
       )}
+
+      {/* Booking Modal */}
+      <BookingModal 
+        isOpen={isBookingModalOpen} 
+        onClose={handleCloseBookingModal}
+        profile={getProfileDataForModal()}
+      />
 
     </>
   );

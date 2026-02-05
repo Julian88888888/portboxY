@@ -4,6 +4,7 @@ import { useProfile } from '../hooks/useProfile';
 import { getAvatarUrl, getHeaderUrl } from '../services/profileService';
 import { createAlbum, getAlbums, uploadImageToAlbum, deleteAlbum, getAlbumImages, setCoverImage, normalizeImageUrl } from '../services/albumsService';
 import { getCustomLinks, createCustomLink, updateCustomLink, deleteCustomLink } from '../services/customLinksService';
+import { getBookings, deleteBooking, updateBooking } from '../services/bookingsService';
 import ProfileSettings from './ProfileSettings';
 import './Dashboard.css';
 
@@ -11,7 +12,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
   const { user, updateProfile, uploadPortfolioAlbum, updatePortfolioAlbum, deletePortfolioAlbum } = useAuth();
   const { data: profile } = useProfile();
   const [activeTab, setActiveTab] = useState(propActiveTab || 'Tab 1');
-  const [activeBookingTab, setActiveBookingTab] = useState('Tab 2');
+  const [activeBookingTab, setActiveBookingTab] = useState('Tab 1');
   const [isPortfolioModalOpen, setIsPortfolioModalOpen] = useState(false);
   const [editingAlbum, setEditingAlbum] = useState(null);
   const [portfolioFormData, setPortfolioFormData] = useState({
@@ -51,6 +52,10 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
     icon_url: '',
     enabled: true
   });
+
+  // Bookings state
+  const [bookings, setBookings] = useState([]);
+  const [bookingsLoading, setBookingsLoading] = useState(false);
 
   // Sync with prop changes - this ensures the tab reflects the current page
   useEffect(() => {
@@ -122,6 +127,33 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
     };
     loadCustomLinks();
   }, [user?.id]); // Use user.id instead of user object to prevent unnecessary re-renders
+
+  // Load bookings
+  useEffect(() => {
+    const loadBookings = async () => {
+      // Only load if user is authenticated
+      if (!user) {
+        console.log('Dashboard: User not authenticated, skipping bookings load');
+        setBookings([]);
+        setBookingsLoading(false);
+        return;
+      }
+
+      setBookingsLoading(true);
+      const result = await getBookings();
+      if (result.success) {
+        setBookings(result.data || []);
+      } else {
+        console.error('Failed to load bookings:', result.error);
+        if (result.requiresAuth) {
+          console.warn('Bookings require authentication - user may need to log in again');
+        }
+        setBookings([]);
+      }
+      setBookingsLoading(false);
+    };
+    loadBookings();
+  }, [user?.id]);
 
   const handleTabChange = (tab) => {
     // Immediately call onTabChange to update the page in App.js
@@ -1255,15 +1287,138 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                   </div>
                   <div className="w-tab-content">
                     {activeBookingTab === 'Tab 1' && (
-                      <div className="w-tab-pane">
+                      <div className={`w-tab-pane ${activeBookingTab === 'Tab 1' ? 'w--tab-active' : ''}`}>
                         <div className="w-layout-vflex flex-block-11">
                           <div className="spacing_48"></div>
-                          <p className="paragraph">No Messages.</p>
+                          {bookingsLoading ? (
+                            <p className="paragraph">Loading bookings...</p>
+                          ) : bookings.length === 0 ? (
+                            <p className="paragraph">No bookings yet.</p>
+                          ) : (
+                            <div style={{ width: '100%' }}>
+                              {bookings.map((booking) => (
+                                <div 
+                                  key={booking.id} 
+                                  style={{
+                                    padding: '20px',
+                                    marginBottom: '16px',
+                                    border: '1px solid #e0e0e0',
+                                    borderRadius: '8px',
+                                    backgroundColor: '#fff'
+                                  }}
+                                >
+                                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
+                                    <div>
+                                      <h4 style={{ margin: '0 0 8px 0', fontSize: '18px', fontWeight: 'bold' }}>
+                                        {booking.name}
+                                      </h4>
+                                      <p style={{ margin: '0 0 4px 0', color: '#666', fontSize: '14px' }}>
+                                        {booking.email}
+                                      </p>
+                                    </div>
+                                    <div style={{ 
+                                      padding: '4px 12px', 
+                                      borderRadius: '4px',
+                                      fontSize: '12px',
+                                      fontWeight: 'bold',
+                                      backgroundColor: 
+                                        booking.status === 'accepted' ? '#d4edda' :
+                                        booking.status === 'rejected' ? '#f8d7da' :
+                                        booking.status === 'completed' ? '#cce5ff' :
+                                        '#fff3cd',
+                                      color: 
+                                        booking.status === 'accepted' ? '#155724' :
+                                        booking.status === 'rejected' ? '#721c24' :
+                                        booking.status === 'completed' ? '#004085' :
+                                        '#856404'
+                                    }}>
+                                      {booking.status?.toUpperCase() || 'PENDING'}
+                                    </div>
+                                  </div>
+                                  
+                                  {booking.job_type && (
+                                    <div style={{ marginBottom: '8px' }}>
+                                      <strong>Job Type:</strong> {booking.job_type}
+                                    </div>
+                                  )}
+                                  
+                                  {booking.dates && (
+                                    <div style={{ marginBottom: '8px' }}>
+                                      <strong>Dates:</strong> {booking.dates}
+                                    </div>
+                                  )}
+                                  
+                                  {booking.location && (
+                                    <div style={{ marginBottom: '8px' }}>
+                                      <strong>Location:</strong> {booking.location}
+                                    </div>
+                                  )}
+                                  
+                                  {booking.pay_rate && (
+                                    <div style={{ marginBottom: '8px' }}>
+                                      <strong>Pay Rate:</strong> {booking.pay_rate}
+                                    </div>
+                                  )}
+                                  
+                                  {booking.details && (
+                                    <div style={{ marginBottom: '12px', padding: '12px', backgroundColor: '#f8f9fa', borderRadius: '4px' }}>
+                                      <strong>Details:</strong>
+                                      <p style={{ margin: '8px 0 0 0', whiteSpace: 'pre-wrap' }}>{booking.details}</p>
+                                    </div>
+                                  )}
+                                  
+                                  <div style={{ 
+                                    display: 'flex', 
+                                    justifyContent: 'space-between', 
+                                    alignItems: 'center',
+                                    marginTop: '12px',
+                                    paddingTop: '12px',
+                                    borderTop: '1px solid #e0e0e0'
+                                  }}>
+                                    <span style={{ fontSize: '12px', color: '#999' }}>
+                                      {new Date(booking.created_at).toLocaleDateString('en-US', {
+                                        year: 'numeric',
+                                        month: 'short',
+                                        day: 'numeric',
+                                        hour: '2-digit',
+                                        minute: '2-digit'
+                                      })}
+                                    </span>
+                                    <div>
+                                      <button
+                                        onClick={async () => {
+                                          if (window.confirm('Are you sure you want to delete this booking?')) {
+                                            const result = await deleteBooking(booking.id);
+                                            if (result.success) {
+                                              setBookings(bookings.filter(b => b.id !== booking.id));
+                                            } else {
+                                              alert('Failed to delete booking: ' + result.error);
+                                            }
+                                          }
+                                        }}
+                                        style={{
+                                          padding: '6px 12px',
+                                          backgroundColor: '#dc3545',
+                                          color: 'white',
+                                          border: 'none',
+                                          borderRadius: '4px',
+                                          cursor: 'pointer',
+                                          fontSize: '12px'
+                                        }}
+                                      >
+                                        Delete
+                                      </button>
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       </div>
                     )}
                     {activeBookingTab === 'Tab 2' && (
-                      <div className="w-tab-pane w--tab-active">
+                      <div className={`w-tab-pane ${activeBookingTab === 'Tab 2' ? 'w--tab-active' : ''}`}>
                         <div className="w-layout-vflex flex-block-8">
                           <div className="w-layout-hflex flex-block-9">
                             <img width="50" height="Auto" alt="" src="/images/smSwitch.png" loading="lazy" />
