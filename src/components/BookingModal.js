@@ -16,6 +16,7 @@ const BookingModal = ({ isOpen, onClose, profile, onBookingCreated }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
   const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [createdBooking, setCreatedBooking] = useState(null);
 
   const jobTypes = [
     { name: 'Photoshoots', icon: FaCamera },
@@ -59,8 +60,10 @@ const BookingModal = ({ isOpen, onClose, profile, onBookingCreated }) => {
       });
 
       if (result.success) {
+        const bookingId = result.data?.id;
+        const clientEmail = formData.email?.trim() || '';
+        setCreatedBooking(bookingId && clientEmail ? { id: bookingId, email: clientEmail } : null);
         setSubmitSuccess(true);
-        // Reset form
         setFormData({
           name: '',
           email: '',
@@ -71,17 +74,12 @@ const BookingModal = ({ isOpen, onClose, profile, onBookingCreated }) => {
           jobType: ''
         });
         setSelectedJobType(null);
-        
-        // Notify parent component to refresh bookings list
-        if (onBookingCreated) {
-          onBookingCreated();
-        }
-        
-        // Close modal after a short delay
+        if (onBookingCreated) onBookingCreated();
         setTimeout(() => {
           onClose();
           setSubmitSuccess(false);
-        }, 2000);
+          setCreatedBooking(null);
+        }, 6000);
       } else {
         setSubmitError(result.error || 'Failed to submit booking request');
       }
@@ -107,6 +105,7 @@ const BookingModal = ({ isOpen, onClose, profile, onBookingCreated }) => {
       setSelectedJobType(null);
       setSubmitError(null);
       setSubmitSuccess(false);
+      setCreatedBooking(null);
       onClose();
     }
   };
@@ -199,10 +198,23 @@ const BookingModal = ({ isOpen, onClose, profile, onBookingCreated }) => {
               padding: '12px', 
               marginBottom: '16px', 
               backgroundColor: '#efe', 
-              color: '#3c3', 
+              color: '#155724', 
               borderRadius: '4px' 
             }}>
-              Booking request submitted successfully!
+              <p style={{ margin: '0 0 8px 0' }}>Booking request submitted successfully!</p>
+              {createdBooking && (
+                <p style={{ margin: 0, fontSize: '14px' }}>
+                  You can message about this booking:{' '}
+                  <a
+                    href={`${window.location.origin}/booking/chat/${createdBooking.id}?email=${encodeURIComponent(createdBooking.email)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ color: '#783FF3', fontWeight: 600 }}
+                  >
+                    Open chat
+                  </a>
+                </p>
+              )}
             </div>
           )}
           

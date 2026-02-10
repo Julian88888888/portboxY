@@ -11,6 +11,7 @@ import ModelPage from './components/ModelPage';
 import ProfilePage from './pages/ProfilePage';
 import PortfolioPage from './pages/PortfolioPage';
 import BookingsPage from './pages/BookingsPage';
+import BookingChatPage from './pages/BookingChatPage';
 import CustomLinksPage from './pages/CustomLinksPage';
 import SettingsPage from './pages/SettingsPage';
 
@@ -34,6 +35,7 @@ function AppContent() {
           {/* Public routes */}
           <Route path="/" element={<MainPage />} />
           <Route path="/model/:username?" element={<ModelPage />} />
+          <Route path="/booking/chat/:bookingId" element={<BookingChatPage />} />
           
           {/* Protected routes - require authentication */}
           <Route 

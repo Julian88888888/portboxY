@@ -61,7 +61,52 @@ const getAuthHeaders = async () => {
 };
 
 /**
- * Get messages for a booking (chat)
+ * Guest (client): get messages - no auth, email required
+ */
+export const getGuestBookingMessages = async (bookingId, email) => {
+  try {
+    const params = new URLSearchParams({ email: (email || '').trim() });
+    const response = await fetch(
+      `${getApiBaseUrl()}/bookings/${bookingId}/guest-messages?${params}`,
+      { method: 'GET', headers: { 'Content-Type': 'application/json' } }
+    );
+    const data = await response.json();
+    if (!response.ok) {
+      return { success: false, error: data.message || data.error || 'Failed to get messages' };
+    }
+    return { success: true, data: data.data || [] };
+  } catch (error) {
+    console.error('Error getting guest messages:', error);
+    return { success: false, error: error.message || 'Failed to get messages' };
+  }
+};
+
+/**
+ * Guest (client): send message - no auth, email required
+ */
+export const sendGuestBookingMessage = async (bookingId, email, body) => {
+  try {
+    const response = await fetch(
+      `${getApiBaseUrl()}/bookings/${bookingId}/guest-messages`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: (email || '').trim(), body: String(body).trim() })
+      }
+    );
+    const data = await response.json();
+    if (!response.ok) {
+      return { success: false, error: data.message || data.error || 'Failed to send message' };
+    }
+    return { success: true, data: data.data };
+  } catch (error) {
+    console.error('Error sending guest message:', error);
+    return { success: false, error: error.message || 'Failed to send message' };
+  }
+};
+
+/**
+ * Get messages for a booking (chat) - for logged-in model
  */
 export const getBookingMessages = async (bookingId) => {
   try {

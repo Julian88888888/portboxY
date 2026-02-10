@@ -338,11 +338,110 @@ const createBookingMessage = async (req, res) => {
   }
 };
 
+/**
+ * Guest: get messages for a booking (no auth, validate by email)
+ * GET /api/bookings/:id/guest-messages?email=...
+ */
+const getGuestBookingMessages = async (req, res) => {
+  try {
+    const bookingId = req.params.id;
+    const email = (req.query.email || '').trim().toLowerCase();
+    if (!email) {
+      return res.status(400).json({ success: false, message: 'Email is required' });
+    }
+
+    const { data: booking, error: bookingError } = await supabase
+      .from('bookings')
+      .select('id, email')
+      .eq('id', bookingId)
+      .single();
+
+    if (bookingError || !booking) {
+      return res.status(404).json({ success: false, message: 'Booking not found' });
+    }
+    if (booking.email.trim().toLowerCase() !== email) {
+      return res.status(403).json({ success: false, message: 'Email does not match this booking' });
+    }
+
+    const { data: messages, error } = await supabase
+      .from('booking_messages')
+      .select('*')
+      .eq('booking_id', bookingId)
+      .order('created_at', { ascending: true });
+
+    if (error) throw error;
+
+    res.json({ success: true, data: messages || [] });
+  } catch (error) {
+    console.error('Error getting guest booking messages:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get messages',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * Guest: send a message (no auth, validate by email)
+ * POST /api/bookings/:id/guest-messages  body: { email, body }
+ */
+const createGuestBookingMessage = async (req, res) => {
+  try {
+    const bookingId = req.params.id;
+    const { email: rawEmail, body: messageBody } = req.body || {};
+    const email = (rawEmail || '').trim().toLowerCase();
+    if (!email) {
+      return res.status(400).json({ success: false, message: 'Email is required' });
+    }
+    if (!messageBody || !String(messageBody).trim()) {
+      return res.status(400).json({ success: false, message: 'Message body is required' });
+    }
+
+    const { data: booking, error: bookingError } = await supabase
+      .from('bookings')
+      .select('id, email')
+      .eq('id', bookingId)
+      .single();
+
+    if (bookingError || !booking) {
+      return res.status(404).json({ success: false, message: 'Booking not found' });
+    }
+    if (booking.email.trim().toLowerCase() !== email) {
+      return res.status(403).json({ success: false, message: 'Email does not match this booking' });
+    }
+
+    const { data: message, error } = await supabase
+      .from('booking_messages')
+      .insert({
+        booking_id: bookingId,
+        sender_type: 'client',
+        sender_id: null,
+        body: String(messageBody).trim()
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    res.status(201).json({ success: true, data: message });
+  } catch (error) {
+    console.error('Error creating guest booking message:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to send message',
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
   getBookings,
   createBooking,
   updateBooking,
   deleteBooking,
   getBookingMessages,
-  createBookingMessage
+  createBookingMessage,
+  getGuestBookingMessages,
+  createGuestBookingMessage
 };

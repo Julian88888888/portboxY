@@ -14,24 +14,29 @@ const BookingChatModal = ({ isOpen, onClose, booking }) => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  const loadMessages = () => {
+    if (!booking?.id) return;
+    setLoading(true);
+    setError(null);
+    getBookingMessages(booking.id)
+      .then((result) => {
+        if (result.success) {
+          setMessages(result.data || []);
+        } else {
+          setError(result.error || 'Failed to load messages');
+          setMessages([]);
+        }
+      })
+      .catch((err) => {
+        setError(err.message || 'Failed to load messages');
+        setMessages([]);
+      })
+      .finally(() => setLoading(false));
+  };
+
   useEffect(() => {
     if (isOpen && booking?.id) {
-      setError(null);
-      setLoading(true);
-      getBookingMessages(booking.id)
-        .then((result) => {
-          if (result.success) {
-            setMessages(result.data || []);
-          } else {
-            setError(result.error || 'Failed to load messages');
-            setMessages([]);
-          }
-        })
-        .catch((err) => {
-          setError(err.message || 'Failed to load messages');
-          setMessages([]);
-        })
-        .finally(() => setLoading(false));
+      loadMessages();
     } else {
       setMessages([]);
       setInputValue('');
@@ -87,13 +92,23 @@ const BookingChatModal = ({ isOpen, onClose, booking }) => {
           <FaTimes />
         </button>
 
-        <div style={{ paddingBottom: '12px', borderBottom: '1px solid #e0e0e0' }}>
-          <h3 style={{ margin: '0 0 4px 0', fontSize: '18px' }}>Chat</h3>
-          {booking && (
-            <p style={{ margin: 0, fontSize: '14px', color: '#666' }}>
-              {booking.name} · {booking.email}
-            </p>
-          )}
+        <div style={{ paddingBottom: '12px', borderBottom: '1px solid #e0e0e0', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div>
+            <h3 style={{ margin: '0 0 4px 0', fontSize: '18px' }}>Chat</h3>
+            {booking && (
+              <p style={{ margin: 0, fontSize: '14px', color: '#666' }}>
+                {booking.name} · {booking.email}
+              </p>
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={loadMessages}
+            disabled={loading}
+            style={{ padding: '4px 10px', fontSize: '12px', cursor: loading ? 'not-allowed' : 'pointer' }}
+          >
+            {loading ? '...' : 'Refresh'}
+          </button>
         </div>
 
         <div

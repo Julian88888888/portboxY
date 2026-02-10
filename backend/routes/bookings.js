@@ -7,10 +7,16 @@ const {
   updateBooking,
   deleteBooking,
   getBookingMessages,
-  createBookingMessage
+  createBookingMessage,
+  getGuestBookingMessages,
+  createGuestBookingMessage
 } = require('../controllers/bookingsController');
 
-// All routes require authentication
+// Guest chat (no auth) - validate by email
+router.get('/:id/guest-messages', getGuestBookingMessages);
+router.post('/:id/guest-messages', createGuestBookingMessage);
+
+// All routes below require authentication
 router.use(verifySupabaseToken);
 
 // GET /api/bookings - Get all bookings for current user
