@@ -5,7 +5,9 @@ const {
   getBookings,
   createBooking,
   updateBooking,
-  deleteBooking
+  deleteBooking,
+  getBookingMessages,
+  createBookingMessage
 } = require('../controllers/bookingsController');
 
 // All routes require authentication
@@ -16,6 +18,12 @@ router.get('/', getBookings);
 
 // POST /api/bookings - Create a new booking
 router.post('/', createBooking);
+
+// GET /api/bookings/:id/messages - Get messages for a booking
+router.get('/:id/messages', getBookingMessages);
+
+// POST /api/bookings/:id/messages - Send a message in a booking chat
+router.post('/:id/messages', createBookingMessage);
 
 // PUT /api/bookings/:id - Update a booking
 router.put('/:id', updateBooking);

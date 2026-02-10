@@ -235,9 +235,114 @@ const deleteBooking = async (req, res) => {
   }
 };
 
+/**
+ * Get messages for a booking
+ * GET /api/bookings/:id/messages
+ */
+const getBookingMessages = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const bookingId = req.params.id;
+
+    const { data: booking, error: bookingError } = await supabase
+      .from('bookings')
+      .select('id')
+      .eq('id', bookingId)
+      .eq('user_id', userId)
+      .single();
+
+    if (bookingError || !booking) {
+      return res.status(404).json({
+        success: false,
+        message: 'Booking not found'
+      });
+    }
+
+    const { data: messages, error } = await supabase
+      .from('booking_messages')
+      .select('*')
+      .eq('booking_id', bookingId)
+      .order('created_at', { ascending: true });
+
+    if (error) throw error;
+
+    res.json({
+      success: true,
+      data: messages || []
+    });
+  } catch (error) {
+    console.error('Error getting booking messages:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get messages',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * Send a message in a booking chat
+ * POST /api/bookings/:id/messages
+ */
+const createBookingMessage = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const bookingId = req.params.id;
+    const { body } = req.body || {};
+
+    if (!body || !String(body).trim()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Message body is required'
+      });
+    }
+
+    const { data: booking, error: bookingError } = await supabase
+      .from('bookings')
+      .select('id')
+      .eq('id', bookingId)
+      .eq('user_id', userId)
+      .single();
+
+    if (bookingError || !booking) {
+      return res.status(404).json({
+        success: false,
+        message: 'Booking not found'
+      });
+    }
+
+    const { data: message, error } = await supabase
+      .from('booking_messages')
+      .insert({
+        booking_id: bookingId,
+        sender_type: 'model',
+        sender_id: userId,
+        body: String(body).trim()
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    res.status(201).json({
+      success: true,
+      data: message
+    });
+  } catch (error) {
+    console.error('Error creating booking message:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to send message',
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
   getBookings,
   createBooking,
   updateBooking,
-  deleteBooking
+  deleteBooking,
+  getBookingMessages,
+  createBookingMessage
 };

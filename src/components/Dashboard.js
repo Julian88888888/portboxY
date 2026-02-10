@@ -6,6 +6,7 @@ import { createAlbum, getAlbums, uploadImageToAlbum, deleteAlbum, getAlbumImages
 import { getCustomLinks, createCustomLink, updateCustomLink, deleteCustomLink } from '../services/customLinksService';
 import { getBookings, deleteBooking, updateBooking } from '../services/bookingsService';
 import ProfileSettings from './ProfileSettings';
+import BookingChatModal from './BookingChatModal';
 import './Dashboard.css';
 
 export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
@@ -56,6 +57,8 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
   // Bookings state
   const [bookings, setBookings] = useState([]);
   const [bookingsLoading, setBookingsLoading] = useState(false);
+  const [bookingChatOpen, setBookingChatOpen] = useState(false);
+  const [selectedBookingForChat, setSelectedBookingForChat] = useState(null);
 
   // Sync with prop changes - this ensures the tab reflects the current page
   useEffect(() => {
@@ -1384,7 +1387,24 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                                         minute: '2-digit'
                                       })}
                                     </span>
-                                    <div>
+                                    <div style={{ display: 'flex', gap: '8px' }}>
+                                      <button
+                                        onClick={() => {
+                                          setSelectedBookingForChat(booking);
+                                          setBookingChatOpen(true);
+                                        }}
+                                        style={{
+                                          padding: '6px 12px',
+                                          backgroundColor: '#783FF3',
+                                          color: 'white',
+                                          border: 'none',
+                                          borderRadius: '4px',
+                                          cursor: 'pointer',
+                                          fontSize: '12px'
+                                        }}
+                                      >
+                                        Chat
+                                      </button>
                                       <button
                                         onClick={async () => {
                                           if (window.confirm('Are you sure you want to delete this booking?')) {
@@ -2785,6 +2805,16 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
           </div>
         </div>
       )}
+
+      {/* Booking Chat Modal */}
+      <BookingChatModal
+        isOpen={bookingChatOpen}
+        onClose={() => {
+          setBookingChatOpen(false);
+          setSelectedBookingForChat(null);
+        }}
+        booking={selectedBookingForChat}
+      />
     </div>
   );
 }

@@ -61,6 +61,67 @@ const getAuthHeaders = async () => {
 };
 
 /**
+ * Get messages for a booking (chat)
+ */
+export const getBookingMessages = async (bookingId) => {
+  try {
+    const headers = await getAuthHeaders();
+    const response = await fetch(`${getApiBaseUrl()}/bookings/${bookingId}/messages`, {
+      method: 'GET',
+      headers
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      return {
+        success: false,
+        error: data.message || data.error || 'Failed to get messages'
+      };
+    }
+    return {
+      success: true,
+      data: data.data || []
+    };
+  } catch (error) {
+    console.error('Error getting booking messages:', error);
+    return {
+      success: false,
+      error: error.message || 'Failed to get messages'
+    };
+  }
+};
+
+/**
+ * Send a message in a booking chat
+ */
+export const sendBookingMessage = async (bookingId, body) => {
+  try {
+    const headers = await getAuthHeaders();
+    const response = await fetch(`${getApiBaseUrl()}/bookings/${bookingId}/messages`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ body: String(body).trim() })
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      return {
+        success: false,
+        error: data.message || data.error || 'Failed to send message'
+      };
+    }
+    return {
+      success: true,
+      data: data.data
+    };
+  } catch (error) {
+    console.error('Error sending booking message:', error);
+    return {
+      success: false,
+      error: error.message || 'Failed to send message'
+    };
+  }
+};
+
+/**
  * Get all bookings for the current user
  */
 export const getBookings = async () => {
