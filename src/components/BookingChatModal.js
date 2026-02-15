@@ -98,6 +98,15 @@ const BookingChatModal = ({ isOpen, onClose, booking }) => {
             {booking && (
               <p style={{ margin: 0, fontSize: '14px', color: '#666' }}>
                 {booking.name} · {booking.email}
+                {' '}
+                <a
+                  href={`mailto:${encodeURIComponent(booking.email)}?subject=${encodeURIComponent('Re: Your booking request')}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ marginLeft: '8px', fontSize: '13px', color: '#783FF3' }}
+                >
+                  Email client
+                </a>
               </p>
             )}
           </div>

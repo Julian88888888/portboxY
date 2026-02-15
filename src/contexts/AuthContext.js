@@ -85,6 +85,8 @@ export const AuthProvider = ({ children }) => {
             profilePhotos: userMetadata.profilePhotos || [],
             links: userMetadata.links || [],
             portfolioAlbums: [], // Will be loaded from database
+            socialLinks: userMetadata.socialLinks || session.user.socialLinks,
+            showSocialLinks: userMetadata.showSocialLinks,
           };
           setUser(userData);
           
@@ -120,6 +122,8 @@ export const AuthProvider = ({ children }) => {
             profilePhotos: userMetadata.profilePhotos || [],
             links: userMetadata.links || [],
             portfolioAlbums: [], // Will be loaded from database
+            socialLinks: userMetadata.socialLinks || session.user.socialLinks,
+            showSocialLinks: userMetadata.showSocialLinks,
           };
           setUser(userData);
           setIsAuthenticated(true);
@@ -358,6 +362,8 @@ export const AuthProvider = ({ children }) => {
           profilePhotos: userMetadata.profilePhotos || [],
           links: userMetadata.links || [],
           portfolioAlbums: userMetadata.portfolioAlbums || [],
+          socialLinks: userMetadata.socialLinks || data.user.socialLinks,
+          showSocialLinks: userMetadata.showSocialLinks,
         });
         return { success: true, data: data.user };
       }

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useProfile } from '../hooks/useProfile';
 import { getAvatarUrl, getHeaderUrl } from '../services/profileService';
@@ -9,7 +10,10 @@ import ProfileSettings from './ProfileSettings';
 import BookingChatModal from './BookingChatModal';
 import './Dashboard.css';
 
+const TAB_ROUTES = { 'Tab 1': '/profile', 'Tab 2': '/portfolio', 'Tab 3': '/bookings', 'Tab 4': '/links', 'Tab 5': '/settings' };
+
 export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
+  const navigate = useNavigate();
   const { user, updateProfile, uploadPortfolioAlbum, updatePortfolioAlbum, deletePortfolioAlbum } = useAuth();
   const { data: profile } = useProfile();
   const [activeTab, setActiveTab] = useState(propActiveTab || 'Tab 1');
@@ -159,12 +163,14 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
   }, [user?.id]);
 
   const handleTabChange = (tab) => {
-    // Immediately call onTabChange to update the page in App.js
     if (onTabChange) {
       onTabChange(tab);
     }
-    // Also update local state for immediate UI feedback
     setActiveTab(tab);
+    const path = TAB_ROUTES[tab];
+    if (path) {
+      navigate(path);
+    }
   };
   const [formData, setFormData] = useState({
     username: '',
@@ -176,6 +182,11 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
     showProfileDescription: true,
     instagram: '',
     twitter: '',
+    linkedin: '',
+    onlyfans: '',
+    spotify: '',
+    vimeo: '',
+    cashapp: '',
     showSocialLinks: true,
     industry: '',
     status: '',
@@ -226,6 +237,17 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
 
   useEffect(() => {
     if (user) {
+      // Social links: Auth stores in user_metadata.socialLinks, also check profile
+      const sl = user.socialLinks || user.user_metadata?.socialLinks || profile?.social_links || profile?.socialLinks || {};
+      const socialLinks = {
+        instagram: sl.instagram || '',
+        twitter: sl.twitter || '',
+        linkedin: sl.linkedin || '',
+        onlyfans: sl.onlyfans || '',
+        spotify: sl.spotify || '',
+        vimeo: sl.vimeo || '',
+        cashapp: sl.cashapp || ''
+      };
       setFormData(prev => ({
         ...prev,
         username: user.username || '',
@@ -236,6 +258,13 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
         markets: user.markets || '',
         availableFor: user.availableFor || '',
         showModelStats: user.showModelStats !== undefined ? user.showModelStats : (user.user_metadata?.showModelStats !== undefined ? user.user_metadata.showModelStats : true),
+        showBookMeButton: user.showBookMeButton !== undefined ? user.showBookMeButton : (user.user_metadata?.showBookMeButton !== undefined ? user.user_metadata.showBookMeButton : true),
+        showCustomLinksTitle: user.showCustomLinksTitle !== undefined ? user.showCustomLinksTitle : (user.user_metadata?.showCustomLinksTitle !== undefined ? user.user_metadata.showCustomLinksTitle : true),
+        showProfileStats: user.showProfileStats !== undefined ? user.showProfileStats : (user.user_metadata?.showProfileStats !== undefined ? user.user_metadata.showProfileStats : true),
+        showSocialLinks: user.showSocialLinks !== undefined ? user.showSocialLinks : (user.user_metadata?.showSocialLinks !== undefined ? user.user_metadata.showSocialLinks : true),
+        showAlbumBadge: user.showAlbumBadge !== undefined ? user.showAlbumBadge : (user.user_metadata?.showAlbumBadge !== undefined ? user.user_metadata.showAlbumBadge : true),
+        showAlbumTitle: user.showAlbumTitle !== undefined ? user.showAlbumTitle : (user.user_metadata?.showAlbumTitle !== undefined ? user.user_metadata.showAlbumTitle : true),
+        showAlbumDescription: user.showAlbumDescription !== undefined ? user.showAlbumDescription : (user.user_metadata?.showAlbumDescription !== undefined ? user.user_metadata.showAlbumDescription : true),
         heightFeet: user.heightFeet || '',
         heightInches: user.heightInches || '',
         heightUnit: user.heightUnit || '',
@@ -256,12 +285,17 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
         gender: user.gender || user.user_metadata?.gender || '',
         ethnicity: user.ethnicity || user.user_metadata?.ethnicity || '',
         email: user.email || '',
-        instagram: user.socialLinks?.instagram || '',
-        twitter: user.socialLinks?.twitter || '',
+        instagram: socialLinks.instagram,
+        twitter: socialLinks.twitter,
+        linkedin: socialLinks.linkedin,
+        onlyfans: socialLinks.onlyfans,
+        spotify: socialLinks.spotify,
+        vimeo: socialLinks.vimeo,
+        cashapp: socialLinks.cashapp,
         hometown: user.currentCity || ''
       }));
     }
-  }, [user]);
+  }, [user, profile]);
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -274,7 +308,21 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
   const handleSubmit = async (e, formType) => {
     e.preventDefault();
     try {
-      const result = await updateProfile(formData);
+      const payload = formType === 'social'
+        ? {
+            ...formData,
+            socialLinks: {
+              instagram: formData.instagram || '',
+              twitter: formData.twitter || '',
+              linkedin: formData.linkedin || '',
+              onlyfans: formData.onlyfans || '',
+              spotify: formData.spotify || '',
+              vimeo: formData.vimeo || '',
+              cashapp: formData.cashapp || ''
+            }
+          }
+        : formData;
+      const result = await updateProfile(payload);
       if (result.success) {
         alert('Settings saved successfully!');
       } else {
@@ -390,109 +438,6 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
       <section>
         <div className="spacing_48"></div>
         <div className="tabs w-tabs">
-          <div className="tabs-menu w-tab-menu" style={{ display: 'none' }}>
-            <button
-              type="button"
-              onClick={() => handleTabChange('Tab 1')}
-              className={`tab-link-tab-1 w-inline-block w-tab-link ${activeTab === 'Tab 1' ? 'w--current' : ''}`}
-              style={{ 
-                background: activeTab === 'Tab 1' ? 'white' : 'transparent', 
-                border: 'none', 
-                padding: '12px 16px',
-                marginBottom: '8px',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                textAlign: 'left',
-                width: '100%',
-                textDecoration: 'none',
-                color: activeTab === 'Tab 1' ? 'var(--black, #070707)' : 'var(--black, #070707)',
-                display: 'block'
-              }}
-            >
-              <div>Profile</div>
-            </button>
-            <button
-              type="button"
-              onClick={() => handleTabChange('Tab 2')}
-              className={`tab-link-tab-2 w-inline-block w-tab-link ${activeTab === 'Tab 2' ? 'w--current' : ''}`}
-              style={{ 
-                background: activeTab === 'Tab 2' ? 'white' : 'transparent', 
-                border: 'none', 
-                padding: '12px 16px',
-                marginBottom: '8px',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                textAlign: 'left',
-                width: '100%',
-                textDecoration: 'none',
-                color: activeTab === 'Tab 2' ? 'var(--black, #070707)' : 'var(--black, #070707)',
-                display: 'block'
-              }}
-            >
-              <div>Portfolio</div>
-            </button>
-            <button
-              type="button"
-              onClick={() => handleTabChange('Tab 3')}
-              className={`tab-link-tab-3 w-inline-block w-tab-link ${activeTab === 'Tab 3' ? 'w--current' : ''}`}
-              style={{ 
-                background: activeTab === 'Tab 3' ? 'white' : 'transparent', 
-                border: 'none', 
-                padding: '12px 16px',
-                marginBottom: '8px',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                textAlign: 'left',
-                width: '100%',
-                textDecoration: 'none',
-                color: activeTab === 'Tab 3' ? 'var(--black, #070707)' : 'var(--black, #070707)',
-                display: 'block'
-              }}
-            >
-              <div>Bookings</div>
-            </button>
-            <button
-              type="button"
-              onClick={() => handleTabChange('Tab 4')}
-              className={`tab-link-tab-4 w-inline-block w-tab-link ${activeTab === 'Tab 4' ? 'w--current' : ''}`}
-              style={{ 
-                background: activeTab === 'Tab 4' ? 'white' : 'transparent', 
-                border: 'none', 
-                padding: '12px 16px',
-                marginBottom: '8px',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                textAlign: 'left',
-                width: '100%',
-                textDecoration: 'none',
-                color: activeTab === 'Tab 4' ? 'var(--black, #070707)' : 'var(--black, #070707)',
-                display: 'block'
-              }}
-            >
-              <div>Custom Links</div>
-            </button>
-            <button
-              type="button"
-              onClick={() => handleTabChange('Tab 5')}
-              className={`tab-link-tab-5 w-inline-block w-tab-link ${activeTab === 'Tab 5' ? 'w--current' : ''}`}
-              style={{ 
-                background: activeTab === 'Tab 5' ? 'white' : 'transparent', 
-                border: 'none', 
-                padding: '12px 16px',
-                marginBottom: '8px',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                textAlign: 'left',
-                width: '100%',
-                textDecoration: 'none',
-                color: activeTab === 'Tab 5' ? 'var(--black, #070707)' : 'var(--black, #070707)',
-                display: 'block'
-              }}
-            >
-              <div>Account Settings</div>
-            </button>
-          </div>
-          
           <div className="tabs-content w-tab-content">
             {/* Tab 1: Profile */}
             {activeTab === 'Tab 1' && (
@@ -565,9 +510,55 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                     <div className="w-form">
                       <div className="spacing_24"></div>
                       <form onSubmit={(e) => handleSubmit(e, 'social')}>
-                        <div className="w-layout-hflex flex-block-9">
-                          <img width="50" height="Auto" alt="" src="/images/smSwitch.png" loading="lazy" />
-                          <p>Show Social Links</p>
+                        <div className="w-layout-hflex flex-block-9" style={{ alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+                          <label
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              cursor: 'pointer',
+                              gap: '10px',
+                              userSelect: 'none',
+                              flex: '0 0 auto'
+                            }}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              const newValue = !formData.showSocialLinks;
+                              setFormData(prev => ({ ...prev, showSocialLinks: newValue }));
+                              updateProfile({ ...formData, showSocialLinks: newValue }).then(result => {
+                                if (result.success) {
+                                  console.log('Show Social Links toggle saved');
+                                }
+                              });
+                            }}
+                          >
+                            <div
+                              style={{
+                                width: '44px',
+                                height: '24px',
+                                borderRadius: '12px',
+                                backgroundColor: (formData.showSocialLinks ?? true) ? '#783FF3' : '#ccc',
+                                position: 'relative',
+                                cursor: 'pointer',
+                                transition: 'background-color 0.2s',
+                                flexShrink: 0
+                              }}
+                            >
+                              <div
+                                style={{
+                                  width: '20px',
+                                  height: '20px',
+                                  borderRadius: '50%',
+                                  backgroundColor: 'white',
+                                  position: 'absolute',
+                                  top: '2px',
+                                  left: (formData.showSocialLinks ?? true) ? '22px' : '2px',
+                                  transition: 'left 0.2s',
+                                  boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                                }}
+                              />
+                            </div>
+                          </label>
+                          <p style={{ margin: 0 }}>Show Social Links</p>
                         </div>
                         <label htmlFor="instagram">Instagram</label>
                         <input 
@@ -591,6 +582,61 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                           value={formData.twitter}
                           onChange={handleInputChange}
                         />
+                        <label htmlFor="linkedin">LinkedIn</label>
+                        <input 
+                          className="w-input" 
+                          maxLength="256" 
+                          name="linkedin" 
+                          placeholder="https://linkedin.com/in/username" 
+                          type="text" 
+                          id="linkedin"
+                          value={formData.linkedin}
+                          onChange={handleInputChange}
+                        />
+                        <label htmlFor="onlyfans">OnlyFans</label>
+                        <input 
+                          className="w-input" 
+                          maxLength="256" 
+                          name="onlyfans" 
+                          placeholder="https://onlyfans.com/username" 
+                          type="text" 
+                          id="onlyfans"
+                          value={formData.onlyfans}
+                          onChange={handleInputChange}
+                        />
+                        <label htmlFor="spotify">Spotify</label>
+                        <input 
+                          className="w-input" 
+                          maxLength="256" 
+                          name="spotify" 
+                          placeholder="https://open.spotify.com/..." 
+                          type="text" 
+                          id="spotify"
+                          value={formData.spotify}
+                          onChange={handleInputChange}
+                        />
+                        <label htmlFor="vimeo">Vimeo</label>
+                        <input 
+                          className="w-input" 
+                          maxLength="256" 
+                          name="vimeo" 
+                          placeholder="https://vimeo.com/username" 
+                          type="text" 
+                          id="vimeo"
+                          value={formData.vimeo}
+                          onChange={handleInputChange}
+                        />
+                        <label htmlFor="cashapp">Cash App</label>
+                        <input 
+                          className="w-input" 
+                          maxLength="256" 
+                          name="cashapp" 
+                          placeholder="$username" 
+                          type="text" 
+                          id="cashapp"
+                          value={formData.cashapp}
+                          onChange={handleInputChange}
+                        />
                         <div className="spacing_24"></div>
                         <input type="submit" className="submit-button w-button" value="Save" />
                       </form>
@@ -608,9 +654,55 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                     <div className="spacing_24"></div>
                     <h3>Profile Stats</h3>
                     <div className="spacing_24"></div>
-                    <div style={{display: 'flex', alignItems: 'center', gap: '12px'}}>
-                      <img width="50" height="Auto" alt="" src="/images/smSwitch.png" loading="lazy" />
-                      <p>Show Profile Stats</p>
+                    <div className="w-layout-hflex flex-block-9" style={{ alignItems: 'center', gap: '12px' }}>
+                      <label
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          cursor: 'pointer',
+                          gap: '10px',
+                          userSelect: 'none',
+                          flex: '0 0 auto'
+                        }}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          const newValue = !formData.showProfileStats;
+                          setFormData(prev => ({ ...prev, showProfileStats: newValue }));
+                          updateProfile({ ...formData, showProfileStats: newValue }).then(result => {
+                            if (result.success) {
+                              console.log('Show Profile Stats toggle saved');
+                            }
+                          });
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: '44px',
+                            height: '24px',
+                            borderRadius: '12px',
+                            backgroundColor: (formData.showProfileStats ?? true) ? '#783FF3' : '#ccc',
+                            position: 'relative',
+                            cursor: 'pointer',
+                            transition: 'background-color 0.2s',
+                            flexShrink: 0
+                          }}
+                        >
+                          <div
+                            style={{
+                              width: '20px',
+                              height: '20px',
+                              borderRadius: '50%',
+                              backgroundColor: 'white',
+                              position: 'absolute',
+                              top: '2px',
+                              left: (formData.showProfileStats ?? true) ? '22px' : '2px',
+                              transition: 'left 0.2s',
+                              boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                            }}
+                          />
+                        </div>
+                      </label>
+                      <p style={{ margin: 0 }}>Show Profile Stats</p>
                     </div>
                     <div className="w-form">
                       <div style={{marginBottom: '12px'}}>
@@ -1063,9 +1155,55 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                   <div className="settingssection">
                     <div className="spacing_24"></div>
                     <h3>Book Me Button</h3>
-                    <div className="w-layout-hflex flex-block-9">
-                      <img width="50" height="Auto" alt="" src="/images/smSwitch.png" loading="lazy" />
-                      <p>Show Book Me Button</p>
+                    <div className="w-layout-hflex flex-block-9" style={{ alignItems: 'center', gap: '12px' }}>
+                      <label
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          cursor: 'pointer',
+                          gap: '10px',
+                          userSelect: 'none',
+                          flex: '0 0 auto'
+                        }}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          const newValue = !formData.showBookMeButton;
+                          setFormData(prev => ({ ...prev, showBookMeButton: newValue }));
+                          updateProfile({ ...formData, showBookMeButton: newValue }).then(result => {
+                            if (result.success) {
+                              console.log('Show Book Me Button toggle saved');
+                            }
+                          });
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: '44px',
+                            height: '24px',
+                            borderRadius: '12px',
+                            backgroundColor: (formData.showBookMeButton ?? true) ? '#783FF3' : '#ccc',
+                            position: 'relative',
+                            cursor: 'pointer',
+                            transition: 'background-color 0.2s',
+                            flexShrink: 0
+                          }}
+                        >
+                          <div
+                            style={{
+                              width: '20px',
+                              height: '20px',
+                              borderRadius: '50%',
+                              backgroundColor: 'white',
+                              position: 'absolute',
+                              top: '2px',
+                              left: (formData.showBookMeButton ?? true) ? '22px' : '2px',
+                              transition: 'left 0.2s',
+                              boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                            }}
+                          />
+                        </div>
+                      </label>
+                      <p style={{ margin: 0 }}>Show Book Me Button</p>
                     </div>
                   </div>
                 </div>
@@ -1077,17 +1215,29 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
               <div className="w-tab-pane w--tab-active">
                 <div className="w-layout-vflex flex-block-8">
                   <div className="spacing_24"></div>
-                  <div className="w-layout-hflex flex-block-9">
-                    <img width="50" height="Auto" alt="" src="/images/smSwitch.png" loading="lazy" />
-                    <p>Show Album Badge</p>
+                  <div className="w-layout-hflex flex-block-9" style={{ alignItems: 'center', gap: '12px' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', gap: '10px', userSelect: 'none', flex: '0 0 auto' }} onClick={(e) => { e.preventDefault(); const v = !formData.showAlbumBadge; setFormData(prev => ({ ...prev, showAlbumBadge: v })); updateProfile({ ...formData, showAlbumBadge: v }); }}>
+                      <div style={{ width: '44px', height: '24px', borderRadius: '12px', backgroundColor: (formData.showAlbumBadge ?? true) ? '#783FF3' : '#ccc', position: 'relative', cursor: 'pointer', flexShrink: 0 }}>
+                        <div style={{ width: '20px', height: '20px', borderRadius: '50%', backgroundColor: 'white', position: 'absolute', top: '2px', left: (formData.showAlbumBadge ?? true) ? '22px' : '2px', transition: 'left 0.2s', boxShadow: '0 2px 4px rgba(0,0,0,0.2)' }} />
+                      </div>
+                      <p style={{ margin: 0 }}>Show Album Badge</p>
+                    </label>
                   </div>
-                  <div className="w-layout-hflex flex-block-9">
-                    <img width="50" height="Auto" alt="" src="/images/smSwitch.png" loading="lazy" />
-                    <p>Show Album Title</p>
+                  <div className="w-layout-hflex flex-block-9" style={{ alignItems: 'center', gap: '12px' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', gap: '10px', userSelect: 'none', flex: '0 0 auto' }} onClick={(e) => { e.preventDefault(); const v = !formData.showAlbumTitle; setFormData(prev => ({ ...prev, showAlbumTitle: v })); updateProfile({ ...formData, showAlbumTitle: v }); }}>
+                      <div style={{ width: '44px', height: '24px', borderRadius: '12px', backgroundColor: (formData.showAlbumTitle ?? true) ? '#783FF3' : '#ccc', position: 'relative', cursor: 'pointer', flexShrink: 0 }}>
+                        <div style={{ width: '20px', height: '20px', borderRadius: '50%', backgroundColor: 'white', position: 'absolute', top: '2px', left: (formData.showAlbumTitle ?? true) ? '22px' : '2px', transition: 'left 0.2s', boxShadow: '0 2px 4px rgba(0,0,0,0.2)' }} />
+                      </div>
+                      <p style={{ margin: 0 }}>Show Album Title</p>
+                    </label>
                   </div>
-                  <div className="w-layout-hflex flex-block-9">
-                    <img width="50" height="Auto" alt="" src="/images/smSwitch.png" loading="lazy" />
-                    <p>Show Album Description</p>
+                  <div className="w-layout-hflex flex-block-9" style={{ alignItems: 'center', gap: '12px' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', gap: '10px', userSelect: 'none', flex: '0 0 auto' }} onClick={(e) => { e.preventDefault(); const v = !formData.showAlbumDescription; setFormData(prev => ({ ...prev, showAlbumDescription: v })); updateProfile({ ...formData, showAlbumDescription: v }); }}>
+                      <div style={{ width: '44px', height: '24px', borderRadius: '12px', backgroundColor: (formData.showAlbumDescription ?? true) ? '#783FF3' : '#ccc', position: 'relative', cursor: 'pointer', flexShrink: 0 }}>
+                        <div style={{ width: '20px', height: '20px', borderRadius: '50%', backgroundColor: 'white', position: 'absolute', top: '2px', left: (formData.showAlbumDescription ?? true) ? '22px' : '2px', transition: 'left 0.2s', boxShadow: '0 2px 4px rgba(0,0,0,0.2)' }} />
+                      </div>
+                      <p style={{ margin: 0 }}>Show Album Description</p>
+                    </label>
                   </div>
                   
                   {/* New Albums API Section */}
@@ -1253,9 +1403,55 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                   <div className="settingssection">
                     <div className="spacing_24"></div>
                     <h3>Book Me Button</h3>
-                    <div className="w-layout-hflex flex-block-9">
-                      <img width="50" height="Auto" alt="" src="/images/smSwitch.png" loading="lazy" />
-                      <p>Show Book Me Button</p>
+                    <div className="w-layout-hflex flex-block-9" style={{ alignItems: 'center', gap: '12px' }}>
+                      <label
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          cursor: 'pointer',
+                          gap: '10px',
+                          userSelect: 'none',
+                          flex: '0 0 auto'
+                        }}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          const newValue = !formData.showBookMeButton;
+                          setFormData(prev => ({ ...prev, showBookMeButton: newValue }));
+                          updateProfile({ ...formData, showBookMeButton: newValue }).then(result => {
+                            if (result.success) {
+                              console.log('Show Book Me Button toggle saved');
+                            }
+                          });
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: '44px',
+                            height: '24px',
+                            borderRadius: '12px',
+                            backgroundColor: (formData.showBookMeButton ?? true) ? '#783FF3' : '#ccc',
+                            position: 'relative',
+                            cursor: 'pointer',
+                            transition: 'background-color 0.2s',
+                            flexShrink: 0
+                          }}
+                        >
+                          <div
+                            style={{
+                              width: '20px',
+                              height: '20px',
+                              borderRadius: '50%',
+                              backgroundColor: 'white',
+                              position: 'absolute',
+                              top: '2px',
+                              left: (formData.showBookMeButton ?? true) ? '22px' : '2px',
+                              transition: 'left 0.2s',
+                              boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                            }}
+                          />
+                        </div>
+                      </label>
+                      <p style={{ margin: 0 }}>Show Book Me Button</p>
                     </div>
                   </div>
                 </div>
@@ -1387,7 +1583,24 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                                         minute: '2-digit'
                                       })}
                                     </span>
-                                    <div style={{ display: 'flex', gap: '8px' }}>
+                                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                                      <a
+                                        href={`mailto:${encodeURIComponent(booking.email)}?subject=${encodeURIComponent('Re: Your booking request')}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        style={{
+                                          padding: '6px 12px',
+                                          backgroundColor: '#0d6efd',
+                                          color: 'white',
+                                          border: 'none',
+                                          borderRadius: '4px',
+                                          cursor: 'pointer',
+                                          fontSize: '12px',
+                                          textDecoration: 'none'
+                                        }}
+                                      >
+                                        Email
+                                      </a>
                                       <button
                                         onClick={() => {
                                           setSelectedBookingForChat(booking);
@@ -1623,9 +1836,55 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                           <div className="settingssection">
                             <div className="spacing_24"></div>
                             <h3>Book Me Button</h3>
-                            <div className="w-layout-hflex flex-block-9">
-                              <img width="50" height="Auto" alt="" src="/images/smSwitch.png" loading="lazy" />
-                              <p>Show Book Me Button</p>
+                            <div className="w-layout-hflex flex-block-9" style={{ alignItems: 'center', gap: '12px' }}>
+                              <label
+                                style={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  cursor: 'pointer',
+                                  gap: '10px',
+                                  userSelect: 'none',
+                                  flex: '0 0 auto'
+                                }}
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  const newValue = !formData.showBookMeButton;
+                                  setFormData(prev => ({ ...prev, showBookMeButton: newValue }));
+                                  updateProfile({ ...formData, showBookMeButton: newValue }).then(result => {
+                                    if (result.success) {
+                                      console.log('Show Book Me Button toggle saved');
+                                    }
+                                  });
+                                }}
+                              >
+                                <div
+                                  style={{
+                                    width: '44px',
+                                    height: '24px',
+                                    borderRadius: '12px',
+                                    backgroundColor: (formData.showBookMeButton ?? true) ? '#783FF3' : '#ccc',
+                                    position: 'relative',
+                                    cursor: 'pointer',
+                                    transition: 'background-color 0.2s',
+                                    flexShrink: 0
+                                  }}
+                                >
+                                  <div
+                                    style={{
+                                      width: '20px',
+                                      height: '20px',
+                                      borderRadius: '50%',
+                                      backgroundColor: 'white',
+                                      position: 'absolute',
+                                      top: '2px',
+                                      left: (formData.showBookMeButton ?? true) ? '22px' : '2px',
+                                      transition: 'left 0.2s',
+                                      boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                                    }}
+                                  />
+                                </div>
+                              </label>
+                              <p style={{ margin: 0 }}>Show Book Me Button</p>
                             </div>
                           </div>
                         </div>
@@ -1646,9 +1905,55 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                   </div>
                   <div className="spacing_24"></div>
                   <h3>Custom Links Settings</h3>
-                  <div className="w-layout-hflex flex-block-9">
-                    <img width="50" height="Auto" alt="" src="/images/smSwitch.png" loading="lazy" />
-                    <p>Show Custom Links Title</p>
+                  <div className="w-layout-hflex flex-block-9" style={{ alignItems: 'center', gap: '12px' }}>
+                    <label
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        cursor: 'pointer',
+                        gap: '10px',
+                        userSelect: 'none',
+                        flex: '0 0 auto'
+                      }}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        const newValue = !formData.showCustomLinksTitle;
+                        setFormData(prev => ({ ...prev, showCustomLinksTitle: newValue }));
+                        updateProfile({ ...formData, showCustomLinksTitle: newValue }).then(result => {
+                          if (result.success) {
+                            console.log('Show Custom Links Title toggle saved');
+                          }
+                        });
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: '44px',
+                          height: '24px',
+                          borderRadius: '12px',
+                          backgroundColor: (formData.showCustomLinksTitle ?? true) ? '#783FF3' : '#ccc',
+                          position: 'relative',
+                          cursor: 'pointer',
+                          transition: 'background-color 0.2s',
+                          flexShrink: 0
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: '20px',
+                            height: '20px',
+                            borderRadius: '50%',
+                            backgroundColor: 'white',
+                            position: 'absolute',
+                            top: '2px',
+                            left: (formData.showCustomLinksTitle ?? true) ? '22px' : '2px',
+                            transition: 'left 0.2s',
+                            boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                          }}
+                        />
+                      </div>
+                    </label>
+                    <p style={{ margin: 0 }}>Show Custom Links Title</p>
                   </div>
                   <div className="div-block-3">
                     <div className="w-layout-hflex flex-block-5 inputtxtdiv">
