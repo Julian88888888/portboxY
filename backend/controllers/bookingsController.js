@@ -100,6 +100,71 @@ const createBooking = async (req, res) => {
 };
 
 /**
+ * Create a booking as guest (no auth) - for model's public page
+ * POST /api/bookings/guest
+ * Body: { model_id?, username?, name, email, job_type?, dates?, location?, pay_rate?, details?, status? }
+ */
+const createGuestBooking = async (req, res) => {
+  try {
+    const { model_id, username, name, email, job_type, dates, location, pay_rate, details, status } = req.body || {};
+
+    if (!name || !String(name).trim()) {
+      return res.status(400).json({ success: false, message: 'Name is required' });
+    }
+    if (!email || !String(email).trim()) {
+      return res.status(400).json({ success: false, message: 'Email is required' });
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(String(email).trim())) {
+      return res.status(400).json({ success: false, message: 'Invalid email format' });
+    }
+
+    let modelUserId = model_id || null;
+    if (!modelUserId && username && String(username).trim()) {
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('username', String(username).trim().toLowerCase())
+        .maybeSingle();
+      if (profileError || !profile) {
+        return res.status(404).json({ success: false, message: 'Model not found' });
+      }
+      modelUserId = profile.id;
+    }
+    if (!modelUserId) {
+      return res.status(400).json({ success: false, message: 'model_id or username is required' });
+    }
+
+    const { data, error } = await supabase
+      .from('bookings')
+      .insert({
+        user_id: modelUserId,
+        name: String(name).trim(),
+        email: String(email).trim().toLowerCase(),
+        job_type: job_type || null,
+        dates: dates || null,
+        location: location || null,
+        pay_rate: pay_rate || null,
+        details: details || null,
+        status: status || 'pending'
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    res.status(201).json({ success: true, data });
+  } catch (error) {
+    console.error('Error creating guest booking:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to create booking',
+      error: error.message
+    });
+  }
+};
+
+/**
  * Update a booking
  * PUT /api/bookings/:id
  */
@@ -438,6 +503,7 @@ const createGuestBookingMessage = async (req, res) => {
 module.exports = {
   getBookings,
   createBooking,
+  createGuestBooking,
   updateBooking,
   deleteBooking,
   getBookingMessages,

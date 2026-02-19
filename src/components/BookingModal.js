@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { FaTimes, FaCamera, FaVideo, FaWalking, FaMicrophone } from 'react-icons/fa';
-import { createBooking } from '../services/bookingsService';
+import { createBooking, createGuestBooking } from '../services/bookingsService';
 
 const BookingModal = ({ isOpen, onClose, profile, onBookingCreated }) => {
   const [formData, setFormData] = useState({
@@ -47,17 +47,21 @@ const BookingModal = ({ isOpen, onClose, profile, onBookingCreated }) => {
     setSubmitError(null);
     setSubmitSuccess(false);
 
+    const bookingPayload = {
+      name: formData.name,
+      email: formData.email,
+      job_type: selectedJobType || formData.jobType,
+      dates: formData.dates,
+      location: formData.location,
+      pay_rate: formData.payRate,
+      details: formData.details,
+      status: 'pending'
+    };
+
     try {
-      const result = await createBooking({
-        name: formData.name,
-        email: formData.email,
-        job_type: selectedJobType || formData.jobType,
-        dates: formData.dates,
-        location: formData.location,
-        pay_rate: formData.payRate,
-        details: formData.details,
-        status: 'pending'
-      });
+      const result = profile?.id
+        ? await createGuestBooking(bookingPayload, { modelId: profile.id, username: profile.username })
+        : await createBooking(bookingPayload);
 
       if (result.success) {
         const bookingId = result.data?.id;

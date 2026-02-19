@@ -4,6 +4,7 @@ const { verifySupabaseToken } = require('../middleware/supabaseAuth');
 const {
   getBookings,
   createBooking,
+  createGuestBooking,
   updateBooking,
   deleteBooking,
   getBookingMessages,
@@ -11,6 +12,9 @@ const {
   getGuestBookingMessages,
   createGuestBookingMessage
 } = require('../controllers/bookingsController');
+
+// Guest create booking (no auth) - for public model page "Book me"
+router.post('/guest', createGuestBooking);
 
 // Guest chat (no auth) - validate by email
 router.get('/:id/guest-messages', getGuestBookingMessages);
@@ -22,7 +26,7 @@ router.use(verifySupabaseToken);
 // GET /api/bookings - Get all bookings for current user
 router.get('/', getBookings);
 
-// POST /api/bookings - Create a new booking
+// POST /api/bookings - Create a new booking (logged-in user)
 router.post('/', createBooking);
 
 // GET /api/bookings/:id/messages - Get messages for a booking

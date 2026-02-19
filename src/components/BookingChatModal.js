@@ -57,8 +57,12 @@ const BookingChatModal = ({ isOpen, onClose, booking }) => {
     setError(null);
     const result = await sendBookingMessage(booking.id, text);
     if (result.success) {
-      setMessages((prev) => [...prev, result.data]);
       setInputValue('');
+      // Optimistically add if we have it; then refetch so list is in sync with server
+      if (result.data && result.data.id) {
+        setMessages((prev) => [...prev, result.data]);
+      }
+      loadMessages();
     } else {
       setError(result.error || 'Failed to send message');
     }
@@ -132,7 +136,7 @@ const BookingChatModal = ({ isOpen, onClose, booking }) => {
           {loading ? (
             <p style={{ textAlign: 'center', color: '#666' }}>Loading messages...</p>
           ) : error ? (
-            <p style={{ color: '#c33', padding: '8px 0' }}>{error}</p>
+            <p style={{ color: '#c33', padding: '10px 12px', backgroundColor: '#ffebee', borderRadius: '8px', margin: '0 0 8px 0' }}>{error}</p>
           ) : messages.length === 0 ? (
             <p style={{ textAlign: 'center', color: '#888', fontSize: '14px' }}>
               No messages yet. Send the first message.

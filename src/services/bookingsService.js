@@ -219,7 +219,64 @@ export const getBookings = async () => {
 };
 
 /**
- * Create a new booking
+ * Create a booking as guest (no auth) - for public model page "Book me"
+ * modelIdentifier: { modelId } or { username }
+ */
+export const createGuestBooking = async (bookingData, modelIdentifier) => {
+  try {
+    const { name, email, job_type, dates, location, pay_rate, details, status } = bookingData;
+    const { modelId, username } = modelIdentifier || {};
+
+    if (!name || !name.trim()) {
+      return { success: false, error: 'Name is required' };
+    }
+    if (!email || !email.trim()) {
+      return { success: false, error: 'Email is required' };
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim())) {
+      return { success: false, error: 'Invalid email format' };
+    }
+    if (!modelId && !username) {
+      return { success: false, error: 'Model is required' };
+    }
+
+    const response = await fetch(`${getApiBaseUrl()}/bookings/guest`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model_id: modelId || undefined,
+        username: username || undefined,
+        name: name.trim(),
+        email: email.trim(),
+        job_type: job_type || null,
+        dates: dates || null,
+        location: location || null,
+        pay_rate: pay_rate || null,
+        details: details || null,
+        status: status || 'pending'
+      })
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+      return {
+        success: false,
+        error: data.message || data.error || 'Failed to create booking'
+      };
+    }
+    return { success: true, data: data.data };
+  } catch (error) {
+    console.error('Error creating guest booking:', error);
+    return {
+      success: false,
+      error: error.message || 'Failed to create booking'
+    };
+  }
+};
+
+/**
+ * Create a new booking (logged-in user)
  */
 export const createBooking = async (bookingData) => {
   try {

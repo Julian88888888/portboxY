@@ -266,10 +266,11 @@ export default function JobRequestPopup() {
     setIsBookingModalOpen(false);
   };
 
-  // Get profile data for BookingModal
+  // Get profile data for BookingModal (include model id for guest booking)
   const getProfileDataForModal = () => {
     if (!profile) return null;
     return {
+      id: profile.id,
       displayName: getUserValue('display_name', 'User Name'),
       username: getUserValue('username'),
       jobType: getUserValue('job_type', 'Model'),
