@@ -219,6 +219,31 @@ export const getBookings = async () => {
 };
 
 /**
+ * Get bookings where current user is the client (I wrote to these models)
+ */
+export const getBookingsAsClient = async () => {
+  try {
+    const headers = await getAuthHeaders();
+    const response = await fetch(`${getApiBaseUrl()}/bookings/as-client`, {
+      method: 'GET',
+      headers
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      return {
+        success: false,
+        error: data.message || data.error || 'Failed to get bookings',
+        data: []
+      };
+    }
+    return { success: true, data: data.data || [] };
+  } catch (error) {
+    console.error('Error getting bookings as client:', error);
+    return { success: false, error: error.message || 'Failed to get bookings', data: [] };
+  }
+};
+
+/**
  * Create a booking as guest (no auth) - for public model page "Book me"
  * modelIdentifier: { modelId } or { username }
  */

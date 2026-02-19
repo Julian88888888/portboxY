@@ -3,6 +3,7 @@ const router = express.Router();
 const { verifySupabaseToken } = require('../middleware/supabaseAuth');
 const {
   getBookings,
+  getBookingsAsClient,
   createBooking,
   createGuestBooking,
   updateBooking,
@@ -23,8 +24,10 @@ router.post('/:id/guest-messages', createGuestBookingMessage);
 // All routes below require authentication
 router.use(verifySupabaseToken);
 
-// GET /api/bookings - Get all bookings for current user
+// GET /api/bookings - Get all bookings for current user (as model)
 router.get('/', getBookings);
+// GET /api/bookings/as-client - Bookings where current user is the client
+router.get('/as-client', getBookingsAsClient);
 
 // POST /api/bookings - Create a new booking (logged-in user)
 router.post('/', createBooking);

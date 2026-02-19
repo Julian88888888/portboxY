@@ -259,6 +259,7 @@ export default function JobRequestPopup() {
 
   const handleOpenBookingModal = (e) => {
     e.preventDefault();
+    if (!user) return;
     setIsBookingModalOpen(true);
   };
 
@@ -712,11 +713,21 @@ export default function JobRequestPopup() {
           )}
           {shouldShowModelStats() && <div className="spacing_24" />}
           <div className="spacing_24" />
-      {shouldShowBookMeButton() && (
+      {shouldShowBookMeButton() && urlUsername && profile?.id !== user?.id && (
         <>
-      <a data-w-id="ee47a855-7715-a4cf-bb17-0acb8cc29f1d" href="#" className="button bookme_large w-button" onClick={handleOpenBookingModal}>
-        Book Me
-      </a>
+      {user ? (
+        <a data-w-id="ee47a855-7715-a4cf-bb17-0acb8cc29f1d" href="#" className="button bookme_large w-button" onClick={handleOpenBookingModal}>
+          Book Me
+        </a>
+      ) : (
+        <span
+          className="button bookme_large w-button"
+          style={{ opacity: 0.6, cursor: 'not-allowed', pointerEvents: 'none' }}
+          title="Sign in to book"
+        >
+          Book Me
+        </span>
+      )}
       <div className="spacing_24" />
         </>
       )}
@@ -781,10 +792,20 @@ export default function JobRequestPopup() {
           )}
           <div className="spacing_48"></div>
           <div className="line_divider"></div>
-          {shouldShowBookMeButton() && (
-          <a data-w-id="ee47a855-7715-a4cf-bb17-0acb8cc29f1d" href="#" className="button bookme_large w-button" onClick={handleOpenBookingModal}>
-        Book Me
-      </a>
+          {shouldShowBookMeButton() && urlUsername && profile?.id !== user?.id && (
+            user ? (
+              <a data-w-id="ee47a855-7715-a4cf-bb17-0acb8cc29f1d" href="#" className="button bookme_large w-button" onClick={handleOpenBookingModal}>
+                Book Me
+              </a>
+            ) : (
+              <span
+                className="button bookme_large w-button"
+                style={{ opacity: 0.6, cursor: 'not-allowed', pointerEvents: 'none' }}
+                title="Sign in to book"
+              >
+                Book Me
+              </span>
+            )
           )}
         </div>
       </div>

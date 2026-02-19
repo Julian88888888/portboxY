@@ -1,7 +1,7 @@
 const { supabase } = require('../middleware/supabaseAuth');
 
 /**
- * Get all bookings for current user
+ * Get all bookings for current user (as model - received)
  * GET /api/bookings
  */
 const getBookings = async (req, res) => {
@@ -24,6 +24,62 @@ const getBookings = async (req, res) => {
     });
   } catch (error) {
     console.error('Error getting bookings:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get bookings',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * Get bookings where current user is the client (emails match)
+ * GET /api/bookings/as-client
+ */
+const getBookingsAsClient = async (req, res) => {
+  try {
+    const userEmail = (req.user.email || '').trim().toLowerCase();
+    if (!userEmail) {
+      return res.json({ success: true, data: [] });
+    }
+
+    const { data: bookings, error: bookError } = await supabase
+      .from('bookings')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (bookError) throw bookError;
+
+    const filtered = (bookings || []).filter(
+      (b) => (b.email || '').trim().toLowerCase() === userEmail
+    );
+    if (filtered.length === 0) {
+      return res.json({ success: true, data: [] });
+    }
+
+    const modelIds = [...new Set(filtered.map((b) => b.user_id))];
+    const { data: profiles, error: profError } = await supabase
+      .from('profiles')
+      .select('id, display_name, username')
+      .in('id', modelIds);
+
+    if (profError) {
+      console.warn('Profiles fetch for as-client:', profError);
+    }
+    const profileMap = (profiles || []).reduce((acc, p) => {
+      acc[p.id] = p;
+      return acc;
+    }, {});
+
+    const data = filtered.map((b) => ({
+      ...b,
+      model_display_name: profileMap[b.user_id]?.display_name || null,
+      model_username: profileMap[b.user_id]?.username || null
+    }));
+
+    res.json({ success: true, data });
+  } catch (error) {
+    console.error('Error getting bookings as client:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to get bookings',
@@ -502,6 +558,7 @@ const createGuestBookingMessage = async (req, res) => {
 
 module.exports = {
   getBookings,
+  getBookingsAsClient,
   createBooking,
   createGuestBooking,
   updateBooking,

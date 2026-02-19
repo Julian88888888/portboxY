@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FaTimes, FaCamera, FaVideo, FaWalking, FaMicrophone } from 'react-icons/fa';
+import { useAuth } from '../contexts/AuthContext';
 import { createBooking, createGuestBooking } from '../services/bookingsService';
 
 const BookingModal = ({ isOpen, onClose, profile, onBookingCreated }) => {
+  const { user } = useAuth();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -17,6 +19,17 @@ const BookingModal = ({ isOpen, onClose, profile, onBookingCreated }) => {
   const [submitError, setSubmitError] = useState(null);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [createdBooking, setCreatedBooking] = useState(null);
+
+  // Prefill email (and name) when modal opens and user is logged in
+  useEffect(() => {
+    if (isOpen && user) {
+      setFormData((prev) => ({
+        ...prev,
+        email: (user.email || prev.email || '').trim(),
+        name: (user.user_metadata?.full_name || user.user_metadata?.name || prev.name || '').trim()
+      }));
+    }
+  }, [isOpen, user?.id]);
 
   const jobTypes = [
     { name: 'Photoshoots', icon: FaCamera },

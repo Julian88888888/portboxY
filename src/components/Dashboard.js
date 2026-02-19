@@ -5,7 +5,7 @@ import { useProfile } from '../hooks/useProfile';
 import { getAvatarUrl, getHeaderUrl } from '../services/profileService';
 import { createAlbum, getAlbums, uploadImageToAlbum, deleteAlbum, getAlbumImages, setCoverImage, normalizeImageUrl } from '../services/albumsService';
 import { getCustomLinks, createCustomLink, updateCustomLink, deleteCustomLink } from '../services/customLinksService';
-import { getBookings, deleteBooking, updateBooking } from '../services/bookingsService';
+import { getBookings, getBookingsAsClient, deleteBooking, updateBooking } from '../services/bookingsService';
 import ProfileSettings from './ProfileSettings';
 import BookingChatModal from './BookingChatModal';
 import './Dashboard.css';
@@ -61,6 +61,8 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
   // Bookings state
   const [bookings, setBookings] = useState([]);
   const [bookingsLoading, setBookingsLoading] = useState(false);
+  const [bookingsAsClient, setBookingsAsClient] = useState([]);
+  const [bookingsAsClientLoading, setBookingsAsClientLoading] = useState(false);
   const [bookingChatOpen, setBookingChatOpen] = useState(false);
   const [selectedBookingForChat, setSelectedBookingForChat] = useState(null);
 
@@ -135,31 +137,31 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
     loadCustomLinks();
   }, [user?.id]); // Use user.id instead of user object to prevent unnecessary re-renders
 
-  // Load bookings
+  // Load bookings (as model) and as client
   useEffect(() => {
+    if (!user) {
+      setBookings([]);
+      setBookingsAsClient([]);
+      setBookingsLoading(false);
+      setBookingsAsClientLoading(false);
+      return;
+    }
     const loadBookings = async () => {
-      // Only load if user is authenticated
-      if (!user) {
-        console.log('Dashboard: User not authenticated, skipping bookings load');
-        setBookings([]);
-        setBookingsLoading(false);
-        return;
-      }
-
       setBookingsLoading(true);
       const result = await getBookings();
-      if (result.success) {
-        setBookings(result.data || []);
-      } else {
-        console.error('Failed to load bookings:', result.error);
-        if (result.requiresAuth) {
-          console.warn('Bookings require authentication - user may need to log in again');
-        }
-        setBookings([]);
-      }
+      if (result.success) setBookings(result.data || []);
+      else setBookings([]);
       setBookingsLoading(false);
     };
+    const loadBookingsAsClient = async () => {
+      setBookingsAsClientLoading(true);
+      const result = await getBookingsAsClient();
+      if (result.success) setBookingsAsClient(result.data || []);
+      else setBookingsAsClient([]);
+      setBookingsAsClientLoading(false);
+    };
     loadBookings();
+    loadBookingsAsClient();
   }, [user?.id]);
 
   const handleTabChange = (tab) => {
@@ -1489,6 +1491,69 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                       <div className={`w-tab-pane ${activeBookingTab === 'Tab 1' ? 'w--tab-active' : ''}`}>
                         <div className="w-layout-vflex flex-block-11">
                           <div className="spacing_48"></div>
+
+                          {/* Bookings I sent (as client) */}
+                          {bookingsAsClient.length > 0 && (
+                            <>
+                              <h4 style={{ margin: '0 0 12px 0', fontSize: '16px', fontWeight: '600' }}>Bookings I sent</h4>
+                              <p style={{ margin: '0 0 16px 0', color: '#666', fontSize: '14px' }}>People you wrote to from a model page — open chat to send or read messages.</p>
+                              {bookingsAsClientLoading ? (
+                                <p className="paragraph">Loading...</p>
+                              ) : (
+                                <div style={{ marginBottom: '32px' }}>
+                                  {bookingsAsClient.map((b) => (
+                                    <div
+                                      key={b.id}
+                                      style={{
+                                        padding: '16px',
+                                        marginBottom: '12px',
+                                        border: '1px solid #e0e0e0',
+                                        borderRadius: '8px',
+                                        backgroundColor: '#fafafa',
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        alignItems: 'center',
+                                        flexWrap: 'wrap',
+                                        gap: '12px'
+                                      }}
+                                    >
+                                      <div>
+                                        <strong>{b.model_display_name || b.model_username || 'Model'}</strong>
+                                        <span style={{ color: '#666', marginLeft: '8px', fontSize: '14px' }}>
+                                          {new Date(b.created_at).toLocaleDateString(undefined, {
+                                            year: 'numeric',
+                                            month: 'short',
+                                            day: 'numeric',
+                                            hour: '2-digit',
+                                            minute: '2-digit'
+                                          })}
+                                        </span>
+                                      </div>
+                                      <a
+                                        href={`${window.location.origin}/booking/chat/${b.id}?email=${encodeURIComponent(user?.email || b.email)}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        style={{
+                                          padding: '6px 14px',
+                                          backgroundColor: '#783FF3',
+                                          color: 'white',
+                                          borderRadius: '4px',
+                                          fontSize: '13px',
+                                          textDecoration: 'none'
+                                        }}
+                                      >
+                                        Open chat
+                                      </a>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                              <div className="spacing_24"></div>
+                              <h4 style={{ margin: '0 0 12px 0', fontSize: '16px', fontWeight: '600' }}>Bookings I received</h4>
+                              <div className="spacing_16"></div>
+                            </>
+                          )}
+
                           {bookingsLoading ? (
                             <p className="paragraph">Loading bookings...</p>
                           ) : bookings.length === 0 ? (
