@@ -23,9 +23,10 @@ async function verifyToken(req) {
 }
 
 function getBookingId(req) {
+  if (req.query && req.query.id) return req.query.id;
   const url = req.url || '';
-  const match = url.match(/\/api\/bookings\/([^/]+)\/messages/);
-  return match ? match[1] : (req.query && req.query.id) || null;
+  const match = url.match(/\/api\/bookings\/([^/?]+)\/messages/);
+  return match ? match[1] : null;
 }
 
 module.exports = async (req, res) => {

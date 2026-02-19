@@ -27,7 +27,7 @@ export default function BookingChatPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  useEffect(() => {
+  const loadMessages = () => {
     if (!bookingId || !email.trim() || !emailSubmitted) return;
     setLoading(true);
     setError(null);
@@ -48,6 +48,10 @@ export default function BookingChatPage() {
         setEmailSubmitted(false);
       })
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    loadMessages();
   }, [bookingId, email, emailSubmitted]);
 
   useEffect(() => {
@@ -76,8 +80,11 @@ export default function BookingChatPage() {
     setError(null);
     const result = await sendGuestBookingMessage(bookingId, email.trim(), text);
     if (result.success) {
-      setMessages((prev) => [...prev, result.data]);
       setInputValue('');
+      if (result.data && result.data.id) {
+        setMessages((prev) => [...prev, result.data]);
+      }
+      loadMessages();
     } else {
       setError(result.error || 'Failed to send message');
     }
@@ -135,10 +142,37 @@ export default function BookingChatPage() {
 
   return (
     <div className="section" style={{ maxWidth: '560px', margin: '24px auto', padding: '24px' }}>
-      <h2 style={{ marginBottom: '8px' }}>Chat about your booking</h2>
-      <p style={{ color: '#666', fontSize: '14px', marginBottom: '24px' }}>
-        You can message here. The model will see your messages on their bookings page.
-      </p>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px', flexWrap: 'wrap', gap: '12px' }}>
+        <div>
+          <h2 style={{ margin: '0 0 8px 0' }}>Chat about your booking</h2>
+          <p style={{ color: '#666', fontSize: '14px', margin: 0 }}>
+            You can message here. The model will see your messages on their bookings page.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={loadMessages}
+          disabled={loading}
+          style={{
+            padding: '8px 14px',
+            fontSize: '13px',
+            border: '1px solid #783FF3',
+            color: '#783FF3',
+            backgroundColor: 'transparent',
+            borderRadius: '8px',
+            cursor: loading ? 'not-allowed' : 'pointer'
+          }}
+        >
+          {loading ? '...' : 'Refresh'}
+        </button>
+      </div>
+      <div style={{ marginBottom: '24px' }} />
+
+      {error && (
+        <p style={{ color: '#c33', padding: '10px 12px', backgroundColor: '#ffebee', borderRadius: '8px', marginBottom: '16px' }}>
+          {error}
+        </p>
+      )}
 
       <div
         style={{
@@ -153,8 +187,6 @@ export default function BookingChatPage() {
       >
         {loading ? (
           <p style={{ textAlign: 'center', color: '#666' }}>Loading messages...</p>
-        ) : error ? (
-          <p style={{ color: '#c33' }}>{error}</p>
         ) : messages.length === 0 ? (
           <p style={{ textAlign: 'center', color: '#888', fontSize: '14px' }}>
             No messages yet. Send the first message.

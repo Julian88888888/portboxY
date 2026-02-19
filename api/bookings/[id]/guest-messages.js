@@ -10,9 +10,10 @@ const dbKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.REACT_APP_SUP
 const supabase = supabaseUrl && dbKey ? createClient(supabaseUrl, dbKey) : null;
 
 function getBookingId(req) {
+  if (req.query && req.query.id) return req.query.id;
   const url = req.url || '';
-  const match = url.match(/\/api\/bookings\/([^/]+)\/guest-messages/);
-  return match ? match[1] : (req.query && req.query.id) || null;
+  const match = url.match(/\/api\/bookings\/([^/?]+)\/guest-messages/);
+  return match ? match[1] : null;
 }
 
 function normalizeEmail(s) {
