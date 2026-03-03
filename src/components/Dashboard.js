@@ -1500,7 +1500,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                               {bookingsAsClientLoading ? (
                                 <p className="paragraph">Loading...</p>
                               ) : (
-                                <div style={{ marginBottom: '32px' }}>
+                                <div style={{ marginBottom: '32px', width: '100%' }}>
                                   {bookingsAsClient.map((b) => (
                                     <div
                                       key={b.id}
@@ -1512,22 +1512,57 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                                         backgroundColor: '#fafafa',
                                         display: 'flex',
                                         justifyContent: 'space-between',
-                                        alignItems: 'center',
+                                        alignItems: 'flex-start',
                                         flexWrap: 'wrap',
-                                        gap: '12px'
+                                        gap: '12px',
+                                        width: '100%',
+                                        boxSizing: 'border-box'
                                       }}
                                     >
                                       <div>
-                                        <strong>{b.model_display_name || b.model_username || 'Model'}</strong>
-                                        <span style={{ color: '#666', marginLeft: '8px', fontSize: '14px' }}>
-                                          {new Date(b.created_at).toLocaleDateString(undefined, {
-                                            year: 'numeric',
-                                            month: 'short',
-                                            day: 'numeric',
-                                            hour: '2-digit',
-                                            minute: '2-digit'
-                                          })}
-                                        </span>
+                                        <div style={{ marginBottom: '4px' }}>
+                                          <strong>{b.model_display_name || b.model_username || 'Model'}</strong>
+                                          <span style={{ color: '#666', marginLeft: '8px', fontSize: '14px' }}>
+                                            {new Date(b.created_at).toLocaleDateString(undefined, {
+                                              year: 'numeric',
+                                              month: 'short',
+                                              day: 'numeric',
+                                              hour: '2-digit',
+                                              minute: '2-digit'
+                                            })}
+                                          </span>
+                                        </div>
+
+                                        {b.job_type && (
+                                          <div style={{ marginBottom: '4px', fontSize: '14px' }}>
+                                            <strong>Job Type:</strong> {b.job_type}
+                                          </div>
+                                        )}
+
+                                        {b.dates && (
+                                          <div style={{ marginBottom: '4px', fontSize: '14px' }}>
+                                            <strong>Dates:</strong> {b.dates}
+                                          </div>
+                                        )}
+
+                                        {b.location && (
+                                          <div style={{ marginBottom: '4px', fontSize: '14px' }}>
+                                            <strong>Location:</strong> {b.location}
+                                          </div>
+                                        )}
+
+                                        {b.pay_rate && (
+                                          <div style={{ marginBottom: '4px', fontSize: '14px' }}>
+                                            <strong>Pay Rate:</strong> {b.pay_rate}
+                                          </div>
+                                        )}
+
+                                        {b.details && (
+                                          <div style={{ marginTop: '4px', fontSize: '14px' }}>
+                                            <strong>Details:</strong>{' '}
+                                            <span style={{ whiteSpace: 'pre-wrap' }}>{b.details}</span>
+                                          </div>
+                                        )}
                                       </div>
                                       <a
                                         href={`${window.location.origin}/booking/chat/${b.id}?email=${encodeURIComponent(user?.email || b.email)}`}

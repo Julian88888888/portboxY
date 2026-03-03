@@ -30,7 +30,11 @@ function AppContent() {
       {/* Sidebar Navigation - only show when authenticated */}
       {isAuthenticated && <Sidebar onToggle={handleSidebarToggle} />}
 
-      <div className={`main-content ${isAuthenticated && sidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
+      <div
+        className={`main-content ${
+          isAuthenticated ? (sidebarOpen ? 'sidebar-open' : 'sidebar-closed') : 'no-sidebar'
+        }`}
+      >
         <Routes>
           {/* Public routes */}
           <Route path="/" element={<MainPage />} />
