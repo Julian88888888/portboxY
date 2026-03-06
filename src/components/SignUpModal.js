@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FaTimes, FaEnvelope, FaLock, FaEye, FaEyeSlash, FaUser, FaPhone, FaSpinner } from 'react-icons/fa';
+import { FaTimes, FaEnvelope, FaLock, FaEye, FaEyeSlash, FaUser, FaSpinner } from 'react-icons/fa';
 import { useAuth } from '../contexts/AuthContext';
 
 const SignUpModal = ({ isOpen, onClose, onSwitchToLogin }) => {
@@ -52,9 +52,9 @@ const SignUpModal = ({ isOpen, onClose, onSwitchToLogin }) => {
         throw new Error('Passwords do not match');
       }
 
-      // Validate required fields
-      if (!formData.firstName || !formData.lastName || !formData.email || !formData.phone) {
-        throw new Error('Please fill in all required fields');
+      // Validate required fields (firstName, lastName, phone hidden for now)
+      if (!formData.email) {
+        throw new Error('Please enter your email');
       }
 
       // Prepare data for API (remove confirmPassword)
@@ -135,40 +135,7 @@ const SignUpModal = ({ isOpen, onClose, onSwitchToLogin }) => {
         <div className="spacing-24"></div>
         
         <form onSubmit={handleSubmit}>
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="firstName">
-                <FaUser size={16} style={{ marginRight: '8px' }} />
-                First Name
-              </label>
-              <input
-                type="text"
-                id="firstName"
-                name="firstName"
-                value={formData.firstName}
-                onChange={handleInputChange}
-                placeholder="Enter your first name"
-                required
-              />
-            </div>
-            
-            <div className="form-group">
-              <label htmlFor="lastName">
-                <FaUser size={16} style={{ marginRight: '8px' }} />
-                Last Name
-              </label>
-              <input
-                type="text"
-                id="lastName"
-                name="lastName"
-                value={formData.lastName}
-                onChange={handleInputChange}
-                placeholder="Enter your last name"
-                required
-              />
-            </div>
-          </div>
-          
+          {/* First name, last name, phone hidden for now */}
           <div className="form-group">
             <label htmlFor="email">
               <FaEnvelope size={16} style={{ marginRight: '8px' }} />
@@ -181,22 +148,6 @@ const SignUpModal = ({ isOpen, onClose, onSwitchToLogin }) => {
               value={formData.email}
               onChange={handleInputChange}
               placeholder="Enter your email"
-              required
-            />
-          </div>
-          
-          <div className="form-group">
-            <label htmlFor="phone">
-              <FaPhone size={16} style={{ marginRight: '8px' }} />
-              Phone Number
-            </label>
-            <input
-              type="tel"
-              id="phone"
-              name="phone"
-              value={formData.phone}
-              onChange={handleInputChange}
-              placeholder="Enter your phone number"
               required
             />
           </div>

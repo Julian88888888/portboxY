@@ -3,7 +3,7 @@ CREATE TABLE IF NOT EXISTS profiles (
   id UUID PRIMARY KEY DEFAULT auth.uid(),
   username TEXT UNIQUE NOT NULL,
   display_name TEXT NOT NULL,
-  job_type TEXT NOT NULL CHECK (job_type IN ('Model', 'Photographer', 'WardrobeStylist', 'HairStylist', 'MakeupArtist', 'Brand', 'Agency')),
+  job_type TEXT NOT NULL CHECK (job_type IN ('Model', 'Photographer', 'WardrobeStylist', 'HairStylist', 'MakeupArtist')),
   description TEXT,
   profile_photo_path TEXT,
   header_photo_path TEXT,

@@ -47,7 +47,7 @@ BEGIN
     AND column_name = 'job_type'
   ) THEN
     ALTER TABLE profiles 
-    ADD COLUMN job_type TEXT CHECK (job_type IN ('Model', 'Photographer', 'WardrobeStylist', 'HairStylist', 'MakeupArtist', 'Brand', 'Agency'));
+    ADD COLUMN job_type TEXT CHECK (job_type IN ('Model', 'Photographer', 'WardrobeStylist', 'HairStylist', 'MakeupArtist'));
     
     RAISE NOTICE 'Job type column added to profiles table';
   ELSE
