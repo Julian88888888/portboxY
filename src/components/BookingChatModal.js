@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { FaTimes } from 'react-icons/fa';
 import { getBookingMessages, sendBookingMessage } from '../services/bookingsService';
+import './BookingChat.css';
 
 const BookingChatModal = ({ isOpen, onClose, booking }) => {
   const [messages, setMessages] = useState([]);
@@ -58,7 +59,6 @@ const BookingChatModal = ({ isOpen, onClose, booking }) => {
     const result = await sendBookingMessage(booking.id, text);
     if (result.success) {
       setInputValue('');
-      // Optimistically add if we have it; then refetch so list is in sync with server
       if (result.data && result.data.id) {
         setMessages((prev) => [...prev, result.data]);
       }
@@ -79,12 +79,14 @@ const BookingChatModal = ({ isOpen, onClose, booking }) => {
 
   if (!isOpen) return null;
 
+  const isSent = (msg) => msg.sender_type === 'model';
+
   return (
     <div className="modal-overlay" onClick={handleClose}>
       <div
-        className="modal-content"
+        className="modal-content booking-chat"
         onClick={(e) => e.stopPropagation()}
-        style={{ maxWidth: '480px', display: 'flex', flexDirection: 'column', maxHeight: '85vh' }}
+        style={{ maxWidth: '480px', width: '100%' }}
       >
         <button
           type="button"
@@ -96,18 +98,18 @@ const BookingChatModal = ({ isOpen, onClose, booking }) => {
           <FaTimes />
         </button>
 
-        <div style={{ paddingBottom: '12px', borderBottom: '1px solid #e0e0e0', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <div className="booking-chat__header">
           <div>
-            <h3 style={{ margin: '0 0 4px 0', fontSize: '18px' }}>Chat</h3>
+            <h3 className="booking-chat__title">Chat</h3>
             {booking && (
-              <p style={{ margin: 0, fontSize: '14px', color: '#666' }}>
+              <p className="booking-chat__subtitle">
                 {booking.name} · {booking.email}
                 {' '}
                 <a
                   href={`mailto:${encodeURIComponent(booking.email)}?subject=${encodeURIComponent('Re: Your booking request')}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  style={{ marginLeft: '8px', fontSize: '13px', color: '#783FF3' }}
+                  className="booking-chat__email-link"
                 >
                   Email client
                 </a>
@@ -116,64 +118,39 @@ const BookingChatModal = ({ isOpen, onClose, booking }) => {
           </div>
           <button
             type="button"
+            className="booking-chat__refresh"
             onClick={loadMessages}
             disabled={loading}
-            style={{ padding: '4px 10px', fontSize: '12px', cursor: loading ? 'not-allowed' : 'pointer' }}
           >
             {loading ? '...' : 'Refresh'}
           </button>
         </div>
 
-        <div
-          style={{
-            flex: 1,
-            overflowY: 'auto',
-            minHeight: '200px',
-            maxHeight: '360px',
-            padding: '16px 0'
-          }}
-        >
+        <div className="booking-chat__messages">
           {loading ? (
-            <p style={{ textAlign: 'center', color: '#666' }}>Loading messages...</p>
+            <p className="booking-chat__state">Loading messages...</p>
           ) : error ? (
-            <p style={{ color: '#c33', padding: '10px 12px', backgroundColor: '#ffebee', borderRadius: '8px', margin: '0 0 8px 0' }}>{error}</p>
+            <p className="booking-chat__state booking-chat__state--error">{error}</p>
           ) : messages.length === 0 ? (
-            <p style={{ textAlign: 'center', color: '#888', fontSize: '14px' }}>
+            <p className="booking-chat__state booking-chat__state--empty">
               No messages yet. Send the first message.
             </p>
           ) : (
             messages.map((msg) => (
               <div
                 key={msg.id}
-                style={{
-                  marginBottom: '12px',
-                  textAlign: msg.sender_type === 'model' ? 'right' : 'left'
-                }}
+                className={`booking-chat__message-wrap ${isSent(msg) ? '' : 'booking-chat__message-wrap--other'}`}
               >
                 <div
-                  style={{
-                    display: 'inline-block',
-                    maxWidth: '85%',
-                    padding: '10px 14px',
-                    borderRadius: '12px',
-                    backgroundColor: msg.sender_type === 'model' ? '#783FF3' : '#f0f0f0',
-                    color: msg.sender_type === 'model' ? '#fff' : '#333',
-                    fontSize: '14px',
-                    textAlign: 'left'
-                  }}
+                  className={`booking-chat__bubble ${isSent(msg) ? 'booking-chat__bubble--sent' : 'booking-chat__bubble--received'}`}
                 >
                   {msg.body}
                 </div>
-                <div
-                  style={{
-                    fontSize: '11px',
-                    color: '#999',
-                    marginTop: '4px',
-                    paddingRight: msg.sender_type === 'model' ? '4px' : 0,
-                    paddingLeft: msg.sender_type === 'model' ? 0 : '4px'
-                  }}
-                >
-                  {new Date(msg.created_at).toLocaleString()}
+                <div className="booking-chat__time">
+                  {new Date(msg.created_at).toLocaleString(undefined, {
+                    dateStyle: 'short',
+                    timeStyle: 'short'
+                  })}
                 </div>
               </div>
             ))
@@ -181,34 +158,21 @@ const BookingChatModal = ({ isOpen, onClose, booking }) => {
           <div ref={messagesEndRef} />
         </div>
 
-        <form onSubmit={handleSend} style={{ marginTop: 'auto', paddingTop: '12px', borderTop: '1px solid #e0e0e0' }}>
-          <div style={{ display: 'flex', gap: '8px' }}>
+        <form onSubmit={handleSend} className="booking-chat__form">
+          <div className="booking-chat__form-row">
             <input
               type="text"
+              className="booking-chat__input"
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               placeholder="Type a message..."
               disabled={sending}
-              style={{
-                flex: 1,
-                padding: '10px 12px',
-                border: '1px solid #e0e0e0',
-                borderRadius: '8px',
-                fontSize: '14px'
-              }}
+              aria-label="Message"
             />
             <button
               type="submit"
+              className="booking-chat__send"
               disabled={sending || !inputValue.trim()}
-              style={{
-                padding: '10px 20px',
-                backgroundColor: '#783FF3',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                cursor: sending ? 'not-allowed' : 'pointer',
-                fontWeight: '600'
-              }}
             >
               {sending ? '...' : 'Send'}
             </button>
