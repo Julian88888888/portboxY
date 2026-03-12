@@ -1483,7 +1483,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                           {/* Bookings I sent (as client) */}
                           {bookingsAsClient.length > 0 && (
                             <>
-                              <h4 style={{ margin: '0 0 12px 0', fontSize: '16px', fontWeight: '600' }}>Bookings I sent</h4>
+                              <h4 style={{ margin: '0 0 12px 0', fontSize: '16px', fontWeight: '600' }}>Outgoing Bookings</h4>
                               <p style={{ margin: '0 0 16px 0', color: '#666', fontSize: '14px' }}>People you wrote to from a model page — open chat to send or read messages.</p>
                               {bookingsAsClientLoading ? (
                                 <p className="paragraph">Loading...</p>
@@ -1495,9 +1495,9 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                                       style={{
                                         padding: '16px',
                                         marginBottom: '12px',
-                                        border: '1px solid #e0e0e0',
+                                        border: 'none',
                                         borderRadius: '8px',
-                                        backgroundColor: '#fafafa',
+                                        backgroundColor: 'transparent',
                                         display: 'flex',
                                         justifyContent: 'space-between',
                                         alignItems: 'flex-start',
@@ -1507,8 +1507,8 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                                         boxSizing: 'border-box'
                                       }}
                                     >
-                                      <div>
-                                        <div style={{ marginBottom: '4px' }}>
+                                      <div style={{ flex: 1, minWidth: 0, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px 24px', alignContent: 'start' }}>
+                                        <div style={{ marginBottom: '4px', gridColumn: '1 / -1' }}>
                                           <strong>{b.model_display_name || b.model_username || 'Model'}</strong>
                                           <span style={{ color: '#666', marginLeft: '8px', fontSize: '14px' }}>
                                             {new Date(b.created_at).toLocaleDateString(undefined, {
@@ -1546,33 +1546,47 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                                         )}
 
                                         {b.details && (
-                                          <div style={{ marginTop: '4px', fontSize: '14px' }}>
-                                            <strong>Details:</strong>{' '}
-                                            <span style={{ whiteSpace: 'pre-wrap' }}>{b.details}</span>
+                                          <div style={{ marginTop: '4px', fontSize: '14px', gridColumn: '1 / -1', whiteSpace: 'pre-wrap' }}>
+                                            <strong>Details:</strong> {b.details}
                                           </div>
                                         )}
                                       </div>
-                                      <a
-                                        href={`${window.location.origin}/booking/chat/${b.id}?email=${encodeURIComponent(user?.email || b.email)}`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          setSelectedBookingForChat({
+                                            id: b.id,
+                                            name: b.model_display_name || b.model_username || 'Model',
+                                            email: b.model_email || b.email || '',
+                                            asClient: true,
+                                            clientEmail: user?.email || '',
+                                            job_type: b.job_type,
+                                            dates: b.dates,
+                                            location: b.location,
+                                            pay_rate: b.pay_rate,
+                                            details: b.details,
+                                            created_at: b.created_at
+                                          });
+                                          setBookingChatOpen(true);
+                                        }}
                                         style={{
                                           padding: '6px 14px',
                                           backgroundColor: '#783FF3',
                                           color: 'white',
+                                          border: 'none',
                                           borderRadius: '4px',
                                           fontSize: '13px',
-                                          textDecoration: 'none'
+                                          cursor: 'pointer'
                                         }}
                                       >
                                         Open chat
-                                      </a>
+                                      </button>
                                     </div>
                                   ))}
                                 </div>
                               )}
                               <div className="spacing_24"></div>
-                              <h4 style={{ margin: '0 0 12px 0', fontSize: '16px', fontWeight: '600' }}>Bookings I received</h4>
+                              <h4 style={{ margin: '0 0 12px 0', fontSize: '16px', fontWeight: '600' }}>Incoming Bookings</h4>
                               <div className="spacing_16"></div>
                             </>
                           )}
@@ -1589,9 +1603,9 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                                   style={{
                                     padding: '20px',
                                     marginBottom: '16px',
-                                    border: '1px solid #e0e0e0',
+                                    border: 'none',
                                     borderRadius: '8px',
-                                    backgroundColor: '#fff'
+                                    backgroundColor: 'transparent'
                                   }}
                                 >
                                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>

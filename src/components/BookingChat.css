@@ -47,11 +47,48 @@
   letter-spacing: -0.02em;
 }
 
+.booking-chat__header-main {
+  flex: 1;
+  min-width: 0;
+}
+
 .booking-chat__subtitle {
   margin: 0;
   font-size: 14px;
   color: #5c5c6b;
   line-height: 1.4;
+}
+
+.booking-chat__meta {
+  font-size: 13px;
+  color: #9a9aa6;
+}
+
+.booking-chat__booking-details {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #e8e8ec;
+  font-size: 13px;
+  color: #5c5c6b;
+  line-height: 1.5;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 24px;
+}
+
+.booking-chat__detail {
+  margin-bottom: 4px;
+}
+
+.booking-chat__detail:last-child,
+.booking-chat__detail:nth-last-child(2):nth-child(odd) {
+  margin-bottom: 0;
+}
+
+.booking-chat__detail--block {
+  grid-column: 1 / -1;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 .booking-chat__email-link {

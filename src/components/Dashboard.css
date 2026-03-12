@@ -73,11 +73,11 @@
 }
 
 .settingssection {
-  background-color: #fff;
+  background-color: transparent;
   border-radius: 12px;
   padding: 24px;
   margin-bottom: 24px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  box-shadow: none;
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
@@ -343,6 +343,13 @@
   padding-right: 0;
 }
 
+.section.full_sec .mainheader,
+.section.full_sec .mainheader .div-block {
+  background-color: transparent;
+  background-image: none;
+  box-shadow: none;
+}
+
 .section.full_sec section {
   width: 100%;
   max-width: 100%;
@@ -434,7 +441,7 @@
 }
 
 .linkpanel {
-  background-color: #fff;
+  background-color: transparent;
   min-width: 600px;
   max-width: 600px;
   padding: 10px 24px 24px;

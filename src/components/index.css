@@ -2304,11 +2304,8 @@ a {
 .section.conver_sec {
   grid-column-gap: 16px;
   grid-row-gap: 16px;
-  background-color: #ffffff80;
-  background-image: url('../../images/Instagram_Profile.webp');
-  background-position: 10%;
-  background-repeat: no-repeat;
-  background-size: auto;
+  background-color: transparent;
+  background-image: none;
   flex-flow: column;
   grid-template-rows: auto auto;
   grid-template-columns: 1fr 1fr;
@@ -3460,7 +3457,7 @@ a {
 }
 
 .div-block-2 {
-  background-color: #fff;
+  background-color: transparent;
   border-radius: 20px;
   flex-flow: column;
   align-items: center;
@@ -3504,8 +3501,6 @@ a {
 
 @media screen and (max-width: 991px) {
   .section.conver_sec {
-    background-position: 5%;
-    background-size: auto;
     align-items: flex-end;
     height: 100%;
     padding-right: 10%;

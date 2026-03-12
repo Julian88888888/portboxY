@@ -17,6 +17,7 @@ const Sidebar = ({ onToggle }) => {
       <div className="sidebar open">
         <nav className="sidebar-nav">
           <ul className="sidebar-nav-list">
+            {/* Main Page - commented out
             <li>
               <NavLink 
                 to="/"
@@ -25,6 +26,8 @@ const Sidebar = ({ onToggle }) => {
                 <div>Main Page</div>
               </NavLink>
             </li>
+            */}
+            {/* Model Page - commented out
             <li>
               <NavLink 
                 to="/model"
@@ -33,6 +36,7 @@ const Sidebar = ({ onToggle }) => {
                 <div>Model Page</div>
               </NavLink>
             </li>
+            */}
             <li>
               <NavLink 
                 to="/profile"
