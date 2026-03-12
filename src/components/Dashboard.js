@@ -498,15 +498,14 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                     <div className="spacing_24"></div>
                     <h3>Social Links</h3>
                     <div className="w-form">
-                      <div className="spacing_24"></div>
-                      <form onSubmit={(e) => handleSubmit(e, 'social')}>
-                        <div className="w-layout-hflex flex-block-9" style={{ alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+                      <form onSubmit={(e) => handleSubmit(e, 'social')} style={{ marginTop: '12px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
                           <label
                             style={{
                               display: 'flex',
                               alignItems: 'center',
                               cursor: 'pointer',
-                              gap: '10px',
+                              gap: '8px',
                               userSelect: 'none',
                               flex: '0 0 auto'
                             }}
@@ -523,9 +522,9 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                           >
                             <div
                               style={{
-                                width: '44px',
-                                height: '24px',
-                                borderRadius: '12px',
+                                width: '40px',
+                                height: '22px',
+                                borderRadius: '11px',
                                 backgroundColor: (formData.showSocialLinks ?? true) ? '#783FF3' : '#ccc',
                                 position: 'relative',
                                 cursor: 'pointer',
@@ -535,100 +534,48 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                             >
                               <div
                                 style={{
-                                  width: '20px',
-                                  height: '20px',
+                                  width: '18px',
+                                  height: '18px',
                                   borderRadius: '50%',
                                   backgroundColor: 'white',
                                   position: 'absolute',
                                   top: '2px',
-                                  left: (formData.showSocialLinks ?? true) ? '22px' : '2px',
+                                  left: (formData.showSocialLinks ?? true) ? '20px' : '2px',
                                   transition: 'left 0.2s',
                                   boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
                                 }}
                               />
                             </div>
+                            <span style={{ margin: 0, fontSize: '13px', fontWeight: 500 }}>Show Social Links</span>
                           </label>
-                          <p style={{ margin: 0 }}>Show Social Links</p>
                         </div>
-                        <label htmlFor="instagram">Instagram</label>
-                        <input 
-                          className="w-input" 
-                          maxLength="256" 
-                          name="instagram" 
-                          placeholder="@username" 
-                          type="text" 
-                          id="instagram"
-                          value={formData.instagram}
-                          onChange={handleInputChange}
-                        />
-                        <label htmlFor="twitter">X</label>
-                        <input 
-                          className="w-input" 
-                          maxLength="256" 
-                          name="twitter" 
-                          placeholder="@username" 
-                          type="text" 
-                          id="twitter"
-                          value={formData.twitter}
-                          onChange={handleInputChange}
-                        />
-                        <label htmlFor="linkedin">LinkedIn</label>
-                        <input 
-                          className="w-input" 
-                          maxLength="256" 
-                          name="linkedin" 
-                          placeholder="https://linkedin.com/in/username" 
-                          type="text" 
-                          id="linkedin"
-                          value={formData.linkedin}
-                          onChange={handleInputChange}
-                        />
-                        <label htmlFor="onlyfans">OnlyFans</label>
-                        <input 
-                          className="w-input" 
-                          maxLength="256" 
-                          name="onlyfans" 
-                          placeholder="https://onlyfans.com/username" 
-                          type="text" 
-                          id="onlyfans"
-                          value={formData.onlyfans}
-                          onChange={handleInputChange}
-                        />
-                        <label htmlFor="spotify">Spotify</label>
-                        <input 
-                          className="w-input" 
-                          maxLength="256" 
-                          name="spotify" 
-                          placeholder="https://open.spotify.com/..." 
-                          type="text" 
-                          id="spotify"
-                          value={formData.spotify}
-                          onChange={handleInputChange}
-                        />
-                        <label htmlFor="vimeo">Vimeo</label>
-                        <input 
-                          className="w-input" 
-                          maxLength="256" 
-                          name="vimeo" 
-                          placeholder="https://vimeo.com/username" 
-                          type="text" 
-                          id="vimeo"
-                          value={formData.vimeo}
-                          onChange={handleInputChange}
-                        />
-                        <label htmlFor="cashapp">Cash App</label>
-                        <input 
-                          className="w-input" 
-                          maxLength="256" 
-                          name="cashapp" 
-                          placeholder="$username" 
-                          type="text" 
-                          id="cashapp"
-                          value={formData.cashapp}
-                          onChange={handleInputChange}
-                        />
-                        <div className="spacing_24"></div>
-                        <input type="submit" className="submit-button w-button" value="Save" />
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '10px 20px', marginBottom: '16px' }}>
+                          {[
+                            { id: 'instagram', name: 'instagram', label: 'Instagram', placeholder: '@username' },
+                            { id: 'twitter', name: 'twitter', label: 'X', placeholder: '@username' },
+                            { id: 'linkedin', name: 'linkedin', label: 'LinkedIn', placeholder: 'linkedin.com/in/...' },
+                            { id: 'onlyfans', name: 'onlyfans', label: 'OnlyFans', placeholder: 'onlyfans.com/...' },
+                            { id: 'spotify', name: 'spotify', label: 'Spotify', placeholder: 'open.spotify.com/...' },
+                            { id: 'vimeo', name: 'vimeo', label: 'Vimeo', placeholder: 'vimeo.com/...' },
+                            { id: 'cashapp', name: 'cashapp', label: 'Cash App', placeholder: '$username' }
+                          ].map(({ id, name, label, placeholder }) => (
+                            <div key={id} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                              <label htmlFor={id} style={{ fontSize: '12px', fontWeight: 500, color: '#555' }}>{label}</label>
+                              <input
+                                className="w-input"
+                                maxLength={256}
+                                name={name}
+                                placeholder={placeholder}
+                                type="text"
+                                id={id}
+                                value={formData[name] || ''}
+                                onChange={handleInputChange}
+                                style={{ padding: '8px 10px', fontSize: '13px' }}
+                              />
+                            </div>
+                          ))}
+                        </div>
+                        <input type="submit" className="submit-button w-button" value="Save" style={{ marginTop: '4px' }} />
                       </form>
                       <div className="w-form-done" tabIndex="-1" role="region" aria-label="Email Form success">
                         <div>Thank you! Your submission has been received!</div>
@@ -1601,88 +1548,67 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                                 <div 
                                   key={booking.id} 
                                   style={{
-                                    padding: '20px',
-                                    marginBottom: '16px',
-                                    border: 'none',
-                                    borderRadius: '8px',
-                                    backgroundColor: 'transparent'
+                                    padding: '18px 20px',
+                                    marginBottom: '14px',
+                                    border: '1px solid #e8e8ec',
+                                    borderRadius: '10px',
+                                    backgroundColor: 'rgba(255,255,255,0.6)',
+                                    boxShadow: '0 1px 3px rgba(0,0,0,0.04)'
                                   }}
                                 >
-                                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
+                                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '14px', gap: '12px' }}>
                                     <div>
-                                      <h4 style={{ margin: '0 0 8px 0', fontSize: '18px', fontWeight: 'bold' }}>
+                                      <div style={{ fontSize: '16px', fontWeight: '600', color: '#2d2d2d', marginBottom: '4px' }}>
                                         {booking.name}
-                                      </h4>
-                                      <p style={{ margin: '0 0 4px 0', color: '#666', fontSize: '14px' }}>
+                                      </div>
+                                      <div style={{ fontSize: '13px', color: '#6b6b6b' }}>
                                         {booking.email}
-                                      </p>
+                                      </div>
                                     </div>
-                                    <div style={{ 
-                                      padding: '4px 12px', 
-                                      borderRadius: '4px',
-                                      fontSize: '12px',
-                                      fontWeight: 'bold',
+                                    <span style={{ 
+                                      padding: '4px 10px', 
+                                      borderRadius: '6px',
+                                      fontSize: '11px',
+                                      fontWeight: '600',
+                                      letterSpacing: '0.02em',
+                                      flexShrink: 0,
                                       backgroundColor: 
-                                        booking.status === 'accepted' ? '#d4edda' :
-                                        booking.status === 'rejected' ? '#f8d7da' :
-                                        booking.status === 'completed' ? '#cce5ff' :
-                                        '#fff3cd',
+                                        booking.status === 'accepted' ? '#e8f5e9' :
+                                        booking.status === 'rejected' ? '#ffebee' :
+                                        booking.status === 'completed' ? '#e3f2fd' :
+                                        '#fff8e1',
                                       color: 
-                                        booking.status === 'accepted' ? '#155724' :
-                                        booking.status === 'rejected' ? '#721c24' :
-                                        booking.status === 'completed' ? '#004085' :
-                                        '#856404'
+                                        booking.status === 'accepted' ? '#2e7d32' :
+                                        booking.status === 'rejected' ? '#c62828' :
+                                        booking.status === 'completed' ? '#1565c0' :
+                                        '#f57c00'
                                     }}>
                                       {booking.status?.toUpperCase() || 'PENDING'}
-                                    </div>
+                                    </span>
                                   </div>
-                                  
-                                  {booking.job_type && (
-                                    <div style={{ marginBottom: '8px' }}>
-                                      <strong>Job Type:</strong> {booking.job_type}
-                                    </div>
-                                  )}
-                                  
-                                  {booking.dates && (
-                                    <div style={{ marginBottom: '8px' }}>
-                                      <strong>Dates:</strong> {booking.dates}
-                                    </div>
-                                  )}
-                                  
-                                  {booking.location && (
-                                    <div style={{ marginBottom: '8px' }}>
-                                      <strong>Location:</strong> {booking.location}
-                                    </div>
-                                  )}
-                                  
-                                  {booking.pay_rate && (
-                                    <div style={{ marginBottom: '8px' }}>
-                                      <strong>Pay Rate:</strong> {booking.pay_rate}
-                                    </div>
-                                  )}
-                                  
+                                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px 20px', fontSize: '13px', color: '#4a4a4a', marginBottom: '10px' }}>
+                                    {booking.job_type && <div><span style={{ color: '#888' }}>Job Type</span> · {booking.job_type}</div>}
+                                    {booking.dates && <div><span style={{ color: '#888' }}>Dates</span> · {booking.dates}</div>}
+                                    {booking.location && <div><span style={{ color: '#888' }}>Location</span> · {booking.location}</div>}
+                                    {booking.pay_rate && <div><span style={{ color: '#888' }}>Pay Rate</span> · {booking.pay_rate}</div>}
+                                  </div>
                                   {booking.details && (
-                                    <div style={{ marginBottom: '12px', padding: '12px', backgroundColor: '#f8f9fa', borderRadius: '4px' }}>
-                                      <strong>Details:</strong>
-                                      <p style={{ margin: '8px 0 0 0', whiteSpace: 'pre-wrap' }}>{booking.details}</p>
+                                    <div style={{ marginBottom: '12px', padding: '10px 12px', backgroundColor: 'rgba(0,0,0,0.03)', borderRadius: '6px', fontSize: '13px', color: '#555', whiteSpace: 'pre-wrap', borderLeft: '3px solid #ddd' }}>
+                                      {booking.details}
                                     </div>
                                   )}
-                                  
                                   <div style={{ 
                                     display: 'flex', 
                                     justifyContent: 'space-between', 
                                     alignItems: 'center',
                                     marginTop: '12px',
                                     paddingTop: '12px',
-                                    borderTop: '1px solid #e0e0e0'
+                                    borderTop: '1px solid #eee'
                                   }}>
-                                    <span style={{ fontSize: '12px', color: '#999' }}>
-                                      {new Date(booking.created_at).toLocaleDateString('en-US', {
-                                        year: 'numeric',
-                                        month: 'short',
-                                        day: 'numeric',
-                                        hour: '2-digit',
-                                        minute: '2-digit'
+                                    <span style={{ fontSize: '12px', color: '#9a9a9a' }}>
+                                      {new Date(booking.created_at).toLocaleString(undefined, {
+                                        dateStyle: 'short',
+                                        timeStyle: 'short'
                                       })}
                                     </span>
                                     <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
@@ -1691,14 +1617,15 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         style={{
-                                          padding: '6px 12px',
-                                          backgroundColor: '#0d6efd',
-                                          color: 'white',
-                                          border: 'none',
-                                          borderRadius: '4px',
+                                          padding: '6px 14px',
+                                          backgroundColor: 'transparent',
+                                          color: '#5a6fc7',
+                                          border: '1px solid #9badde',
+                                          borderRadius: '6px',
                                           cursor: 'pointer',
                                           fontSize: '12px',
-                                          textDecoration: 'none'
+                                          textDecoration: 'none',
+                                          fontWeight: '500'
                                         }}
                                       >
                                         Email
@@ -1709,13 +1636,14 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                                           setBookingChatOpen(true);
                                         }}
                                         style={{
-                                          padding: '6px 12px',
-                                          backgroundColor: '#783FF3',
-                                          color: 'white',
-                                          border: 'none',
-                                          borderRadius: '4px',
+                                          padding: '6px 14px',
+                                          backgroundColor: 'rgba(120, 63, 243, 0.12)',
+                                          color: '#5c4d9e',
+                                          border: '1px solid rgba(120, 63, 243, 0.35)',
+                                          borderRadius: '6px',
                                           cursor: 'pointer',
-                                          fontSize: '12px'
+                                          fontSize: '12px',
+                                          fontWeight: '500'
                                         }}
                                       >
                                         Chat
@@ -1732,13 +1660,14 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                                           }
                                         }}
                                         style={{
-                                          padding: '6px 12px',
-                                          backgroundColor: '#dc3545',
-                                          color: 'white',
-                                          border: 'none',
-                                          borderRadius: '4px',
+                                          padding: '6px 14px',
+                                          backgroundColor: 'rgba(183, 28, 28, 0.08)',
+                                          color: '#a63d3d',
+                                          border: '1px solid rgba(183, 28, 28, 0.25)',
+                                          borderRadius: '6px',
                                           cursor: 'pointer',
-                                          fontSize: '12px'
+                                          fontSize: '12px',
+                                          fontWeight: '500'
                                         }}
                                       >
                                         Delete
@@ -1755,7 +1684,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                     {activeBookingTab === 'Tab 2' && (
                       <div className={`w-tab-pane ${activeBookingTab === 'Tab 2' ? 'w--tab-active' : ''}`}>
                         <div className="w-layout-vflex flex-block-8">
-                          <div className="w-layout-hflex flex-block-9">
+                          <div className="w-layout-hflex flex-block-9" style={{ display: 'none' }}>
                             <img width="50" height="Auto" alt="" src="/images/smSwitch.png" loading="lazy" />
                             <p>Enable Bookings Widget</p>
                           </div>
@@ -1763,9 +1692,13 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                           <div className="settingssection">
                             <div className="w-form">
                               <form onSubmit={(e) => handleSubmit(e, 'bookings')}>
-                                <div className="w-layout-hflex flex-block-9">
-                                  <img width="50" height="Auto" alt="" src="/images/smSwitch.png" loading="lazy" />
-                                  <p>Enable Bookings Section Title</p>
+                                <div className="w-layout-hflex flex-block-9" style={{ alignItems: 'center', gap: '12px' }}>
+                                  <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', gap: '10px', userSelect: 'none', flex: '0 0 auto' }} onClick={(e) => { e.preventDefault(); const v = !(formData.enableBookingsTitle ?? true); setFormData(prev => ({ ...prev, enableBookingsTitle: v })); updateProfile({ ...formData, enableBookingsTitle: v }); }}>
+                                    <div style={{ width: '44px', height: '24px', borderRadius: '12px', backgroundColor: (formData.enableBookingsTitle ?? true) ? '#783FF3' : '#ccc', position: 'relative', cursor: 'pointer', transition: 'background-color 0.2s', flexShrink: 0 }}>
+                                      <div style={{ width: '20px', height: '20px', borderRadius: '50%', backgroundColor: 'white', position: 'absolute', top: '2px', left: (formData.enableBookingsTitle ?? true) ? '22px' : '2px', transition: 'left 0.2s', boxShadow: '0 2px 4px rgba(0,0,0,0.2)' }} />
+                                    </div>
+                                    <p style={{ margin: 0 }}>Enable Bookings Section Title</p>
+                                  </label>
                                 </div>
                                 <input 
                                   className="w-input" 
@@ -1787,9 +1720,13 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                                   value={formData.hometown}
                                   onChange={handleInputChange}
                                 />
-                                <div className="w-layout-hflex flex-block-9">
-                                  <img width="50" height="Auto" alt="" src="/images/smSwitch.png" loading="lazy" />
-                                  <p>Show Hometown</p>
+                                <div className="w-layout-hflex flex-block-9" style={{ alignItems: 'center', gap: '12px' }}>
+                                  <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', gap: '10px', userSelect: 'none', flex: '0 0 auto' }} onClick={(e) => { e.preventDefault(); const v = !(formData.showHometown ?? true); setFormData(prev => ({ ...prev, showHometown: v })); updateProfile({ ...formData, showHometown: v }); }}>
+                                    <div style={{ width: '44px', height: '24px', borderRadius: '12px', backgroundColor: (formData.showHometown ?? true) ? '#783FF3' : '#ccc', position: 'relative', cursor: 'pointer', transition: 'background-color 0.2s', flexShrink: 0 }}>
+                                      <div style={{ width: '20px', height: '20px', borderRadius: '50%', backgroundColor: 'white', position: 'absolute', top: '2px', left: (formData.showHometown ?? true) ? '22px' : '2px', transition: 'left 0.2s', boxShadow: '0 2px 4px rgba(0,0,0,0.2)' }} />
+                                    </div>
+                                    <p style={{ margin: 0 }}>Show Hometown</p>
+                                  </label>
                                 </div>
                                 <label htmlFor="bookingDescription">Booking Request Description</label>
                                 <textarea 
@@ -1801,26 +1738,36 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                                   value={formData.bookingDescription}
                                   onChange={handleInputChange}
                                 />
-                                <div className="w-layout-hflex flex-block-9">
-                                  <img width="50" height="Auto" alt="" src="/images/smSwitch.png" loading="lazy" />
-                                  <p>Show Request Description</p>
+                                <div className="w-layout-hflex flex-block-9" style={{ alignItems: 'center', gap: '12px' }}>
+                                  <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', gap: '10px', userSelect: 'none', flex: '0 0 auto' }} onClick={(e) => { e.preventDefault(); const v = !(formData.showRequestDescription ?? true); setFormData(prev => ({ ...prev, showRequestDescription: v })); updateProfile({ ...formData, showRequestDescription: v }); }}>
+                                    <div style={{ width: '44px', height: '24px', borderRadius: '12px', backgroundColor: (formData.showRequestDescription ?? true) ? '#783FF3' : '#ccc', position: 'relative', cursor: 'pointer', transition: 'background-color 0.2s', flexShrink: 0 }}>
+                                      <div style={{ width: '20px', height: '20px', borderRadius: '50%', backgroundColor: 'white', position: 'absolute', top: '2px', left: (formData.showRequestDescription ?? true) ? '22px' : '2px', transition: 'left 0.2s', boxShadow: '0 2px 4px rgba(0,0,0,0.2)' }} />
+                                    </div>
+                                    <p style={{ margin: 0 }}>Show Request Description</p>
+                                  </label>
                                 </div>
-                                <label htmlFor="availableForBooking">Available For</label>
-                                <select 
-                                  id="availableForBooking" 
-                                  name="availableForBooking" 
-                                  className="dropdowntxt w-select"
-                                  value={formData.availableForBooking}
-                                  onChange={handleInputChange}
-                                >
-                                  <option value="">Select one...</option>
-                                  <option value="Photoshoot">Photoshoot</option>
-                                  <option value="Acting">Acting</option>
-                                  <option value="Runway">Runway</option>
-                                </select>
-                                <div className="w-layout-hflex flex-block-9">
-                                  <img width="50" height="Auto" alt="" src="/images/smSwitch.png" loading="lazy" />
-                                  <p>Show Available For</p>
+                                <div style={{ display: 'none' }}>
+                                  <label htmlFor="availableForBooking">Available For</label>
+                                  <select 
+                                    id="availableForBooking" 
+                                    name="availableForBooking" 
+                                    className="dropdowntxt w-select"
+                                    value={formData.availableForBooking}
+                                    onChange={handleInputChange}
+                                  >
+                                    <option value="">Select one...</option>
+                                    <option value="Photoshoot">Photoshoot</option>
+                                    <option value="Acting">Acting</option>
+                                    <option value="Runway">Runway</option>
+                                  </select>
+                                  <div className="w-layout-hflex flex-block-9" style={{ alignItems: 'center', gap: '12px' }}>
+                                    <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', gap: '10px', userSelect: 'none', flex: '0 0 auto' }} onClick={(e) => { e.preventDefault(); const v = !(formData.showAvailableFor ?? true); setFormData(prev => ({ ...prev, showAvailableFor: v })); updateProfile({ ...formData, showAvailableFor: v }); }}>
+                                      <div style={{ width: '44px', height: '24px', borderRadius: '12px', backgroundColor: (formData.showAvailableFor ?? true) ? '#783FF3' : '#ccc', position: 'relative', cursor: 'pointer', transition: 'background-color 0.2s', flexShrink: 0 }}>
+                                        <div style={{ width: '20px', height: '20px', borderRadius: '50%', backgroundColor: 'white', position: 'absolute', top: '2px', left: (formData.showAvailableFor ?? true) ? '22px' : '2px', transition: 'left 0.2s', boxShadow: '0 2px 4px rgba(0,0,0,0.2)' }} />
+                                      </div>
+                                      <p style={{ margin: 0 }}>Show Available For</p>
+                                    </label>
+                                  </div>
                                 </div>
                                 <input type="submit" className="submit-button w-button" value="Save" />
                               </form>
@@ -1833,7 +1780,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                             </div>
                           </div>
                           <div className="spacing_24"></div>
-                          <div className="modelpopup">
+                          <div className="modelpopup" style={{ display: 'none' }}>
                             <h3>Edit Job Request Form</h3>
                             <div className="w-form">
                               <div className="spacing_24"></div>
@@ -1935,58 +1882,60 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                               </div>
                             </div>
                           </div>
-                          <div className="settingssection">
-                            <div className="spacing_24"></div>
-                            <h3>Book Me Button</h3>
-                            <div className="w-layout-hflex flex-block-9" style={{ alignItems: 'center', gap: '12px' }}>
-                              <label
-                                style={{
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  cursor: 'pointer',
-                                  gap: '10px',
-                                  userSelect: 'none',
-                                  flex: '0 0 auto'
-                                }}
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  const newValue = !formData.showBookMeButton;
-                                  setFormData(prev => ({ ...prev, showBookMeButton: newValue }));
-                                  updateProfile({ ...formData, showBookMeButton: newValue }).then(result => {
-                                    if (result.success) {
-                                      console.log('Show Book Me Button toggle saved');
-                                    }
-                                  });
-                                }}
-                              >
-                                <div
+                          <div style={{ display: 'none' }}>
+                            <div className="settingssection">
+                              <div className="spacing_24"></div>
+                              <h3>Book Me Button</h3>
+                              <div className="w-layout-hflex flex-block-9" style={{ alignItems: 'center', gap: '12px' }}>
+                                <label
                                   style={{
-                                    width: '44px',
-                                    height: '24px',
-                                    borderRadius: '12px',
-                                    backgroundColor: (formData.showBookMeButton ?? true) ? '#783FF3' : '#ccc',
-                                    position: 'relative',
+                                    display: 'flex',
+                                    alignItems: 'center',
                                     cursor: 'pointer',
-                                    transition: 'background-color 0.2s',
-                                    flexShrink: 0
+                                    gap: '10px',
+                                    userSelect: 'none',
+                                    flex: '0 0 auto'
+                                  }}
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    const newValue = !formData.showBookMeButton;
+                                    setFormData(prev => ({ ...prev, showBookMeButton: newValue }));
+                                    updateProfile({ ...formData, showBookMeButton: newValue }).then(result => {
+                                      if (result.success) {
+                                        console.log('Show Book Me Button toggle saved');
+                                      }
+                                    });
                                   }}
                                 >
                                   <div
                                     style={{
-                                      width: '20px',
-                                      height: '20px',
-                                      borderRadius: '50%',
-                                      backgroundColor: 'white',
-                                      position: 'absolute',
-                                      top: '2px',
-                                      left: (formData.showBookMeButton ?? true) ? '22px' : '2px',
-                                      transition: 'left 0.2s',
-                                      boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                                      width: '44px',
+                                      height: '24px',
+                                      borderRadius: '12px',
+                                      backgroundColor: (formData.showBookMeButton ?? true) ? '#783FF3' : '#ccc',
+                                      position: 'relative',
+                                      cursor: 'pointer',
+                                      transition: 'background-color 0.2s',
+                                      flexShrink: 0
                                     }}
-                                  />
-                                </div>
-                              </label>
-                              <p style={{ margin: 0 }}>Show Book Me Button</p>
+                                  >
+                                    <div
+                                      style={{
+                                        width: '20px',
+                                        height: '20px',
+                                        borderRadius: '50%',
+                                        backgroundColor: 'white',
+                                        position: 'absolute',
+                                        top: '2px',
+                                        left: (formData.showBookMeButton ?? true) ? '22px' : '2px',
+                                        transition: 'left 0.2s',
+                                        boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                                      }}
+                                    />
+                                  </div>
+                                </label>
+                                <p style={{ margin: 0 }}>Show Book Me Button</p>
+                              </div>
                             </div>
                           </div>
                         </div>

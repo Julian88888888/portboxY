@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import './Sidebar.css';
 
 const Sidebar = ({ onToggle }) => {
+  const { logout } = useAuth();
   const [isOpen, setIsOpen] = useState(true);
 
   // Sync state with parent on mount and when isOpen changes
@@ -76,6 +78,16 @@ const Sidebar = ({ onToggle }) => {
               >
                 <div>Account Settings</div>
               </NavLink>
+            </li>
+            <li className="sidebar-logout">
+              <button
+                type="button"
+                onClick={() => logout()}
+                className="nav-item"
+                style={{ width: '100%', textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', font: 'inherit', color: '#666' }}
+              >
+                <div>Logout</div>
+              </button>
             </li>
           </ul>
         </nav>
