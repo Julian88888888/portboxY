@@ -2076,12 +2076,14 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                                   title={link.enabled ? 'Disable link' : 'Enable link'}
                                   onClick={async (e) => {
                                     e.preventDefault();
-                                    const newEnabled = !link.enabled;
+                                    const newEnabled = !(link.enabled !== false);
+                                    const prevLinks = [...customLinks];
+                                    setCustomLinks(prev =>
+                                      prev.map(l => l.id === link.id ? { ...l, enabled: newEnabled } : l)
+                                    );
                                     const result = await updateCustomLink(link.id, { enabled: newEnabled });
-                                    if (result.success) {
-                                      const reloadResult = await getCustomLinks();
-                                      if (reloadResult.success) setCustomLinks(reloadResult.data || []);
-                                    } else {
+                                    if (!result.success) {
+                                      setCustomLinks(prevLinks);
                                       alert(result.error || 'Failed to update link');
                                     }
                                   }}
