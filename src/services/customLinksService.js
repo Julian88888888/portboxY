@@ -67,6 +67,19 @@ const getAuthHeaders = async () => {
 };
 
 /**
+ * Safely parse response as JSON (handles HTML error pages)
+ */
+const parseJsonResponse = async (response) => {
+  const text = await response.text();
+  try {
+    return { data: text ? JSON.parse(text) : {}, parseError: null };
+  } catch (e) {
+    console.warn('CustomLinks: Response was not JSON:', text?.substring?.(0, 80));
+    return { data: null, parseError: e };
+  }
+};
+
+/**
  * Get all custom links for the current user
  */
 export const getCustomLinks = async () => {
@@ -88,7 +101,10 @@ export const getCustomLinks = async () => {
       };
     }
 
-    const data = await response.json();
+    const { data, parseError } = await parseJsonResponse(response);
+    if (parseError) {
+      return { success: false, error: 'Server returned invalid response. Please try again.' };
+    }
     
     if (!response.ok) {
       if (response.status === 401) {
@@ -285,18 +301,24 @@ export const updateCustomLink = async (linkId, linkData) => {
       body: JSON.stringify(updateData)
     });
 
-    const data = await response.json();
-    
+    const { data, parseError } = await parseJsonResponse(response);
+    if (parseError) {
+      return {
+        success: false,
+        error: response.ok ? 'Invalid response from server.' : `Request failed (${response.status}). Please try again.`
+      };
+    }
+
     if (!response.ok) {
       return {
         success: false,
-        error: data.message || data.error || 'Failed to update custom link'
+        error: data?.message || data?.error || 'Failed to update custom link'
       };
     }
 
     return {
       success: true,
-      data: data.data
+      data: data?.data
     };
   } catch (error) {
     console.error('Error updating custom link:', error);
@@ -318,18 +340,24 @@ export const deleteCustomLink = async (linkId) => {
       headers
     });
 
-    const data = await response.json();
-    
+    const { data, parseError } = await parseJsonResponse(response);
+    if (parseError) {
+      return {
+        success: false,
+        error: response.ok ? 'Invalid response from server.' : `Request failed (${response.status}). Please try again.`
+      };
+    }
+
     if (!response.ok) {
       return {
         success: false,
-        error: data.message || data.error || 'Failed to delete custom link'
+        error: data?.message || data?.error || 'Failed to delete custom link'
       };
     }
 
     return {
       success: true,
-      message: data.message || 'Custom link deleted successfully'
+      message: data?.message || 'Custom link deleted successfully'
     };
   } catch (error) {
     console.error('Error deleting custom link:', error);
