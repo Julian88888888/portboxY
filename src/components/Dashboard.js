@@ -1952,9 +1952,11 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
             {activeTab === 'Tab 4' && (
               <div className="w-tab-pane w--tab-active">
                 <div className="w-layout-vflex flex-block-8">
-                  <div className="w-layout-hflex flex-block-9">
-                    <img width="50" height="Auto" alt="" src="/images/smSwitch.png" loading="lazy" />
-                    <p>Show Custom Links Widget</p>
+                  <div style={{ display: 'none' }}>
+                    <div className="w-layout-hflex flex-block-9">
+                      <img width="50" height="Auto" alt="" src="/images/smSwitch.png" loading="lazy" />
+                      <p>Show Custom Links Widget</p>
+                    </div>
                   </div>
                   <div className="spacing_24"></div>
                   <h3>Custom Links Settings</h3>
@@ -1974,7 +1976,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                         setFormData(prev => ({ ...prev, showCustomLinksTitle: newValue }));
                         updateProfile({ ...formData, showCustomLinksTitle: newValue }).then(result => {
                           if (result.success) {
-                            console.log('Show Custom Links Title toggle saved');
+                            console.log('Show Custom Links toggle saved');
                           }
                         });
                       }}
@@ -2006,7 +2008,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                         />
                       </div>
                     </label>
-                    <p style={{ margin: 0 }}>Show Custom Links Title</p>
+                    <p style={{ margin: 0 }}>Show Custom Links</p>
                   </div>
                   <div className="div-block-3">
                     <div className="w-layout-hflex flex-block-5 inputtxtdiv">
