@@ -339,7 +339,7 @@
 }
 
 .section.full_sec {
-  padding-left: 0 !important;
+  padding-left: 30px !important;
   padding-right: 0 !important;
   margin-left: 0;
 }
@@ -355,7 +355,7 @@
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
-  padding-left: 0;
+  padding-left: 30px;
   margin-left: 0;
 }
 
