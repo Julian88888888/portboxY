@@ -6,5 +6,11 @@
       "source": "/((?!api).*)",
       "destination": "/index.html"
     }
-  ]
+  ],
+  "functions": {
+    "api/custom-links/[id].js": {
+      "memory": 1024,
+      "maxDuration": 10
+    }
+  }
 }
