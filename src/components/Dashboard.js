@@ -1337,58 +1337,60 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                     )}
                   </div>
                   
-                  <div className="settingssection">
-                    <div className="spacing_24"></div>
-                    <h3>Book Me Button</h3>
-                    <div className="w-layout-hflex flex-block-9" style={{ alignItems: 'center', gap: '12px' }}>
-                      <label
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          cursor: 'pointer',
-                          gap: '10px',
-                          userSelect: 'none',
-                          flex: '0 0 auto'
-                        }}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          const newValue = !formData.showBookMeButton;
-                          setFormData(prev => ({ ...prev, showBookMeButton: newValue }));
-                          updateProfile({ ...formData, showBookMeButton: newValue }).then(result => {
-                            if (result.success) {
-                              console.log('Show Book Me Button toggle saved');
-                            }
-                          });
-                        }}
-                      >
-                        <div
+                  <div style={{ display: 'none' }}>
+                    <div className="settingssection">
+                      <div className="spacing_24"></div>
+                      <h3>Book Me Button</h3>
+                      <div className="w-layout-hflex flex-block-9" style={{ alignItems: 'center', gap: '12px' }}>
+                        <label
                           style={{
-                            width: '44px',
-                            height: '24px',
-                            borderRadius: '12px',
-                            backgroundColor: (formData.showBookMeButton ?? true) ? '#783FF3' : '#ccc',
-                            position: 'relative',
+                            display: 'flex',
+                            alignItems: 'center',
                             cursor: 'pointer',
-                            transition: 'background-color 0.2s',
-                            flexShrink: 0
+                            gap: '10px',
+                            userSelect: 'none',
+                            flex: '0 0 auto'
+                          }}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            const newValue = !formData.showBookMeButton;
+                            setFormData(prev => ({ ...prev, showBookMeButton: newValue }));
+                            updateProfile({ ...formData, showBookMeButton: newValue }).then(result => {
+                              if (result.success) {
+                                console.log('Show Book Me Button toggle saved');
+                              }
+                            });
                           }}
                         >
                           <div
                             style={{
-                              width: '20px',
-                              height: '20px',
-                              borderRadius: '50%',
-                              backgroundColor: 'white',
-                              position: 'absolute',
-                              top: '2px',
-                              left: (formData.showBookMeButton ?? true) ? '22px' : '2px',
-                              transition: 'left 0.2s',
-                              boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                              width: '44px',
+                              height: '24px',
+                              borderRadius: '12px',
+                              backgroundColor: (formData.showBookMeButton ?? true) ? '#783FF3' : '#ccc',
+                              position: 'relative',
+                              cursor: 'pointer',
+                              transition: 'background-color 0.2s',
+                              flexShrink: 0
                             }}
-                          />
-                        </div>
-                      </label>
-                      <p style={{ margin: 0 }}>Show Book Me Button</p>
+                          >
+                            <div
+                              style={{
+                                width: '20px',
+                                height: '20px',
+                                borderRadius: '50%',
+                                backgroundColor: 'white',
+                                position: 'absolute',
+                                top: '2px',
+                                left: (formData.showBookMeButton ?? true) ? '22px' : '2px',
+                                transition: 'left 0.2s',
+                                boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                              }}
+                            />
+                          </div>
+                        </label>
+                        <p style={{ margin: 0 }}>Show Book Me Button</p>
+                      </div>
                     </div>
                   </div>
                 </div>
