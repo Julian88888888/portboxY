@@ -2175,10 +2175,6 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                       )}
                       
                       <div className="linkpanel">
-                        <div className="w-layout-hflex flex-block-9">
-                          <img width="50" height="Auto" alt="" src="/images/smSwitch.png" loading="lazy" />
-                          <p>Enable Link</p>
-                        </div>
                         <div className="w-form">
                           <div className="spacing_24"></div>
                           <button
