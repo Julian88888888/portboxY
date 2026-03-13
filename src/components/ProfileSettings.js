@@ -846,7 +846,7 @@ export default function ProfileSettings() {
           <input 
             type="submit" 
             className="submit-button w-button" 
-            value={saveStatus === 'saving' ? 'Saving...' : profile ? 'Save Changes' : 'Create Profile'} 
+            value={saveStatus === 'saving' ? 'Saving...' : profile ? 'Save Profile Settings' : 'Create Profile'} 
             disabled={saveStatus === 'saving'}
           />
         </form>

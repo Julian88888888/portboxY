@@ -75,7 +75,7 @@
 .settingssection {
   background-color: transparent;
   border-radius: 12px;
-  padding: 24px;
+  padding: 24px 24px 24px 0;
   margin-bottom: 24px;
   box-shadow: none;
   width: 100%;
@@ -194,7 +194,7 @@
 }
 
 .flex-block-8 {
-  padding-left: 40px;
+  padding-left: 0;
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
@@ -339,8 +339,9 @@
 }
 
 .section.full_sec {
-  padding-left: 0;
-  padding-right: 0;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  margin-left: 0;
 }
 
 .section.full_sec .mainheader,
@@ -354,6 +355,8 @@
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
+  padding-left: 0;
+  margin-left: 0;
 }
 
 .section {
