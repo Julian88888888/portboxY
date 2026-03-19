@@ -43,7 +43,9 @@ const PortfolioSection = () => {
     <section className="section full_sec">
     <div className="w-layout-hflex mainheader">
       <div className="headerbar">
-        <div className="text-block-5">Model Link Porfolio</div>
+        <div className="text-block-5" style={{ textAlign: 'left', marginRight: 'auto' }}>
+          Model Link Porfolio
+        </div>
         <div className="flex_wrapper flex_center">
           {isAuthenticated ? (
             <>

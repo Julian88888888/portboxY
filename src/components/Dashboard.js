@@ -407,10 +407,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
   return (
     <div className="section full_sec">
       <div className="w-layout-hflex mainheader">
-        <div className="headerbar">
-          <a href="/" className="w-inline-block">
-            <div className="text-block-5">Portfolio-In-Link</div>
-          </a>
+        <div className="headerbar" style={{ justifyContent: 'flex-end' }}>
           <a href="/" className="w-inline-block">
             <img 
               src={getProfileImage()} 
@@ -1429,15 +1426,24 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                         <div className="w-layout-vflex flex-block-11">
                           <div className="spacing_48"></div>
 
-                          {/* Bookings I sent (as client) */}
-                          {bookingsAsClient.length > 0 && (
-                            <>
-                              <h4 style={{ margin: '0 0 12px 0', fontSize: '16px', fontWeight: '600' }}>Outgoing Bookings</h4>
-                              <p style={{ margin: '0 0 16px 0', color: '#666', fontSize: '14px' }}>People you wrote to from a model page — open chat to send or read messages.</p>
+                          <div
+                            style={{
+                              width: '100%',
+                              display: 'grid',
+                              gridTemplateColumns: 'repeat(auto-fit, minmax(420px, 1fr))',
+                              gap: '24px',
+                              alignItems: 'start'
+                            }}
+                          >
+                            <div style={{ minWidth: 0 }}>
+                              <h4 style={{ margin: '0 0 12px 0', fontSize: '16px', fontWeight: '600', textAlign: 'left', width: '100%' }}>Outgoing Bookings</h4>
+                              <p style={{ margin: '0 0 16px 0', color: '#666', fontSize: '14px' }}>People you wrote to from a model page - open chat to send or read messages.</p>
                               {bookingsAsClientLoading ? (
                                 <p className="paragraph">Loading...</p>
+                              ) : bookingsAsClient.length === 0 ? (
+                                <p className="paragraph">No outgoing bookings yet.</p>
                               ) : (
-                                <div style={{ marginBottom: '32px', width: '100%' }}>
+                                <div style={{ width: '100%' }}>
                                   {bookingsAsClient.map((b) => (
                                     <div
                                       key={b.id}
@@ -1534,19 +1540,18 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                                   ))}
                                 </div>
                               )}
-                              <div className="spacing_24"></div>
-                              <h4 style={{ margin: '0 0 12px 0', fontSize: '16px', fontWeight: '600' }}>Incoming Bookings</h4>
-                              <div className="spacing_16"></div>
-                            </>
-                          )}
+                            </div>
 
-                          {bookingsLoading ? (
-                            <p className="paragraph">Loading bookings...</p>
-                          ) : bookings.length === 0 ? (
-                            <p className="paragraph">No bookings yet.</p>
-                          ) : (
-                            <div style={{ width: '100%' }}>
-                              {bookings.map((booking) => (
+                            <div style={{ minWidth: 0 }}>
+                              <h4 style={{ margin: '0 0 12px 0', fontSize: '16px', fontWeight: '600', textAlign: 'right', width: '100%' }}>Incoming Bookings</h4>
+                              <div className="spacing_16"></div>
+                              {bookingsLoading ? (
+                                <p className="paragraph">Loading bookings...</p>
+                              ) : bookings.length === 0 ? (
+                                <p className="paragraph">No bookings yet.</p>
+                              ) : (
+                                <div style={{ width: '100%' }}>
+                                  {bookings.map((booking) => (
                                 <div 
                                   key={booking.id} 
                                   style={{
@@ -1677,9 +1682,11 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                                     </div>
                                   </div>
                                 </div>
-                              ))}
+                                  ))}
+                                </div>
+                              )}
                             </div>
-                          )}
+                          </div>
                         </div>
                       </div>
                     )}

@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 function AuthOnlyBlock() {
@@ -10,16 +11,33 @@ function AuthOnlyBlock() {
     <div className="auth-block" style={{
       background: 'transparent',
       color: '#333',
-      padding: '20px',
-      textAlign: 'center',
+      padding: '20px 24px',
+      textAlign: 'left',
       borderRadius: '8px',
-      margin: '20px',
-      boxShadow: 'none'
+      margin: 0,
+      boxShadow: 'none',
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      zIndex: 1100
     }}>
-      <h2>Welcome back, {user?.firstName || 'User'}!</h2>
-      <p>You're successfully logged in to your Model Link Portfolio account.</p>
+      <Link
+        to="/"
+        style={{
+          display: 'inline-block',
+          color: '#111',
+          textDecoration: 'none',
+          fontWeight: 600,
+          marginBottom: '8px'
+        }}
+      >
+        Portfolio-In-Link
+      </Link>
+      <h2 style={{ margin: 0, fontSize: '24px', lineHeight: '1.2', fontWeight: 600 }}>
+        Welcome Back {user?.firstName || 'User'}
+      </h2>
       {user?.email && (
-        <p style={{ fontSize: '14px', color: '#666' }}>
+        <p style={{ fontSize: '14px', color: '#666', margin: '6px 0 0 0' }}>
           Logged in as: {user.email}
         </p>
       )}
