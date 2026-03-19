@@ -32,7 +32,7 @@ const Sidebar = ({ onToggle }) => {
             {/* Model Page - commented out
             <li>
               <NavLink 
-                to="/model"
+                to="/user"
                 className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
               >
                 <div>Model Page</div>

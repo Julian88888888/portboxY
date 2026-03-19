@@ -38,7 +38,7 @@ function AppContent() {
         <Routes>
           {/* Public routes */}
           <Route path="/" element={<MainPage />} />
-          <Route path="/model/:username?" element={<ModelPage />} />
+          <Route path="/user/:username?" element={<ModelPage />} />
           <Route path="/booking/chat/:bookingId" element={<BookingChatPage />} />
           
           {/* Protected routes - require authentication */}

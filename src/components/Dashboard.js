@@ -359,6 +359,8 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
   };
 
   const headerBackgroundUrl = getHeaderBackgroundUrl();
+  const showProfileDescription = profile?.show_description ?? profile?.showProfileDescription ?? formData.showProfileDescription ?? true;
+  const profileDescriptionText = profile?.description || formData.bio || 'I am a professional model with many years of experience working for top brands all over the world.';
 
   const jobTypes = [
     { 
@@ -477,9 +479,9 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                         {(profile?.username || formData.username) && (
                           <p className="username_txt">@{profile?.username || formData.username}</p>
                         )}
-                        {profile?.show_description !== false && (profile?.description || formData.bio) && (
+                        {showProfileDescription && (profile?.description || formData.bio) && (
                           <p className="text_color_grey text_width_medium">
-                            {profile?.description || formData.bio || 'I am a professional model with many years of experience working for top brands all over the world.'}
+                            {profileDescriptionText}
                           </p>
                         )}
                       </div>

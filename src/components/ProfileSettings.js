@@ -770,9 +770,9 @@ export default function ProfileSettings() {
             <span style={{ 
               position: 'absolute', 
               left: '12px', 
-              top: '50%', 
+              top: '35%', 
               transform: 'translateY(-50%)', 
-              color: '#999',
+              color: 'rgb(153, 153, 153)',
               pointerEvents: 'none'
             }}>@</span>
             <input 
@@ -809,7 +809,7 @@ export default function ProfileSettings() {
                 width: '100%',
                 boxSizing: 'border-box'
               }}>
-                {window.location.origin}/model/{formData.username}
+                {window.location.origin}/user/{formData.username}
               </div>
             </div>
           )}
@@ -838,9 +838,74 @@ export default function ProfileSettings() {
             onChange={handleInputChange}
           />
           
-          <div className="w-layout-hflex flex-block-9">
-            <img width="50" height="Auto" alt="" src="/images/smSwitch.png" loading="lazy" />
-            <p>Show Profile Description</p>
+          <div className="w-layout-hflex flex-block-9" style={{ marginTop: '12px', alignItems: 'center', gap: '12px' }}>
+            <label
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                cursor: 'pointer',
+                gap: '10px',
+                userSelect: 'none',
+                flex: '0 0 auto'
+              }}
+              onClick={(e) => {
+                e.preventDefault();
+                const newValue = !(formData.show_description ?? true);
+                setFormData(prev => ({ ...prev, show_description: newValue }));
+                updateProfile.mutate({ show_description: newValue }, {
+                  onSuccess: () => {
+                    setSaveStatus('saved');
+                    setTimeout(() => setSaveStatus(''), 2000);
+                    setErrors(prev => {
+                      const newErrors = { ...prev };
+                      delete newErrors.show_description;
+                      return newErrors;
+                    });
+                  },
+                  onError: (error) => {
+                    console.error('Error updating show_description:', error);
+                    setFormData(prev => ({ ...prev, show_description: !newValue }));
+                    setErrors(prev => ({
+                      ...prev,
+                      show_description: error.message || 'Failed to update setting'
+                    }));
+                  }
+                });
+              }}
+            >
+              <div
+                style={{
+                  width: '44px',
+                  height: '24px',
+                  borderRadius: '12px',
+                  backgroundColor: (formData.show_description ?? true) ? '#783FF3' : '#ccc',
+                  position: 'relative',
+                  cursor: 'pointer',
+                  transition: 'background-color 0.2s',
+                  flexShrink: 0
+                }}
+              >
+                <div
+                  style={{
+                    width: '20px',
+                    height: '20px',
+                    borderRadius: '50%',
+                    backgroundColor: 'white',
+                    position: 'absolute',
+                    top: '2px',
+                    left: (formData.show_description ?? true) ? '22px' : '2px',
+                    transition: 'left 0.2s',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                  }}
+                />
+              </div>
+            </label>
+            <p style={{ margin: 0 }}>Show Profile Description</p>
+            {errors.show_description && (
+              <span style={{ color: 'red', fontSize: '12px', marginLeft: '8px' }}>
+                {errors.show_description}
+              </span>
+            )}
           </div>
           
           <input 
