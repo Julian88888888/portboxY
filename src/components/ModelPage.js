@@ -166,10 +166,47 @@ export default function JobRequestPopup() {
       }
     }
     if (!Array.isArray(raw)) return [];
-    return raw
-      .filter((id) => typeof id === 'string' && BOOKING_TAG_LABELS[id])
+    const selected = new Set(
+      raw.filter((id) => typeof id === 'string' && BOOKING_TAG_LABELS[id])
+    );
+    const order = ['photoshoots', 'acting', 'runway', 'promo'];
+    return order
+      .filter((id) => selected.has(id))
       .map((id) => ({ id, label: BOOKING_TAG_LABELS[id] }));
   };
+
+  const getBookingsTitleDisplay = () =>
+    profile?.bookings_title ?? user?.user_metadata?.bookingsTitle ?? 'BOOKINGS';
+
+  const shouldShowBookingsHeading = () => {
+    if (profile?.show_bookings_title === false) return false;
+    if (user?.user_metadata?.enableBookingsTitle === false) return false;
+    return true;
+  };
+
+  const getHometownDisplay = () =>
+    (profile?.hometown ?? user?.user_metadata?.hometown ?? '').trim();
+
+  const shouldShowHometownPublic = () => {
+    if (profile?.show_hometown === false) return false;
+    if (user?.user_metadata?.showHometown === false) return false;
+    return true;
+  };
+
+  const getBookingDescriptionDisplay = () =>
+    (profile?.booking_description ?? user?.user_metadata?.bookingDescription ?? '').trim();
+
+  const shouldShowBookingDescriptionPublic = () => {
+    if (profile?.show_booking_description === false) return false;
+    if (user?.user_metadata?.showRequestDescription === false) return false;
+    return true;
+  };
+
+  const hasPublicBookingsBlock =
+    (shouldShowBookingsHeading() && String(getBookingsTitleDisplay()).trim() !== '') ||
+    (shouldShowHometownPublic() && getHometownDisplay() !== '') ||
+    (shouldShowBookingDescriptionPublic() && getBookingDescriptionDisplay() !== '') ||
+    (shouldShowAvailableForTags() && getPublicAvailableForTags().length > 0);
 
   // Check if Social Links (icon row) should be shown
   const shouldShowSocialLinks = () => {
@@ -763,37 +800,6 @@ export default function JobRequestPopup() {
           )}
           {shouldShowModelStats() && <div className="spacing_24" />}
           <div className="spacing_24" />
-          {shouldShowAvailableForTags() && visibleBookingTags.length > 0 && (
-            <div
-              className="flex_wrapper flex_center"
-              style={{
-                flexWrap: 'wrap',
-                gap: '10px',
-                marginBottom: '16px',
-                justifyContent: 'center',
-              }}
-            >
-              {visibleBookingTags.map(({ id, label }) => (
-                <div
-                  key={id}
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    padding: '10px 16px',
-                    borderRadius: '999px',
-                    fontWeight: 600,
-                    fontSize: '14px',
-                    backgroundColor: '#783FF3',
-                    color: '#fff',
-                  }}
-                >
-                  <span>{label}</span>
-                  <PublicAvailableForTagIcon type={id} color="#ffffff" />
-                </div>
-              ))}
-            </div>
-          )}
       {shouldShowBookMeButton() && urlUsername && profile?.id !== user?.id && (
         <>
       {user ? (
@@ -891,9 +897,98 @@ export default function JobRequestPopup() {
         </div>
       </div>
 
-      {shouldShowCustomLinksTitle() && (
+      {(hasPublicBookingsBlock || shouldShowCustomLinksTitle()) && (
       <div className="section links_sec">
         <div className="content_wrapper largebanner_btn">
+          {hasPublicBookingsBlock && (
+            <div style={{ width: '100%', maxWidth: '520px', margin: '0 auto' }}>
+              <div className="spacing_48"></div>
+              {shouldShowBookingsHeading() && String(getBookingsTitleDisplay()).trim() !== '' && (
+                <h4
+                  style={{
+                    textAlign: 'left',
+                    fontWeight: 700,
+                    fontSize: '17px',
+                    letterSpacing: '0.02em',
+                    margin: '0 0 20px 0',
+                    color: '#111',
+                  }}
+                >
+                  {getBookingsTitleDisplay()}
+                </h4>
+              )}
+              {shouldShowHometownPublic() && getHometownDisplay() !== '' && (
+                <div style={{ textAlign: 'center', marginBottom: '18px' }}>
+                  <div style={{ fontWeight: 700, fontSize: '16px', color: '#111', marginBottom: '6px' }}>
+                    Hometown City
+                  </div>
+                  <div className="text_color_grey" style={{ fontSize: '15px' }}>
+                    {getHometownDisplay()}
+                  </div>
+                </div>
+              )}
+              {shouldShowBookingDescriptionPublic() && getBookingDescriptionDisplay() !== '' && (
+                <p
+                  className="text_color_grey text_width_medium"
+                  style={{
+                    textAlign: 'center',
+                    fontSize: '15px',
+                    lineHeight: 1.55,
+                    margin: '0 auto 24px',
+                    maxWidth: '480px',
+                  }}
+                >
+                  {getBookingDescriptionDisplay()}
+                </p>
+              )}
+              {shouldShowAvailableForTags() && visibleBookingTags.length > 0 && (
+                <>
+                  <div
+                    style={{
+                      fontWeight: 700,
+                      fontSize: '16px',
+                      color: '#111',
+                      marginBottom: '12px',
+                      textAlign: 'left',
+                    }}
+                  >
+                    Available For
+                  </div>
+                  <div
+                    className="flex_wrapper flex_center"
+                    style={{
+                      flexWrap: 'wrap',
+                      gap: '10px',
+                      marginBottom: '8px',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    {visibleBookingTags.map(({ id, label }) => (
+                      <div
+                        key={id}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          padding: '10px 16px',
+                          borderRadius: '999px',
+                          fontWeight: 600,
+                          fontSize: '14px',
+                          backgroundColor: '#783FF3',
+                          color: '#fff',
+                        }}
+                      >
+                        <span>{label}</span>
+                        <PublicAvailableForTagIcon type={id} color="#ffffff" />
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+          {shouldShowCustomLinksTitle() && (
+            <>
           <div className="spacing_48"></div>
           <h4 className="section_title links_headinng">My Links</h4>
           <div className="spacing_24"></div>
@@ -937,6 +1032,8 @@ export default function JobRequestPopup() {
                 </div>
               )}
             </div>
+          )}
+            </>
           )}
         </div>
       </div>

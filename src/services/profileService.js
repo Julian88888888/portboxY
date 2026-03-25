@@ -117,6 +117,12 @@ export const upsertProfile = async (payload) => {
       'show_description',
       'available_for_tags',
       'show_available_for',
+      'bookings_title',
+      'hometown',
+      'booking_description',
+      'show_bookings_title',
+      'show_hometown',
+      'show_booking_description',
     ];
 
     // Filter payload to only include allowed fields and handle field name mapping

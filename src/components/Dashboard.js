@@ -330,7 +330,29 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
         spotify: socialLinks.spotify,
         vimeo: socialLinks.vimeo,
         cashapp: socialLinks.cashapp,
-        hometown: user.currentCity || '',
+        bookingsTitle:
+          profile?.bookings_title ??
+          user.user_metadata?.bookingsTitle ??
+          'BOOKINGS',
+        hometown:
+          profile?.hometown ??
+          user.user_metadata?.hometown ??
+          user.currentCity ??
+          '',
+        bookingDescription:
+          profile?.booking_description ?? user.user_metadata?.bookingDescription ?? '',
+        enableBookingsTitle:
+          profile?.show_bookings_title !== undefined
+            ? profile.show_bookings_title
+            : user.user_metadata?.enableBookingsTitle !== false,
+        showHometown:
+          profile?.show_hometown !== undefined
+            ? profile.show_hometown
+            : user.user_metadata?.showHometown !== false,
+        showRequestDescription:
+          profile?.show_booking_description !== undefined
+            ? profile.show_booking_description
+            : user.user_metadata?.showRequestDescription !== false,
         availableForTags: (() => {
           const fromProfile = profile?.available_for_tags;
           const fromMeta = user.user_metadata?.availableForTags;
@@ -382,11 +404,19 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
       await upsertProfile({
         available_for_tags: tags,
         show_available_for: showTags,
+        bookings_title: bookingsMeta.bookingsTitle,
+        hometown: bookingsMeta.hometown,
+        booking_description: bookingsMeta.bookingDescription,
+        show_bookings_title: bookingsMeta.enableBookingsTitle !== false,
+        show_hometown: bookingsMeta.showHometown !== false,
+        show_booking_description: bookingsMeta.showRequestDescription !== false,
       });
     } catch (dbErr) {
       console.error('profiles.available_for_tags update:', dbErr);
       alert(
-        'Could not save to public profile (database). Run add_available_for_tags_columns.sql in Supabase SQL Editor, then try again.\n\n' +
+        'Could not save to public profile (database). In Supabase SQL Editor run:\n' +
+          '• add_available_for_tags_columns.sql (if not yet)\n' +
+          '• add_bookings_public_display_columns.sql\n\n' +
           (dbErr.message || String(dbErr))
       );
       return;
@@ -403,6 +433,12 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
           ...prev,
           available_for_tags: tags,
           show_available_for: showTags,
+          bookings_title: bookingsMeta.bookingsTitle,
+          hometown: bookingsMeta.hometown,
+          booking_description: bookingsMeta.bookingDescription,
+          show_bookings_title: bookingsMeta.enableBookingsTitle !== false,
+          show_hometown: bookingsMeta.showHometown !== false,
+          show_booking_description: bookingsMeta.showRequestDescription !== false,
         };
       });
     }
