@@ -11,7 +11,7 @@ function AuthOnlyBlock() {
     <div className="auth-block" style={{
       background: 'transparent',
       color: '#333',
-      padding: '20px 24px',
+      padding: '12px 12px',
       textAlign: 'left',
       borderRadius: '8px',
       margin: 0,
@@ -19,7 +19,9 @@ function AuthOnlyBlock() {
       position: 'fixed',
       top: 0,
       left: 0,
-      zIndex: 1100
+      zIndex: 1100,
+      maxWidth: 'min(260px, calc(100vw - 24px))',
+      boxSizing: 'border-box'
     }}>
       <Link
         to="/"
@@ -28,16 +30,17 @@ function AuthOnlyBlock() {
           color: '#111',
           textDecoration: 'none',
           fontWeight: 600,
-          marginBottom: '8px'
+          fontSize: '13px',
+          marginBottom: '4px'
         }}
       >
         Portfolio-In-Link
       </Link>
-      <h2 style={{ margin: 0, fontSize: '24px', lineHeight: '1.2', fontWeight: 600 }}>
+      <h2 style={{ margin: 0, fontSize: '18px', lineHeight: '1.2', fontWeight: 600 }}>
         Welcome Back {user?.firstName || 'User'}
       </h2>
       {user?.email && (
-        <p style={{ fontSize: '14px', color: '#666', margin: '6px 0 0 0' }}>
+        <p style={{ fontSize: '12px', color: '#666', margin: '4px 0 0 0' }}>
           Logged in as: {user.email}
         </p>
       )}

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useParams } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
 import './components/index.css';
 import './App.css';
@@ -14,6 +14,11 @@ import BookingsPage from './pages/BookingsPage';
 import BookingChatPage from './pages/BookingChatPage';
 import CustomLinksPage from './pages/CustomLinksPage';
 import SettingsPage from './pages/SettingsPage';
+
+function LegacyUserProfileRedirect() {
+  const { username } = useParams();
+  return <Navigate to={`/@${username}`} replace />;
+}
 
 function AppContent() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -38,7 +43,8 @@ function AppContent() {
         <Routes>
           {/* Public routes */}
           <Route path="/" element={<MainPage />} />
-          <Route path="/user/:username?" element={<ModelPage />} />
+          <Route path="/user/:username" element={<LegacyUserProfileRedirect />} />
+          <Route path="/user" element={<ModelPage />} />
           <Route path="/booking/chat/:bookingId" element={<BookingChatPage />} />
           
           {/* Protected routes - require authentication */}
@@ -82,6 +88,8 @@ function AppContent() {
               </ProtectedRoute>
             } 
           />
+          {/* /@handle — one URL segment (e.g. /@dev); React Router does not match /@:param */}
+          <Route path="/:username" element={<ModelPage />} />
         </Routes>
       </div>
     </div>

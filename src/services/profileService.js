@@ -114,7 +114,9 @@ export const upsertProfile = async (payload) => {
       'show_profile_photo',
       'show_profile_header',
       'show_header_photo', // Support both names for compatibility
-      'show_description'
+      'show_description',
+      'available_for_tags',
+      'show_available_for',
     ];
 
     // Filter payload to only include allowed fields and handle field name mapping

@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../contexts/AuthContext';
 import { useProfile } from '../hooks/useProfile';
-import { getAvatarUrl, getHeaderUrl } from '../services/profileService';
+import { getAvatarUrl, getHeaderUrl, upsertProfile } from '../services/profileService';
 import { createAlbum, getAlbums, uploadImageToAlbum, deleteAlbum, getAlbumImages, setCoverImage, normalizeImageUrl } from '../services/albumsService';
 import { getCustomLinks, createCustomLink, updateCustomLink, deleteCustomLink } from '../services/customLinksService';
 import { getBookings, getBookingsAsClient, deleteBooking, updateBooking } from '../services/bookingsService';
@@ -12,8 +13,42 @@ import './Dashboard.css';
 
 const TAB_ROUTES = { 'Tab 1': '/profile', 'Tab 2': '/portfolio', 'Tab 3': '/bookings', 'Tab 4': '/links', 'Tab 5': '/settings' };
 
+const BOOKING_AVAILABLE_FOR_IDS = ['photoshoots', 'acting', 'runway', 'promo'];
+
+const BookingAvailableForIcon = ({ type, color }) => {
+  const stroke = color || 'currentColor';
+  if (type === 'photoshoots') {
+    return (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+        <path stroke={stroke} strokeLinejoin="round" strokeWidth="2" d="M4 18V8a1 1 0 0 1 1-1h1.5l1.707-1.707A1 1 0 0 1 8.914 5h6.172a1 1 0 0 1 .707.293L17.5 7H19a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1Z" />
+        <path stroke={stroke} strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+      </svg>
+    );
+  }
+  if (type === 'acting') {
+    return (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+        <path stroke={stroke} strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 6H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1Zm7 11-6-2V9l6-2v10Z" />
+      </svg>
+    );
+  }
+  if (type === 'runway') {
+    return (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+        <path stroke={stroke} strokeLinejoin="round" strokeWidth="2" d="M9 5h-.16667c-.86548 0-1.70761.28071-2.4.8L3.5 8l2 3.5L8 10v9h8v-9l2.5 1.5 2-3.5-2.9333-2.2c-.6924-.51929-1.5346-.8-2.4-.8H15M9 5c0 1.5 1.5 3 3 3s3-1.5 3-3M9 5h6" />
+      </svg>
+    );
+  }
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+      <path stroke={stroke} strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 9H5a1 1 0 0 0-1 1v4a1 1 0 0 0 1 1h6m0-6v6m0-6 5.419-3.87A1 1 0 0 1 18 5.942v12.114a1 1 0 0 1-1.581.814L11 15m7 0a3 3 0 0 0 0-6M6 15h3v5H6v-5Z" />
+    </svg>
+  );
+};
+
 export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { user, updateProfile, uploadPortfolioAlbum, updatePortfolioAlbum, deletePortfolioAlbum } = useAuth();
   const { data: profile } = useProfile();
   const [activeTab, setActiveTab] = useState(propActiveTab || 'Tab 1');
@@ -229,6 +264,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
     bookingDescription: '',
     showRequestDescription: true,
     availableForBooking: '',
+    availableForTags: [],
     showAvailableFor: true,
     showCustomLinksWidget: true,
     showCustomLinksTitle: true,
@@ -294,7 +330,18 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
         spotify: socialLinks.spotify,
         vimeo: socialLinks.vimeo,
         cashapp: socialLinks.cashapp,
-        hometown: user.currentCity || ''
+        hometown: user.currentCity || '',
+        availableForTags: (() => {
+          const fromProfile = profile?.available_for_tags;
+          const fromMeta = user.user_metadata?.availableForTags;
+          const raw = Array.isArray(fromProfile) && fromProfile.length > 0 ? fromProfile : fromMeta;
+          if (!Array.isArray(raw)) return [];
+          return raw.filter((id) => BOOKING_AVAILABLE_FOR_IDS.includes(id));
+        })(),
+        showAvailableFor:
+          profile?.show_available_for !== undefined
+            ? profile.show_available_for
+            : user.user_metadata?.showAvailableFor !== false,
       }));
     }
   }, [user, profile]);
@@ -307,8 +354,76 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
     }));
   };
 
+  const toggleAvailableForTag = (tagId) => {
+    setFormData((prev) => {
+      const cur = Array.isArray(prev.availableForTags) ? [...prev.availableForTags] : [];
+      const i = cur.indexOf(tagId);
+      if (i >= 0) cur.splice(i, 1);
+      else cur.push(tagId);
+      return { ...prev, availableForTags: cur };
+    });
+  };
+
+  /** Bookings tab: avoid sending entire formData to user_metadata (size / serialization limits). DB first so @username sees tags even if metadata fails. */
+  const saveBookingsSettings = async () => {
+    const tags = Array.isArray(formData.availableForTags) ? [...formData.availableForTags] : [];
+    const showTags = formData.showAvailableFor !== false;
+    const bookingsMeta = {
+      bookingsTitle: formData.bookingsTitle ?? 'BOOKINGS',
+      hometown: formData.hometown ?? '',
+      showHometown: formData.showHometown ?? true,
+      bookingDescription: formData.bookingDescription ?? '',
+      showRequestDescription: formData.showRequestDescription ?? true,
+      enableBookingsTitle: formData.enableBookingsTitle ?? true,
+      availableForTags: tags,
+      showAvailableFor: showTags,
+    };
+    try {
+      await upsertProfile({
+        available_for_tags: tags,
+        show_available_for: showTags,
+      });
+    } catch (dbErr) {
+      console.error('profiles.available_for_tags update:', dbErr);
+      alert(
+        'Could not save to public profile (database). Run add_available_for_tags_columns.sql in Supabase SQL Editor, then try again.\n\n' +
+          (dbErr.message || String(dbErr))
+      );
+      return;
+    }
+    queryClient.invalidateQueries({ queryKey: ['profile'] });
+    queryClient.invalidateQueries({ queryKey: ['publicProfile'] });
+    const publicUsername = String(profile?.username || formData.username || '')
+      .trim()
+      .replace(/^@+/, '');
+    if (publicUsername) {
+      queryClient.setQueryData(['publicProfile', publicUsername], (prev) => {
+        if (!prev || typeof prev !== 'object') return prev;
+        return {
+          ...prev,
+          available_for_tags: tags,
+          show_available_for: showTags,
+        };
+      });
+    }
+    const result = await updateProfile(bookingsMeta);
+    if (result.success) {
+      alert('Settings saved successfully! Your public page will show the selected tags.');
+    } else {
+      alert(
+        'Public profile was updated, but syncing to your login session failed: ' +
+          (result.error || 'Unknown error') +
+          '\nRefresh the page and try Save again if settings look wrong.'
+      );
+    }
+  };
+
   const handleSubmit = async (e, formType) => {
     e.preventDefault();
+    if (formType === 'bookings') {
+      await saveBookingsSettings();
+      return;
+    }
     try {
       const payload = formType === 'social'
         ? {
@@ -1434,7 +1549,8 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                               display: 'grid',
                               gridTemplateColumns: 'repeat(auto-fit, minmax(420px, 1fr))',
                               gap: '24px',
-                              alignItems: 'start'
+                              alignItems: 'start',
+                              paddingRight: '30px'
                             }}
                           >
                             <div style={{ minWidth: 0 }}>
@@ -1702,7 +1818,13 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                           <h3>Bookings Settings</h3>
                           <div className="settingssection">
                             <div className="w-form">
-                              <form onSubmit={(e) => handleSubmit(e, 'bookings')}>
+                              <form
+                                noValidate
+                                onSubmit={(e) => {
+                                  e.preventDefault();
+                                  void saveBookingsSettings();
+                                }}
+                              >
                                 <div className="w-layout-hflex flex-block-9" style={{ alignItems: 'center', gap: '12px' }}>
                                   <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', gap: '10px', userSelect: 'none', flex: '0 0 auto' }} onClick={(e) => { e.preventDefault(); const v = !(formData.enableBookingsTitle ?? true); setFormData(prev => ({ ...prev, enableBookingsTitle: v })); updateProfile({ ...formData, enableBookingsTitle: v }); }}>
                                     <div style={{ width: '44px', height: '24px', borderRadius: '12px', backgroundColor: (formData.enableBookingsTitle ?? true) ? '#783FF3' : '#ccc', position: 'relative', cursor: 'pointer', transition: 'background-color 0.2s', flexShrink: 0 }}>
@@ -1757,30 +1879,71 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                                     <p style={{ margin: 0 }}>Show Request Description</p>
                                   </label>
                                 </div>
-                                <div style={{ display: 'none' }}>
-                                  <label htmlFor="availableForBooking">Available For</label>
-                                  <select 
-                                    id="availableForBooking" 
-                                    name="availableForBooking" 
-                                    className="dropdowntxt w-select"
-                                    value={formData.availableForBooking}
-                                    onChange={handleInputChange}
-                                  >
-                                    <option value="">Select one...</option>
-                                    <option value="Photoshoot">Photoshoot</option>
-                                    <option value="Acting">Acting</option>
-                                    <option value="Runway">Runway</option>
-                                  </select>
-                                  <div className="w-layout-hflex flex-block-9" style={{ alignItems: 'center', gap: '12px' }}>
-                                    <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', gap: '10px', userSelect: 'none', flex: '0 0 auto' }} onClick={(e) => { e.preventDefault(); const v = !(formData.showAvailableFor ?? true); setFormData(prev => ({ ...prev, showAvailableFor: v })); updateProfile({ ...formData, showAvailableFor: v }); }}>
-                                      <div style={{ width: '44px', height: '24px', borderRadius: '12px', backgroundColor: (formData.showAvailableFor ?? true) ? '#783FF3' : '#ccc', position: 'relative', cursor: 'pointer', transition: 'background-color 0.2s', flexShrink: 0 }}>
-                                        <div style={{ width: '20px', height: '20px', borderRadius: '50%', backgroundColor: 'white', position: 'absolute', top: '2px', left: (formData.showAvailableFor ?? true) ? '22px' : '2px', transition: 'left 0.2s', boxShadow: '0 2px 4px rgba(0,0,0,0.2)' }} />
-                                      </div>
-                                      <p style={{ margin: 0 }}>Show Available For</p>
-                                    </label>
-                                  </div>
+                                <div className="spacing_24"></div>
+                                <div style={{ fontWeight: 700, fontSize: '16px', marginBottom: '12px', color: '#111' }}>Available For</div>
+                                <p style={{ margin: '0 0 14px 0', fontSize: '13px', color: '#666' }}>
+                                  Choose what appears as tags on your public page above the Book Me button. Click Save to apply.
+                                </p>
+                                <div
+                                  role="group"
+                                  aria-label="Available for booking types"
+                                  style={{
+                                    display: 'flex',
+                                    flexWrap: 'wrap',
+                                    gap: '10px',
+                                    marginBottom: '16px',
+                                  }}
+                                >
+                                  {[
+                                    { id: 'photoshoots', label: 'Photoshoots' },
+                                    { id: 'acting', label: 'Acting' },
+                                    { id: 'runway', label: 'Runway' },
+                                    { id: 'promo', label: 'Promo' },
+                                  ].map(({ id, label }) => {
+                                    const selected = (formData.availableForTags || []).includes(id);
+                                    const iconColor = selected ? '#ffffff' : '#4b5563';
+                                    return (
+                                      <label
+                                        key={id}
+                                        style={{
+                                          display: 'inline-flex',
+                                          alignItems: 'center',
+                                          gap: '8px',
+                                          padding: '10px 16px',
+                                          borderRadius: '999px',
+                                          cursor: 'pointer',
+                                          fontWeight: 600,
+                                          fontSize: '14px',
+                                          userSelect: 'none',
+                                          backgroundColor: selected ? '#783FF3' : '#d1d5db',
+                                          color: selected ? '#fff' : '#374151',
+                                          border: selected ? '2px solid transparent' : '2px solid #9ca3af',
+                                          transition: 'background-color 0.2s, color 0.2s, border-color 0.2s',
+                                        }}
+                                      >
+                                        <input
+                                          type="checkbox"
+                                          checked={selected}
+                                          onChange={() => toggleAvailableForTag(id)}
+                                          style={{ position: 'absolute', opacity: 0, width: 1, height: 1, margin: 0 }}
+                                        />
+                                        <span>{label}</span>
+                                        <BookingAvailableForIcon type={id} color={iconColor} />
+                                      </label>
+                                    );
+                                  })}
                                 </div>
-                                <input type="submit" className="submit-button w-button" value="Save" />
+                                <div className="w-layout-hflex flex-block-9" style={{ alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+                                  <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', gap: '10px', userSelect: 'none', flex: '0 0 auto' }} onClick={(e) => { e.preventDefault(); const v = !(formData.showAvailableFor ?? true); setFormData(prev => ({ ...prev, showAvailableFor: v })); updateProfile({ ...formData, showAvailableFor: v }); }}>
+                                    <div style={{ width: '44px', height: '24px', borderRadius: '12px', backgroundColor: (formData.showAvailableFor ?? true) ? '#783FF3' : '#ccc', position: 'relative', cursor: 'pointer', transition: 'background-color 0.2s', flexShrink: 0 }}>
+                                      <div style={{ width: '20px', height: '20px', borderRadius: '50%', backgroundColor: 'white', position: 'absolute', top: '2px', left: (formData.showAvailableFor ?? true) ? '22px' : '2px', transition: 'left 0.2s', boxShadow: '0 2px 4px rgba(0,0,0,0.2)' }} />
+                                    </div>
+                                    <p style={{ margin: 0 }}>Show Available For on public profile</p>
+                                  </label>
+                                </div>
+                                <button type="submit" className="submit-button w-button">
+                                  Save
+                                </button>
                               </form>
                               <div className="w-form-done" tabIndex="-1" role="region" aria-label="Email Form success">
                                 <div>Thank you! Your submission has been received!</div>

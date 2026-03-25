@@ -36,8 +36,50 @@ const travels = [
   },
 ];
 
+const PublicAvailableForTagIcon = ({ type, color }) => {
+  const stroke = color || 'currentColor';
+  if (type === 'photoshoots') {
+    return (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+        <path stroke={stroke} strokeLinejoin="round" strokeWidth="2" d="M4 18V8a1 1 0 0 1 1-1h1.5l1.707-1.707A1 1 0 0 1 8.914 5h6.172a1 1 0 0 1 .707.293L17.5 7H19a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1Z" />
+        <path stroke={stroke} strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+      </svg>
+    );
+  }
+  if (type === 'acting') {
+    return (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+        <path stroke={stroke} strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 6H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1Zm7 11-6-2V9l6-2v10Z" />
+      </svg>
+    );
+  }
+  if (type === 'runway') {
+    return (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+        <path stroke={stroke} strokeLinejoin="round" strokeWidth="2" d="M9 5h-.16667c-.86548 0-1.70761.28071-2.4.8L3.5 8l2 3.5L8 10v9h8v-9l2.5 1.5 2-3.5-2.9333-2.2c-.6924-.51929-1.5346-.8-2.4-.8H15M9 5c0 1.5 1.5 3 3 3s3-1.5 3-3M9 5h6" />
+      </svg>
+    );
+  }
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+      <path stroke={stroke} strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 9H5a1 1 0 0 0-1 1v4a1 1 0 0 0 1 1h6m0-6v6m0-6 5.419-3.87A1 1 0 0 1 18 5.942v12.114a1 1 0 0 1-1.581.814L11 15m7 0a3 3 0 0 0 0-6M6 15h3v5H6v-5Z" />
+    </svg>
+  );
+};
+
+const BOOKING_TAG_LABELS = {
+  photoshoots: 'Photoshoots',
+  acting: 'Acting',
+  runway: 'Runway',
+  promo: 'Promo',
+};
+
 export default function JobRequestPopup() {
-  const { username: urlUsername } = useParams();
+  const { username: usernameSegment } = useParams();
+  // Path is /:username so /@dev yields param "@dev"; strip leading @ for API lookup
+  const urlUsername = usernameSegment
+    ? usernameSegment.replace(/^@+/, '').trim() || undefined
+    : undefined;
   const { user } = useAuth();
   
   // If username is in URL, get public profile; otherwise get current user's profile
@@ -104,6 +146,29 @@ export default function JobRequestPopup() {
       return user.user_metadata.showBookMeButton;
     }
     return true;
+  };
+
+  const shouldShowAvailableForTags = () => {
+    if (profile?.show_available_for === false) return false;
+    if (profile?.showAvailableFor === false) return false;
+    if (user?.user_metadata?.showAvailableFor === false) return false;
+    return true;
+  };
+
+  const getPublicAvailableForTags = () => {
+    let raw = profile?.available_for_tags ?? user?.user_metadata?.availableForTags;
+    if (raw == null || raw === '') return [];
+    if (typeof raw === 'string') {
+      try {
+        raw = JSON.parse(raw);
+      } catch {
+        return [];
+      }
+    }
+    if (!Array.isArray(raw)) return [];
+    return raw
+      .filter((id) => typeof id === 'string' && BOOKING_TAG_LABELS[id])
+      .map((id) => ({ id, label: BOOKING_TAG_LABELS[id] }));
   };
 
   // Check if Social Links (icon row) should be shown
@@ -388,6 +453,8 @@ export default function JobRequestPopup() {
       );
     }
   }
+
+  const visibleBookingTags = getPublicAvailableForTags();
 
   return (
     <>
@@ -696,6 +763,37 @@ export default function JobRequestPopup() {
           )}
           {shouldShowModelStats() && <div className="spacing_24" />}
           <div className="spacing_24" />
+          {shouldShowAvailableForTags() && visibleBookingTags.length > 0 && (
+            <div
+              className="flex_wrapper flex_center"
+              style={{
+                flexWrap: 'wrap',
+                gap: '10px',
+                marginBottom: '16px',
+                justifyContent: 'center',
+              }}
+            >
+              {visibleBookingTags.map(({ id, label }) => (
+                <div
+                  key={id}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '10px 16px',
+                    borderRadius: '999px',
+                    fontWeight: 600,
+                    fontSize: '14px',
+                    backgroundColor: '#783FF3',
+                    color: '#fff',
+                  }}
+                >
+                  <span>{label}</span>
+                  <PublicAvailableForTagIcon type={id} color="#ffffff" />
+                </div>
+              ))}
+            </div>
+          )}
       {shouldShowBookMeButton() && urlUsername && profile?.id !== user?.id && (
         <>
       {user ? (

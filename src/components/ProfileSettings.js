@@ -809,7 +809,7 @@ export default function ProfileSettings() {
                 width: '100%',
                 boxSizing: 'border-box'
               }}>
-                {window.location.origin}/user/{formData.username}
+                {window.location.origin}/@{formData.username}
               </div>
             </div>
           )}

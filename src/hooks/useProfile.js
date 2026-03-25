@@ -35,7 +35,8 @@ export const useProfileByUsername = (username) => {
     queryKey: ['publicProfile', username],
     queryFn: () => getProfileByUsername(username),
     enabled: !!username,
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    // Short stale window so tags / booking settings show soon after Save (also invalidated on save)
+    staleTime: 30 * 1000,
   });
 };
 
