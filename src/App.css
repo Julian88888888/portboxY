@@ -40,6 +40,19 @@
   }
 }
 
+/* Mobile: sidebar is a drawer — full-width main, hamburger opens menu */
+@media (max-width: 767px) {
+  .main-content.sidebar-open,
+  .main-content.sidebar-closed {
+    margin-left: 0;
+  }
+
+  /* User greeting lives in mobile drawer (Sidebar) */
+  .auth-block {
+    display: none !important;
+  }
+}
+
 /* Modal styles */
 .modal-overlay {
   position: fixed;
