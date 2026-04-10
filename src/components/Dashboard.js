@@ -46,6 +46,53 @@ const BookingAvailableForIcon = ({ type, color }) => {
   );
 };
 
+const BOOKINGS_PAGE_SIZE = 5;
+
+function BookingsPaginationFooter({ page, total, onPageChange, alignEnd }) {
+  if (total <= BOOKINGS_PAGE_SIZE) return null;
+  const totalPages = Math.ceil(total / BOOKINGS_PAGE_SIZE);
+  const safePage = Math.min(Math.max(1, page), totalPages);
+  const from = (safePage - 1) * BOOKINGS_PAGE_SIZE + 1;
+  const to = Math.min(total, safePage * BOOKINGS_PAGE_SIZE);
+  const btnStyle = (disabled) => ({
+    padding: '6px 12px',
+    fontSize: '13px',
+    border: '1px solid #ccc',
+    borderRadius: '6px',
+    background: '#fff',
+    cursor: disabled ? 'not-allowed' : 'pointer',
+    opacity: disabled ? 0.5 : 1
+  });
+  return (
+    <div
+      style={{
+        display: 'flex',
+        flexWrap: 'wrap',
+        alignItems: 'center',
+        justifyContent: alignEnd ? 'flex-end' : 'flex-start',
+        gap: '10px',
+        marginTop: '16px',
+        width: '100%'
+      }}
+    >
+      <span style={{ fontSize: '13px', color: '#666' }}>
+        {from}–{to} of {total}
+      </span>
+      <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+        <button type="button" disabled={safePage <= 1} onClick={() => onPageChange(safePage - 1)} style={btnStyle(safePage <= 1)}>
+          Previous
+        </button>
+        <span style={{ fontSize: '13px', color: '#444' }}>
+          Page {safePage} of {totalPages}
+        </span>
+        <button type="button" disabled={safePage >= totalPages} onClick={() => onPageChange(safePage + 1)} style={btnStyle(safePage >= totalPages)}>
+          Next
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -100,6 +147,8 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
   const [bookingsAsClientLoading, setBookingsAsClientLoading] = useState(false);
   const [bookingChatOpen, setBookingChatOpen] = useState(false);
   const [selectedBookingForChat, setSelectedBookingForChat] = useState(null);
+  const [outgoingBookingsPage, setOutgoingBookingsPage] = useState(1);
+  const [incomingBookingsPage, setIncomingBookingsPage] = useState(1);
 
   // Sync with prop changes - this ensures the tab reflects the current page
   useEffect(() => {
@@ -198,6 +247,16 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
     loadBookings();
     loadBookingsAsClient();
   }, [user?.id]);
+
+  useEffect(() => {
+    const tp = Math.max(1, Math.ceil(bookingsAsClient.length / BOOKINGS_PAGE_SIZE));
+    setOutgoingBookingsPage((p) => Math.min(p, tp));
+  }, [bookingsAsClient.length]);
+
+  useEffect(() => {
+    const tp = Math.max(1, Math.ceil(bookings.length / BOOKINGS_PAGE_SIZE));
+    setIncomingBookingsPage((p) => Math.min(p, tp));
+  }, [bookings.length]);
 
   const handleTabChange = (tab) => {
     if (onTabChange) {
@@ -556,6 +615,20 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
       </svg>
     },
   ];
+
+  const outgoingTotalPages = Math.max(1, Math.ceil(bookingsAsClient.length / BOOKINGS_PAGE_SIZE));
+  const outgoingPageClamped = Math.min(outgoingBookingsPage, outgoingTotalPages);
+  const outgoingPaged = bookingsAsClient.slice(
+    (outgoingPageClamped - 1) * BOOKINGS_PAGE_SIZE,
+    outgoingPageClamped * BOOKINGS_PAGE_SIZE
+  );
+
+  const incomingTotalPages = Math.max(1, Math.ceil(bookings.length / BOOKINGS_PAGE_SIZE));
+  const incomingPageClamped = Math.min(incomingBookingsPage, incomingTotalPages);
+  const incomingPaged = bookings.slice(
+    (incomingPageClamped - 1) * BOOKINGS_PAGE_SIZE,
+    incomingPageClamped * BOOKINGS_PAGE_SIZE
+  );
 
   return (
     <div className="section full_sec">
@@ -1598,7 +1671,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                                 <p className="paragraph">No outgoing bookings yet.</p>
                               ) : (
                                 <div style={{ width: '100%' }}>
-                                  {bookingsAsClient.map((b) => (
+                                  {outgoingPaged.map((b) => (
                                     <div
                                       key={b.id}
                                       style={{
@@ -1692,6 +1765,11 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                                       </button>
                                     </div>
                                   ))}
+                                  <BookingsPaginationFooter
+                                    page={outgoingBookingsPage}
+                                    total={bookingsAsClient.length}
+                                    onPageChange={setOutgoingBookingsPage}
+                                  />
                                 </div>
                               )}
                             </div>
@@ -1705,7 +1783,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                                 <p className="paragraph">No bookings yet.</p>
                               ) : (
                                 <div style={{ width: '100%' }}>
-                                  {bookings.map((booking) => (
+                                  {incomingPaged.map((booking) => (
                                 <div 
                                   key={booking.id} 
                                   style={{
@@ -1837,6 +1915,12 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                                   </div>
                                 </div>
                                   ))}
+                                  <BookingsPaginationFooter
+                                    page={incomingBookingsPage}
+                                    total={bookings.length}
+                                    onPageChange={setIncomingBookingsPage}
+                                    alignEnd
+                                  />
                                 </div>
                               )}
                             </div>
