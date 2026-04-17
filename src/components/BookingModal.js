@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { FaTimes, FaCamera, FaVideo, FaWalking, FaMicrophone } from 'react-icons/fa';
 import { useAuth } from '../contexts/AuthContext';
+import { useProfile } from '../hooks/useProfile';
 import { createBooking, createGuestBooking } from '../services/bookingsService';
 
 const BookingModal = ({ isOpen, onClose, profile, onBookingCreated }) => {
   const { user } = useAuth();
+  const { data: clientProfile } = useProfile();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -68,7 +70,12 @@ const BookingModal = ({ isOpen, onClose, profile, onBookingCreated }) => {
       location: formData.location,
       pay_rate: formData.payRate,
       details: formData.details,
-      status: 'pending'
+      status: 'pending',
+      ...(user && clientProfile?.username
+        ? {
+            client_username: String(clientProfile.username).trim().replace(/^@+/, '').slice(0, 30)
+          }
+        : {})
     };
 
     try {

@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { FaTimes, FaEnvelope, FaLock, FaEye, FaEyeSlash, FaSpinner } from 'react-icons/fa';
 import { useAuth } from '../contexts/AuthContext';
+import { getProfile } from '../services/profileService';
 
 const LoginModal = ({ isOpen, onClose, onSwitchToSignUp }) => {
   const { login } = useAuth();
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -46,9 +49,18 @@ const LoginModal = ({ isOpen, onClose, onSwitchToSignUp }) => {
       const result = await login(formData);
       
       if (result.success) {
+        let nextPath = '/profile';
+        try {
+          const profile = await getProfile();
+          const handle = profile?.username
+            ? String(profile.username).trim().replace(/^@+/, '')
+            : '';
+          if (handle) nextPath = `/@${handle}`;
+        } catch (profileErr) {
+          console.warn('Could not load profile for post-login redirect:', profileErr);
+        }
         onClose();
-        // Optionally redirect or update app state
-        window.location.reload(); // Simple refresh for now
+        navigate(nextPath, { replace: true });
       } else {
         // Use the error message from the result (already formatted)
         setError(result.error || 'Login failed. Please check your credentials.');

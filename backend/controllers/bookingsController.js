@@ -162,7 +162,19 @@ const createBooking = async (req, res) => {
  */
 const createGuestBooking = async (req, res) => {
   try {
-    const { model_id, username, name, email, job_type, dates, location, pay_rate, details, status } = req.body || {};
+    const {
+      model_id,
+      username,
+      name,
+      email,
+      job_type,
+      dates,
+      location,
+      pay_rate,
+      details,
+      status,
+      client_username
+    } = req.body || {};
 
     if (!name || !String(name).trim()) {
       return res.status(400).json({ success: false, message: 'Name is required' });
@@ -191,12 +203,17 @@ const createGuestBooking = async (req, res) => {
       return res.status(400).json({ success: false, message: 'model_id or username is required' });
     }
 
+    const cleanedClientUsername = client_username
+      ? String(client_username).trim().replace(/^@+/, '').slice(0, 30) || null
+      : null;
+
     const { data, error } = await supabase
       .from('bookings')
       .insert({
         user_id: modelUserId,
         name: String(name).trim(),
         email: String(email).trim().toLowerCase(),
+        client_username: cleanedClientUsername,
         job_type: job_type || null,
         dates: dates || null,
         location: location || null,

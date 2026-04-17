@@ -16,6 +16,14 @@ const getApiBaseUrl = () => {
   return 'http://localhost:5002/api';
 };
 
+/** Subline for incoming booking cards / chat: @username when stored, else email */
+export function formatBookingClientHandle(booking) {
+  if (!booking) return '';
+  const u = String(booking.client_username || '').trim().replace(/^@+/, '');
+  if (u) return `@${u}`;
+  return String(booking.email || '').trim();
+}
+
 /**
  * Get auth headers with Supabase token
  */
@@ -249,7 +257,7 @@ export const getBookingsAsClient = async () => {
  */
 export const createGuestBooking = async (bookingData, modelIdentifier) => {
   try {
-    const { name, email, job_type, dates, location, pay_rate, details, status } = bookingData;
+    const { name, email, job_type, dates, location, pay_rate, details, status, client_username } = bookingData;
     const { modelId, username } = modelIdentifier || {};
 
     if (!name || !name.trim()) {
@@ -274,6 +282,9 @@ export const createGuestBooking = async (bookingData, modelIdentifier) => {
         username: username || undefined,
         name: name.trim(),
         email: email.trim(),
+        client_username: client_username
+          ? String(client_username).trim().replace(/^@+/, '').slice(0, 30)
+          : undefined,
         job_type: job_type || null,
         dates: dates || null,
         location: location || null,

@@ -1,12 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../contexts/AuthContext';
 import { useProfile } from '../hooks/useProfile';
 import { getAvatarUrl, getHeaderUrl, upsertProfile } from '../services/profileService';
 import { createAlbum, getAlbums, uploadImageToAlbum, deleteAlbum, getAlbumImages, setCoverImage, normalizeImageUrl } from '../services/albumsService';
 import { getCustomLinks, createCustomLink, updateCustomLink, deleteCustomLink } from '../services/customLinksService';
-import { getBookings, getBookingsAsClient, deleteBooking, updateBooking } from '../services/bookingsService';
+import { getBookings, getBookingsAsClient, deleteBooking, updateBooking, formatBookingClientHandle } from '../services/bookingsService';
 import ProfileSettings from './ProfileSettings';
 import BookingChatModal from './BookingChatModal';
 import './Dashboard.css';
@@ -630,11 +630,17 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
     incomingPageClamped * BOOKINGS_PAGE_SIZE
   );
 
+  const myPublicPagePath = useMemo(() => {
+    const raw = profile?.username || formData.username || '';
+    const handle = String(raw).trim().replace(/^@+/, '');
+    return handle ? `/@${handle}` : '/profile';
+  }, [profile?.username, formData.username]);
+
   return (
     <div className="section full_sec">
       <div className="w-layout-hflex mainheader">
         <div className="headerbar" style={{ justifyContent: 'flex-end' }}>
-          <a href="/" className="w-inline-block">
+          <Link to={myPublicPagePath} className="w-inline-block" title="View public page">
             <img 
               src={getProfileImage()} 
               loading="lazy" 
@@ -644,7 +650,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                 e.target.src = '/images/headshot_model.jpg';
               }}
             />
-          </a>
+          </Link>
         </div>
       </div>
       
@@ -1801,7 +1807,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                                         {booking.name}
                                       </div>
                                       <div style={{ fontSize: '13px', color: '#6b6b6b' }}>
-                                        {booking.email}
+                                        {formatBookingClientHandle(booking)}
                                       </div>
                                     </div>
                                     <span style={{ 

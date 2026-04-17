@@ -1,6 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { FaTimes } from 'react-icons/fa';
-import { getBookingMessages, sendBookingMessage, getGuestBookingMessages, sendGuestBookingMessage } from '../services/bookingsService';
+import {
+  getBookingMessages,
+  sendBookingMessage,
+  getGuestBookingMessages,
+  sendGuestBookingMessage,
+  formatBookingClientHandle
+} from '../services/bookingsService';
 import './BookingChat.css';
 
 const BookingChatModal = ({ isOpen, onClose, booking }) => {
@@ -137,7 +143,9 @@ const BookingChatModal = ({ isOpen, onClose, booking }) => {
           <div className="booking-chat__header-main">
             {booking && (
               <p className="booking-chat__subtitle">
-                {asClient ? `Chat with ${booking.name || 'Model'}` : `${booking.name} · ${booking.email || ''}`}
+                {asClient
+                  ? `Chat with ${booking.name || 'Model'}`
+                  : `${booking.name} · ${formatBookingClientHandle(booking)}`}
                 {booking.created_at && (
                   <span className="booking-chat__meta">
                     {' '}
