@@ -7,6 +7,8 @@ import { createBooking, createGuestBooking } from '../services/bookingsService';
 const BookingModal = ({ isOpen, onClose, profile, onBookingCreated }) => {
   const { user } = useAuth();
   const { data: clientProfile } = useProfile();
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -56,6 +58,42 @@ const BookingModal = ({ isOpen, onClose, profile, onBookingCreated }) => {
     }));
   };
 
+  const formatDateForDisplay = (dateValue) => {
+    if (!dateValue) return '';
+    const d = new Date(`${dateValue}T00:00:00`);
+    if (Number.isNaN(d.getTime())) return dateValue;
+    return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+  };
+
+  const syncDatesText = (fromValue, toValue) => {
+    let nextText = '';
+    if (fromValue && toValue) {
+      nextText = `${formatDateForDisplay(fromValue)} - ${formatDateForDisplay(toValue)}`;
+    } else if (fromValue) {
+      nextText = formatDateForDisplay(fromValue);
+    } else if (toValue) {
+      nextText = formatDateForDisplay(toValue);
+    }
+    setFormData((prev) => ({ ...prev, dates: nextText }));
+  };
+
+  const handleDateFromChange = (e) => {
+    const nextFrom = e.target.value;
+    let nextTo = dateTo;
+    if (nextTo && nextFrom && nextTo < nextFrom) {
+      nextTo = nextFrom;
+      setDateTo(nextFrom);
+    }
+    setDateFrom(nextFrom);
+    syncDatesText(nextFrom, nextTo);
+  };
+
+  const handleDateToChange = (e) => {
+    const nextTo = e.target.value;
+    setDateTo(nextTo);
+    syncDatesText(dateFrom, nextTo);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -97,6 +135,8 @@ const BookingModal = ({ isOpen, onClose, profile, onBookingCreated }) => {
           details: '',
           jobType: ''
         });
+        setDateFrom('');
+        setDateTo('');
         setSelectedJobType(null);
         if (onBookingCreated) onBookingCreated();
         setTimeout(() => {
@@ -126,6 +166,8 @@ const BookingModal = ({ isOpen, onClose, profile, onBookingCreated }) => {
         details: '',
         jobType: ''
       });
+      setDateFrom('');
+      setDateTo('');
       setSelectedJobType(null);
       setSubmitError(null);
       setSubmitSuccess(false);
@@ -272,6 +314,34 @@ const BookingModal = ({ isOpen, onClose, profile, onBookingCreated }) => {
           
           <div className="form-group">
             <label htmlFor="dates">Dates Requesting</label>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
+              <div>
+                <label htmlFor="dateFrom" style={{ fontSize: '12px', color: '#666', marginBottom: '6px', display: 'block' }}>
+                  From
+                </label>
+                <input
+                  type="date"
+                  id="dateFrom"
+                  value={dateFrom}
+                  min={new Date().toISOString().slice(0, 10)}
+                  onChange={handleDateFromChange}
+                  disabled={isSubmitting}
+                />
+              </div>
+              <div>
+                <label htmlFor="dateTo" style={{ fontSize: '12px', color: '#666', marginBottom: '6px', display: 'block' }}>
+                  To
+                </label>
+                <input
+                  type="date"
+                  id="dateTo"
+                  value={dateTo}
+                  min={dateFrom || new Date().toISOString().slice(0, 10)}
+                  onChange={handleDateToChange}
+                  disabled={isSubmitting}
+                />
+              </div>
+            </div>
             <input
               type="text"
               id="dates"

@@ -69,16 +69,14 @@ function AuthOnlyBlock() {
       <h2 style={{ margin: 0, fontSize: '18px', lineHeight: '1.2', fontWeight: 600, color: '#333' }}>
         Welcome Back {user?.firstName || user?.user_metadata?.firstName || 'User'}
       </h2>
-      {displayUsername ? (
-        <p style={{ fontSize: '12px', color: '#666', margin: '4px 0 0 0' }}>
-          @{displayUsername}
-        </p>
-      ) : (
-        <p style={{ fontSize: '12px', color: '#999', margin: '4px 0 0 0', fontStyle: 'italic' }}>
-          Set username in Profile
-        </p>
-      )}
-      <div style={{ marginTop: '10px' }}>
+      <div
+        style={{
+          marginTop: '10px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px'
+        }}
+      >
         <img
           src={avatarSrc}
           alt=""
@@ -96,6 +94,28 @@ function AuthOnlyBlock() {
             display: 'block'
           }}
         />
+        {displayUsername ? (
+          <span
+            style={{
+              fontSize: '12px',
+              lineHeight: 1,
+              fontWeight: 600,
+              color: '#fff',
+              background: '#783ff3',
+              padding: '5px 8px',
+              borderRadius: '999px',
+              border: '1px solid #ffffff',
+              whiteSpace: 'nowrap',
+              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)'
+            }}
+          >
+            @{displayUsername}
+          </span>
+        ) : (
+          <p style={{ fontSize: '12px', color: '#999', margin: '8px 0 0 0', fontStyle: 'italic' }}>
+            Set username in Profile
+          </p>
+        )}
       </div>
     </Link>
   );

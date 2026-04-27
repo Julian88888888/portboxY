@@ -359,9 +359,27 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
         showCustomLinksTitle: user.showCustomLinksTitle !== undefined ? user.showCustomLinksTitle : (user.user_metadata?.showCustomLinksTitle !== undefined ? user.user_metadata.showCustomLinksTitle : true),
         showProfileStats: user.showProfileStats !== undefined ? user.showProfileStats : (user.user_metadata?.showProfileStats !== undefined ? user.user_metadata.showProfileStats : true),
         showSocialLinks: user.showSocialLinks !== undefined ? user.showSocialLinks : (user.user_metadata?.showSocialLinks !== undefined ? user.user_metadata.showSocialLinks : true),
-        showAlbumBadge: user.showAlbumBadge !== undefined ? user.showAlbumBadge : (user.user_metadata?.showAlbumBadge !== undefined ? user.user_metadata.showAlbumBadge : true),
-        showAlbumTitle: user.showAlbumTitle !== undefined ? user.showAlbumTitle : (user.user_metadata?.showAlbumTitle !== undefined ? user.user_metadata.showAlbumTitle : true),
-        showAlbumDescription: user.showAlbumDescription !== undefined ? user.showAlbumDescription : (user.user_metadata?.showAlbumDescription !== undefined ? user.user_metadata.showAlbumDescription : true),
+        showAlbumBadge: profile?.show_album_badge !== undefined
+          ? profile.show_album_badge
+          : (profile?.showAlbumBadge !== undefined
+            ? profile.showAlbumBadge
+            : (user.showAlbumBadge !== undefined
+              ? user.showAlbumBadge
+              : (user.user_metadata?.showAlbumBadge !== undefined ? user.user_metadata.showAlbumBadge : prev.showAlbumBadge))),
+        showAlbumTitle: profile?.show_album_title !== undefined
+          ? profile.show_album_title
+          : (profile?.showAlbumTitle !== undefined
+            ? profile.showAlbumTitle
+            : (user.showAlbumTitle !== undefined
+              ? user.showAlbumTitle
+              : (user.user_metadata?.showAlbumTitle !== undefined ? user.user_metadata.showAlbumTitle : prev.showAlbumTitle))),
+        showAlbumDescription: profile?.show_album_description !== undefined
+          ? profile.show_album_description
+          : (profile?.showAlbumDescription !== undefined
+            ? profile.showAlbumDescription
+            : (user.showAlbumDescription !== undefined
+              ? user.showAlbumDescription
+              : (user.user_metadata?.showAlbumDescription !== undefined ? user.user_metadata.showAlbumDescription : prev.showAlbumDescription))),
         heightFeet: user.heightFeet || '',
         heightInches: user.heightInches || '',
         heightUnit: user.heightUnit || '',
@@ -403,15 +421,21 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
         enableBookingsTitle:
           profile?.show_bookings_title !== undefined
             ? profile.show_bookings_title
-            : user.user_metadata?.enableBookingsTitle !== false,
+            : (user.user_metadata?.enableBookingsTitle !== undefined
+              ? user.user_metadata.enableBookingsTitle
+              : prev.enableBookingsTitle),
         showHometown:
           profile?.show_hometown !== undefined
             ? profile.show_hometown
-            : user.user_metadata?.showHometown !== false,
+            : (user.user_metadata?.showHometown !== undefined
+              ? user.user_metadata.showHometown
+              : prev.showHometown),
         showRequestDescription:
           profile?.show_booking_description !== undefined
             ? profile.show_booking_description
-            : user.user_metadata?.showRequestDescription !== false,
+            : (user.user_metadata?.showRequestDescription !== undefined
+              ? user.user_metadata.showRequestDescription
+              : prev.showRequestDescription),
         availableForTags: (() => {
           const fromProfile = profile?.available_for_tags;
           const fromMeta = user.user_metadata?.availableForTags;
@@ -422,7 +446,9 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
         showAvailableFor:
           profile?.show_available_for !== undefined
             ? profile.show_available_for
-            : user.user_metadata?.showAvailableFor !== false,
+            : (user.user_metadata?.showAvailableFor !== undefined
+              ? user.user_metadata.showAvailableFor
+              : prev.showAvailableFor),
       }));
     }
   }, [user, profile]);
@@ -433,6 +459,24 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
       ...prev,
       [name]: type === 'checkbox' ? checked : value
     }));
+  };
+
+  // Optimistic toggle for simple visibility switches to avoid "flip back" from stale full-form saves.
+  const handleQuickToggle = async (fieldName, profileFieldName = null) => {
+    const previousValue = formData[fieldName] ?? true;
+    const nextValue = !previousValue;
+    setFormData((prev) => ({ ...prev, [fieldName]: nextValue }));
+    try {
+      const result = profileFieldName
+        ? await upsertProfile({ [profileFieldName]: nextValue })
+        : await updateProfile({ [fieldName]: nextValue });
+      const isSuccess = profileFieldName ? !!result : !!result?.success;
+      if (!isSuccess) {
+        setFormData((prev) => ({ ...prev, [fieldName]: previousValue }));
+      }
+    } catch (error) {
+      setFormData((prev) => ({ ...prev, [fieldName]: previousValue }));
+    }
   };
 
   const toggleAvailableForTag = (tagId) => {
@@ -1382,7 +1426,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                 <div className="w-layout-vflex flex-block-8">
                   <div className="spacing_24"></div>
                   <div className="w-layout-hflex flex-block-9" style={{ alignItems: 'center', gap: '12px' }}>
-                    <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', gap: '10px', userSelect: 'none', flex: '0 0 auto' }} onClick={(e) => { e.preventDefault(); const v = !formData.showAlbumBadge; setFormData(prev => ({ ...prev, showAlbumBadge: v })); updateProfile({ ...formData, showAlbumBadge: v }); }}>
+                    <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', gap: '10px', userSelect: 'none', flex: '0 0 auto' }} onClick={(e) => { e.preventDefault(); handleQuickToggle('showAlbumBadge', 'show_album_badge'); }}>
                       <div style={{ width: '44px', height: '24px', borderRadius: '12px', backgroundColor: (formData.showAlbumBadge ?? true) ? '#783FF3' : '#ccc', position: 'relative', cursor: 'pointer', flexShrink: 0 }}>
                         <div style={{ width: '20px', height: '20px', borderRadius: '50%', backgroundColor: 'white', position: 'absolute', top: '2px', left: (formData.showAlbumBadge ?? true) ? '22px' : '2px', transition: 'left 0.2s', boxShadow: '0 2px 4px rgba(0,0,0,0.2)' }} />
                       </div>
@@ -1390,7 +1434,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                     </label>
                   </div>
                   <div className="w-layout-hflex flex-block-9" style={{ alignItems: 'center', gap: '12px' }}>
-                    <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', gap: '10px', userSelect: 'none', flex: '0 0 auto' }} onClick={(e) => { e.preventDefault(); const v = !formData.showAlbumTitle; setFormData(prev => ({ ...prev, showAlbumTitle: v })); updateProfile({ ...formData, showAlbumTitle: v }); }}>
+                    <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', gap: '10px', userSelect: 'none', flex: '0 0 auto' }} onClick={(e) => { e.preventDefault(); handleQuickToggle('showAlbumTitle', 'show_album_title'); }}>
                       <div style={{ width: '44px', height: '24px', borderRadius: '12px', backgroundColor: (formData.showAlbumTitle ?? true) ? '#783FF3' : '#ccc', position: 'relative', cursor: 'pointer', flexShrink: 0 }}>
                         <div style={{ width: '20px', height: '20px', borderRadius: '50%', backgroundColor: 'white', position: 'absolute', top: '2px', left: (formData.showAlbumTitle ?? true) ? '22px' : '2px', transition: 'left 0.2s', boxShadow: '0 2px 4px rgba(0,0,0,0.2)' }} />
                       </div>
@@ -1398,7 +1442,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                     </label>
                   </div>
                   <div className="w-layout-hflex flex-block-9" style={{ alignItems: 'center', gap: '12px' }}>
-                    <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', gap: '10px', userSelect: 'none', flex: '0 0 auto' }} onClick={(e) => { e.preventDefault(); const v = !formData.showAlbumDescription; setFormData(prev => ({ ...prev, showAlbumDescription: v })); updateProfile({ ...formData, showAlbumDescription: v }); }}>
+                    <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', gap: '10px', userSelect: 'none', flex: '0 0 auto' }} onClick={(e) => { e.preventDefault(); handleQuickToggle('showAlbumDescription', 'show_album_description'); }}>
                       <div style={{ width: '44px', height: '24px', borderRadius: '12px', backgroundColor: (formData.showAlbumDescription ?? true) ? '#783FF3' : '#ccc', position: 'relative', cursor: 'pointer', flexShrink: 0 }}>
                         <div style={{ width: '20px', height: '20px', borderRadius: '50%', backgroundColor: 'white', position: 'absolute', top: '2px', left: (formData.showAlbumDescription ?? true) ? '22px' : '2px', transition: 'left 0.2s', boxShadow: '0 2px 4px rgba(0,0,0,0.2)' }} />
                       </div>
@@ -1409,7 +1453,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                   {/* New Albums API Section */}
                   <div className="settingssection" style={{ marginTop: '32px', paddingTop: '32px', borderTop: '1px solid #e0e0e0' }}>
                     <div className="spacing_24"></div>
-                    <h3>Image Albums (New API)</h3>
+                    <h3>Image Albums</h3>
                     <p className="text_color_grey" style={{ marginBottom: '16px' }}>
                       Create albums and upload multiple images to each album
                     </p>
@@ -1952,7 +1996,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                                 }}
                               >
                                 <div className="w-layout-hflex flex-block-9" style={{ alignItems: 'center', gap: '12px' }}>
-                                  <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', gap: '10px', userSelect: 'none', flex: '0 0 auto' }} onClick={(e) => { e.preventDefault(); const v = !(formData.enableBookingsTitle ?? true); setFormData(prev => ({ ...prev, enableBookingsTitle: v })); updateProfile({ ...formData, enableBookingsTitle: v }); }}>
+                                  <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', gap: '10px', userSelect: 'none', flex: '0 0 auto' }} onClick={(e) => { e.preventDefault(); setFormData(prev => ({ ...prev, enableBookingsTitle: !(prev.enableBookingsTitle ?? true) })); }}>
                                     <div style={{ width: '44px', height: '24px', borderRadius: '12px', backgroundColor: (formData.enableBookingsTitle ?? true) ? '#783FF3' : '#ccc', position: 'relative', cursor: 'pointer', transition: 'background-color 0.2s', flexShrink: 0 }}>
                                       <div style={{ width: '20px', height: '20px', borderRadius: '50%', backgroundColor: 'white', position: 'absolute', top: '2px', left: (formData.enableBookingsTitle ?? true) ? '22px' : '2px', transition: 'left 0.2s', boxShadow: '0 2px 4px rgba(0,0,0,0.2)' }} />
                                     </div>
@@ -1980,7 +2024,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                                   onChange={handleInputChange}
                                 />
                                 <div className="w-layout-hflex flex-block-9" style={{ alignItems: 'center', gap: '12px' }}>
-                                  <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', gap: '10px', userSelect: 'none', flex: '0 0 auto' }} onClick={(e) => { e.preventDefault(); const v = !(formData.showHometown ?? true); setFormData(prev => ({ ...prev, showHometown: v })); updateProfile({ ...formData, showHometown: v }); }}>
+                                  <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', gap: '10px', userSelect: 'none', flex: '0 0 auto' }} onClick={(e) => { e.preventDefault(); setFormData(prev => ({ ...prev, showHometown: !(prev.showHometown ?? true) })); }}>
                                     <div style={{ width: '44px', height: '24px', borderRadius: '12px', backgroundColor: (formData.showHometown ?? true) ? '#783FF3' : '#ccc', position: 'relative', cursor: 'pointer', transition: 'background-color 0.2s', flexShrink: 0 }}>
                                       <div style={{ width: '20px', height: '20px', borderRadius: '50%', backgroundColor: 'white', position: 'absolute', top: '2px', left: (formData.showHometown ?? true) ? '22px' : '2px', transition: 'left 0.2s', boxShadow: '0 2px 4px rgba(0,0,0,0.2)' }} />
                                     </div>
@@ -1998,7 +2042,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                                   onChange={handleInputChange}
                                 />
                                 <div className="w-layout-hflex flex-block-9" style={{ alignItems: 'center', gap: '12px' }}>
-                                  <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', gap: '10px', userSelect: 'none', flex: '0 0 auto' }} onClick={(e) => { e.preventDefault(); const v = !(formData.showRequestDescription ?? true); setFormData(prev => ({ ...prev, showRequestDescription: v })); updateProfile({ ...formData, showRequestDescription: v }); }}>
+                                  <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', gap: '10px', userSelect: 'none', flex: '0 0 auto' }} onClick={(e) => { e.preventDefault(); setFormData(prev => ({ ...prev, showRequestDescription: !(prev.showRequestDescription ?? true) })); }}>
                                     <div style={{ width: '44px', height: '24px', borderRadius: '12px', backgroundColor: (formData.showRequestDescription ?? true) ? '#783FF3' : '#ccc', position: 'relative', cursor: 'pointer', transition: 'background-color 0.2s', flexShrink: 0 }}>
                                       <div style={{ width: '20px', height: '20px', borderRadius: '50%', backgroundColor: 'white', position: 'absolute', top: '2px', left: (formData.showRequestDescription ?? true) ? '22px' : '2px', transition: 'left 0.2s', boxShadow: '0 2px 4px rgba(0,0,0,0.2)' }} />
                                     </div>
@@ -2060,7 +2104,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                                   })}
                                 </div>
                                 <div className="w-layout-hflex flex-block-9" style={{ alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
-                                  <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', gap: '10px', userSelect: 'none', flex: '0 0 auto' }} onClick={(e) => { e.preventDefault(); const v = !(formData.showAvailableFor ?? true); setFormData(prev => ({ ...prev, showAvailableFor: v })); updateProfile({ ...formData, showAvailableFor: v }); }}>
+                                  <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', gap: '10px', userSelect: 'none', flex: '0 0 auto' }} onClick={(e) => { e.preventDefault(); setFormData(prev => ({ ...prev, showAvailableFor: !(prev.showAvailableFor ?? true) })); }}>
                                     <div style={{ width: '44px', height: '24px', borderRadius: '12px', backgroundColor: (formData.showAvailableFor ?? true) ? '#783FF3' : '#ccc', position: 'relative', cursor: 'pointer', transition: 'background-color 0.2s', flexShrink: 0 }}>
                                       <div style={{ width: '20px', height: '20px', borderRadius: '50%', backgroundColor: 'white', position: 'absolute', top: '2px', left: (formData.showAvailableFor ?? true) ? '22px' : '2px', transition: 'left 0.2s', boxShadow: '0 2px 4px rgba(0,0,0,0.2)' }} />
                                     </div>

@@ -818,7 +818,6 @@ export default function JobRequestPopup() {
       <div className="spacing_24" />
         </>
       )}
-      <div className="line_divider" />
       <div className="spacing_48" />
         </div>
       </div>
@@ -878,7 +877,6 @@ export default function JobRequestPopup() {
             </div>
           )}
           <div className="spacing_48"></div>
-          <div className="line_divider"></div>
           {shouldShowBookMeButton() && urlUsername && profile?.id !== user?.id && (
             user ? (
               <a data-w-id="ee47a855-7715-a4cf-bb17-0acb8cc29f1d" href="#" className="button bookme_large w-button" onClick={handleOpenBookingModal}>
