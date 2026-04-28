@@ -708,57 +708,22 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                 <div className="w-layout-vflex flex-block-8">
                   {/* Profile Settings */}
                   <div className="settingssection">
-                    <div 
-                      className="profileimg_wrapper"
-                      style={{
-                        backgroundImage: headerBackgroundUrl ? `url(${headerBackgroundUrl})` : 'none',
-                        backgroundSize: 'cover',
-                        backgroundPosition: 'center',
-                        backgroundRepeat: 'no-repeat',
-                        borderRadius: headerBackgroundUrl ? '8px' : '0',
-                        padding: headerBackgroundUrl ? '20px' : '0',
-                        position: 'relative'
-                      }}
-                    >
-                      {headerBackgroundUrl && (
-                        <div style={{
-                          position: 'absolute',
-                          top: 0,
-                          left: 0,
-                          right: 0,
-                          bottom: 0,
-                          background: 'linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.1) 50%, rgba(0,0,0,0.4) 100%)',
-                          borderRadius: '8px',
-                          pointerEvents: 'none'
-                        }} />
+                    <div className="text_wrapper text_align_center">
+                      <div className="flex_wrapper flex_center">
+                        <h3>{profile?.display_name || formData.name || 'User Name'}</h3>
+                        <span className="button_icon accent_button small_btn">
+                          <span>{profile?.job_type || formData.jobType || 'Model'}</span>
+                        </span>
+                      </div>
+                      <div className="spacing_8"></div>
+                      {(profile?.username || formData.username) && (
+                        <p className="username_txt">@{profile?.username || formData.username}</p>
                       )}
-                      <div className="profile_wrapper" style={{ position: 'relative', zIndex: 1 }}>
-                        <img 
-                          src={getProfileImage()} 
-                          alt="" 
-                          className="prodile_image"
-                          onError={(e) => {
-                            e.target.src = '/images/headshot_model.jpg';
-                          }}
-                        />
-                      </div>
-                      <div className="text_wrapper text_align_center">
-                        <div className="flex_wrapper flex_center">
-                          <h3>{profile?.display_name || formData.name || 'User Name'}</h3>
-                          <a href="#" className="button_icon accent_button small_btn w-inline-block">
-                            <div>{profile?.job_type || formData.jobType || 'Model'}</div>
-                          </a>
-                        </div>
-                        <div className="spacing_8"></div>
-                        {(profile?.username || formData.username) && (
-                          <p className="username_txt">@{profile?.username || formData.username}</p>
-                        )}
-                        {showProfileDescription && (profile?.description || formData.bio) && (
-                          <p className="text_color_grey text_width_medium">
-                            {profileDescriptionText}
-                          </p>
-                        )}
-                      </div>
+                      {showProfileDescription && (profile?.description || formData.bio) && (
+                        <p className="text_color_grey text_width_medium">
+                          {profileDescriptionText}
+                        </p>
+                      )}
                     </div>
                     <div className="spacing_24"></div>
                     <h3>Profile Settings</h3>
@@ -1424,6 +1389,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
             {activeTab === 'Tab 2' && (
               <div className="w-tab-pane w--tab-active">
                 <div className="w-layout-vflex flex-block-8">
+                  <h3>Portfolio Setting</h3>
                   <div className="spacing_24"></div>
                   <div className="w-layout-hflex flex-block-9" style={{ alignItems: 'center', gap: '12px' }}>
                     <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', gap: '10px', userSelect: 'none', flex: '0 0 auto' }} onClick={(e) => { e.preventDefault(); handleQuickToggle('showAlbumBadge', 'show_album_badge'); }}>
@@ -2011,6 +1977,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                                   type="text" 
                                   value={formData.bookingsTitle}
                                   onChange={handleInputChange}
+                                  disabled
                                 />
                                 <div className="spacing_24"></div>
                                 <label htmlFor="hometown">Hometown</label>
@@ -2351,11 +2318,6 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                       </div>
                     </label>
                     <p style={{ margin: 0 }}>Show Custom Links</p>
-                  </div>
-                  <div className="div-block-3">
-                    <div className="w-layout-hflex flex-block-5 inputtxtdiv">
-                      <div className="text_color_muted">MY LINKS</div>
-                    </div>
                   </div>
                   <div className="spacing_24"></div>
                   
