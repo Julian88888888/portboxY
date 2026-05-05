@@ -322,6 +322,13 @@
   margin-bottom: 0;
 }
 
+/* Dashboard profile: full-width header row so avatar can align to the right edge */
+.section.full_sec.dashboard-profile-page > .mainheader {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
 .headerbar {
   justify-content: space-between;
   align-items: center;
@@ -520,6 +527,103 @@
   .linkpanel {
     min-width: 100%;
     max-width: 100%;
+  }
+
+  /* Profile avatar in dashboard header: pin to the left on mobile */
+  .section.full_sec.dashboard-profile-page > .mainheader {
+    justify-content: flex-start;
+    align-items: center;
+  }
+
+  .section.full_sec.dashboard-profile-page .headerbar {
+    justify-content: flex-start;
+    width: 100%;
+    max-width: 100%;
+    padding-left: 12px;
+    padding-right: 12px;
+    box-sizing: border-box;
+  }
+
+  .section.full_sec.dashboard-profile-page {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+  }
+}
+
+/* Bookings tab: grid + cards stretch on narrow screens */
+.flex-block-11 {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.dashboard-bookings-grid {
+  width: 100%;
+  max-width: 100%;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr));
+  gap: 24px;
+  align-items: start;
+  padding-right: 30px;
+  box-sizing: border-box;
+}
+
+@media screen and (max-width: 767px) {
+  .dashboard-bookings-grid {
+    grid-template-columns: 1fr;
+    padding-right: 0;
+    gap: 20px;
+  }
+
+  .dashboard-booking-card-outgoing {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .dashboard-booking-card-details--outgoing,
+  .dashboard-booking-card-details--incoming {
+    grid-template-columns: 1fr !important;
+  }
+
+  .dashboard-booking-open-chat-btn {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .dashboard-booking-card-incoming-header {
+    flex-wrap: wrap;
+  }
+
+  .dashboard-bookings-incoming-title {
+    text-align: left !important;
+  }
+
+  /* Incoming card footer: date on top, actions centered below with spacing */
+  .dashboard-booking-incoming-footer {
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 16px;
+    margin-top: 16px;
+    padding-top: 16px;
+    padding-bottom: 4px;
+  }
+
+  .dashboard-booking-incoming-footer-date {
+    text-align: center;
+    width: 100%;
+    order: 0;
+  }
+
+  .dashboard-booking-incoming-footer-actions {
+    order: 1;
+    justify-content: center;
+    width: 100%;
+    max-width: 100%;
+    padding: 0 12px 8px;
+    box-sizing: border-box;
+    gap: 10px !important;
   }
 }
 

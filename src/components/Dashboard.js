@@ -681,9 +681,9 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
   }, [profile?.username, formData.username]);
 
   return (
-    <div className="section full_sec">
+    <div className="section full_sec dashboard-profile-page">
       <div className="w-layout-hflex mainheader">
-        <div className="headerbar" style={{ justifyContent: 'flex-end' }}>
+        <div className="headerbar" style={{ justifyContent: 'flex-start' }}>
           <Link to={myPublicPagePath} className="w-inline-block" title="View public page">
             <img 
               src={getProfileImage()} 
@@ -1389,7 +1389,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
             {activeTab === 'Tab 2' && (
               <div className="w-tab-pane w--tab-active">
                 <div className="w-layout-vflex flex-block-8">
-                  <h3>Portfolio Setting</h3>
+                  <h3 style={{ color: '#000' }}>Portfolio Setting</h3>
                   <div className="spacing_24"></div>
                   <div className="w-layout-hflex flex-block-9" style={{ alignItems: 'center', gap: '12px' }}>
                     <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', gap: '10px', userSelect: 'none', flex: '0 0 auto' }} onClick={(e) => { e.preventDefault(); handleQuickToggle('showAlbumBadge', 'show_album_badge'); }}>
@@ -1668,17 +1668,8 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                         <div className="w-layout-vflex flex-block-11">
                           <div className="spacing_48"></div>
 
-                          <div
-                            style={{
-                              width: '100%',
-                              display: 'grid',
-                              gridTemplateColumns: 'repeat(auto-fit, minmax(420px, 1fr))',
-                              gap: '24px',
-                              alignItems: 'start',
-                              paddingRight: '30px'
-                            }}
-                          >
-                            <div style={{ minWidth: 0 }}>
+                          <div className="dashboard-bookings-grid">
+                            <div style={{ minWidth: 0, width: '100%', maxWidth: '100%' }}>
                               <h4 style={{ margin: '0 0 12px 0', fontSize: '16px', fontWeight: '600', textAlign: 'left', width: '100%' }}>Outgoing Bookings</h4>
                               <p style={{ margin: '0 0 16px 0', color: '#666', fontSize: '14px' }}>People you wrote to from a model page - open chat to send or read messages.</p>
                               {bookingsAsClientLoading ? (
@@ -1690,6 +1681,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                                   {outgoingPaged.map((b) => (
                                     <div
                                       key={b.id}
+                                      className="dashboard-booking-card-outgoing"
                                       style={{
                                         padding: '16px',
                                         marginBottom: '12px',
@@ -1702,10 +1694,11 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                                         flexWrap: 'wrap',
                                         gap: '12px',
                                         width: '100%',
+                                        maxWidth: '100%',
                                         boxSizing: 'border-box'
                                       }}
                                     >
-                                      <div style={{ flex: 1, minWidth: 0, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px 24px', alignContent: 'start' }}>
+                                      <div className="dashboard-booking-card-details dashboard-booking-card-details--outgoing" style={{ flex: 1, minWidth: 0, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px 24px', alignContent: 'start' }}>
                                         <div style={{ marginBottom: '4px', gridColumn: '1 / -1' }}>
                                           <strong>{b.model_display_name || b.model_username || 'Model'}</strong>
                                           <span style={{ color: '#666', marginLeft: '8px', fontSize: '14px' }}>
@@ -1751,6 +1744,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                                       </div>
                                       <button
                                         type="button"
+                                        className="dashboard-booking-open-chat-btn"
                                         onClick={() => {
                                           setSelectedBookingForChat({
                                             id: b.id,
@@ -1790,8 +1784,8 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                               )}
                             </div>
 
-                            <div style={{ minWidth: 0 }}>
-                              <h4 style={{ margin: '0 0 12px 0', fontSize: '16px', fontWeight: '600', textAlign: 'right', width: '100%' }}>Incoming Bookings</h4>
+                            <div style={{ minWidth: 0, width: '100%', maxWidth: '100%' }}>
+                              <h4 className="dashboard-bookings-incoming-title" style={{ margin: '0 0 12px 0', fontSize: '16px', fontWeight: '600', textAlign: 'right', width: '100%' }}>Incoming Bookings</h4>
                               <div className="spacing_16"></div>
                               {bookingsLoading ? (
                                 <p className="paragraph">Loading bookings...</p>
@@ -1802,16 +1796,20 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                                   {incomingPaged.map((booking) => (
                                 <div 
                                   key={booking.id} 
+                                  className="dashboard-booking-card-incoming"
                                   style={{
                                     padding: '18px 20px',
                                     marginBottom: '14px',
                                     border: '1px solid #e8e8ec',
                                     borderRadius: '10px',
                                     backgroundColor: 'rgba(255,255,255,0.6)',
-                                    boxShadow: '0 1px 3px rgba(0,0,0,0.04)'
+                                    boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                                    width: '100%',
+                                    maxWidth: '100%',
+                                    boxSizing: 'border-box'
                                   }}
                                 >
-                                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '14px', gap: '12px' }}>
+                                  <div className="dashboard-booking-card-incoming-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '14px', gap: '12px' }}>
                                     <div>
                                       <div style={{ fontSize: '16px', fontWeight: '600', color: '#2d2d2d', marginBottom: '4px' }}>
                                         {booking.name}
@@ -1841,7 +1839,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                                       {booking.status?.toUpperCase() || 'PENDING'}
                                     </span>
                                   </div>
-                                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px 20px', fontSize: '13px', color: '#4a4a4a', marginBottom: '10px' }}>
+                                  <div className="dashboard-booking-card-details dashboard-booking-card-details--incoming" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px 20px', fontSize: '13px', color: '#4a4a4a', marginBottom: '10px' }}>
                                     {booking.job_type && <div><span style={{ color: '#888' }}>Job Type</span> · {booking.job_type}</div>}
                                     {booking.dates && <div><span style={{ color: '#888' }}>Dates</span> · {booking.dates}</div>}
                                     {booking.location && <div><span style={{ color: '#888' }}>Location</span> · {booking.location}</div>}
@@ -1852,7 +1850,9 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                                       {booking.details}
                                     </div>
                                   )}
-                                  <div style={{ 
+                                  <div
+                                    className="dashboard-booking-incoming-footer"
+                                    style={{ 
                                     display: 'flex', 
                                     justifyContent: 'space-between', 
                                     alignItems: 'center',
@@ -1860,13 +1860,13 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                                     paddingTop: '12px',
                                     borderTop: '1px solid #eee'
                                   }}>
-                                    <span style={{ fontSize: '12px', color: '#9a9a9a' }}>
+                                    <span className="dashboard-booking-incoming-footer-date" style={{ fontSize: '12px', color: '#9a9a9a' }}>
                                       {new Date(booking.created_at).toLocaleString(undefined, {
                                         dateStyle: 'short',
                                         timeStyle: 'short'
                                       })}
                                     </span>
-                                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                                    <div className="dashboard-booking-incoming-footer-actions" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                                       <a
                                         href={`mailto:${encodeURIComponent(booking.email)}?subject=${encodeURIComponent('Re: Your booking request')}`}
                                         target="_blank"
