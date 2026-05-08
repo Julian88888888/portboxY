@@ -23,17 +23,29 @@ const BookingModal = ({ isOpen, onClose, profile, onBookingCreated }) => {
   const [submitError, setSubmitError] = useState(null);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [createdBooking, setCreatedBooking] = useState(null);
+  const isIdentityLocked = Boolean(user);
 
   // Prefill email (and name) when modal opens and user is logged in
   useEffect(() => {
     if (isOpen && user) {
+      const fallbackName =
+        clientProfile?.display_name ||
+        clientProfile?.name ||
+        clientProfile?.username ||
+        '';
       setFormData((prev) => ({
         ...prev,
         email: (user.email || prev.email || '').trim(),
-        name: (user.user_metadata?.full_name || user.user_metadata?.name || prev.name || '').trim()
+        name: (
+          user.user_metadata?.full_name ||
+          user.user_metadata?.name ||
+          fallbackName ||
+          prev.name ||
+          ''
+        ).trim()
       }));
     }
-  }, [isOpen, user?.id]);
+  }, [isOpen, user?.id, user?.email, user?.user_metadata?.full_name, user?.user_metadata?.name, clientProfile?.display_name, clientProfile?.name, clientProfile?.username]);
 
   const jobTypes = [
     { name: 'Photoshoots', icon: FaCamera },
@@ -294,6 +306,7 @@ const BookingModal = ({ isOpen, onClose, profile, onBookingCreated }) => {
               onChange={handleInputChange}
               placeholder="Full Name"
               required
+              readOnly={isIdentityLocked || isSubmitting}
               disabled={isSubmitting}
             />
           </div>
@@ -308,6 +321,7 @@ const BookingModal = ({ isOpen, onClose, profile, onBookingCreated }) => {
               onChange={handleInputChange}
               placeholder="@"
               required
+              readOnly={isIdentityLocked || isSubmitting}
               disabled={isSubmitting}
             />
           </div>
