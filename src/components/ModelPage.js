@@ -148,6 +148,25 @@ export default function JobRequestPopup() {
     return true;
   };
 
+  /** Per-section Book Me (master = shouldShowBookMeButton). DB keys + user_metadata fallback. */
+  const isBookMeSectionEnabled = (dbKey, metaKey) => {
+    if (!shouldShowBookMeButton()) return false;
+    if (profile?.[dbKey] === false) return false;
+    if (user?.user_metadata?.[metaKey] === false) return false;
+    return true;
+  };
+
+  const shouldShowBookMeProfileSection = () =>
+    isBookMeSectionEnabled('show_book_me_profile_section', 'showBookMeProfileSection');
+  const shouldShowBookMePortfolioSection = () =>
+    isBookMeSectionEnabled('show_book_me_portfolio', 'showBookMePortfolioSection');
+  const shouldShowBookMeLinksSection = () =>
+    isBookMeSectionEnabled('show_book_me_links_section', 'showBookMeLinksSection');
+  const shouldShowBookMeCustomLinksSection = () =>
+    isBookMeSectionEnabled('show_book_me_custom_links_section', 'showBookMeCustomLinksSection');
+
+  const canShowBookMeToVisitor = urlUsername && profile?.id && user?.id !== profile?.id;
+
   const shouldShowAvailableForTags = () => {
     if (profile?.show_available_for === false) return false;
     if (profile?.showAvailableFor === false) return false;
@@ -368,6 +387,26 @@ export default function JobRequestPopup() {
   const handleCloseBookingModal = () => {
     setIsBookingModalOpen(false);
   };
+
+  const renderBookMeCta = () =>
+    user ? (
+      <a
+        data-w-id="ee47a855-7715-a4cf-bb17-0acb8cc29f1d"
+        href="#"
+        className="button bookme_large w-button"
+        onClick={handleOpenBookingModal}
+      >
+        Book Me
+      </a>
+    ) : (
+      <span
+        className="button bookme_large w-button"
+        style={{ opacity: 0.6, cursor: 'not-allowed', pointerEvents: 'none' }}
+        title="Sign in to book"
+      >
+        Book Me
+      </span>
+    );
 
   // Get profile data for BookingModal (include model id for guest booking)
   const getProfileDataForModal = () => {
@@ -800,22 +839,10 @@ export default function JobRequestPopup() {
           )}
           {shouldShowModelStats() && <div className="spacing_24" />}
           <div className="spacing_24" />
-      {shouldShowBookMeButton() && urlUsername && profile?.id !== user?.id && (
+      {shouldShowBookMeProfileSection() && canShowBookMeToVisitor && (
         <>
-      {user ? (
-        <a data-w-id="ee47a855-7715-a4cf-bb17-0acb8cc29f1d" href="#" className="button bookme_large w-button" onClick={handleOpenBookingModal}>
-          Book Me
-        </a>
-      ) : (
-        <span
-          className="button bookme_large w-button"
-          style={{ opacity: 0.6, cursor: 'not-allowed', pointerEvents: 'none' }}
-          title="Sign in to book"
-        >
-          Book Me
-        </span>
-      )}
-      <div className="spacing_24" />
+          {renderBookMeCta()}
+          <div className="spacing_24" />
         </>
       )}
       <div className="spacing_48" />
@@ -877,21 +904,7 @@ export default function JobRequestPopup() {
             </div>
           )}
           <div className="spacing_48"></div>
-          {shouldShowBookMeButton() && urlUsername && profile?.id !== user?.id && (
-            user ? (
-              <a data-w-id="ee47a855-7715-a4cf-bb17-0acb8cc29f1d" href="#" className="button bookme_large w-button" onClick={handleOpenBookingModal}>
-                Book Me
-              </a>
-            ) : (
-              <span
-                className="button bookme_large w-button"
-                style={{ opacity: 0.6, cursor: 'not-allowed', pointerEvents: 'none' }}
-                title="Sign in to book"
-              >
-                Book Me
-              </span>
-            )
-          )}
+          {shouldShowBookMePortfolioSection() && canShowBookMeToVisitor && renderBookMeCta()}
         </div>
       </div>
 
@@ -983,6 +996,12 @@ export default function JobRequestPopup() {
                   </div>
                 </>
               )}
+              {shouldShowBookMeLinksSection() && canShowBookMeToVisitor && (
+                <div style={{ textAlign: 'center', marginTop: '8px', width: '100%' }}>
+                  <div className="spacing_24" />
+                  {renderBookMeCta()}
+                </div>
+              )}
             </div>
           )}
           {shouldShowCustomLinksTitle() && (
@@ -1031,6 +1050,12 @@ export default function JobRequestPopup() {
               )}
             </div>
           )}
+              {shouldShowBookMeCustomLinksSection() && canShowBookMeToVisitor && (
+                <>
+                  <div className="spacing_32"></div>
+                  <div style={{ textAlign: 'center', width: '100%' }}>{renderBookMeCta()}</div>
+                </>
+              )}
             </>
           )}
         </div>

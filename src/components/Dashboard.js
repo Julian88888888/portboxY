@@ -315,6 +315,10 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
     showAlbumTitle: true,
     showAlbumDescription: true,
     showBookMeButton: true,
+    showBookMeProfileSection: true,
+    showBookMePortfolioSection: true,
+    showBookMeLinksSection: true,
+    showBookMeCustomLinksSection: true,
     enableBookingsWidget: true,
     enableBookingsTitle: true,
     bookingsTitle: 'BOOKINGS',
@@ -355,7 +359,38 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
         markets: user.markets || '',
         availableFor: user.availableFor || '',
         showModelStats: user.showModelStats !== undefined ? user.showModelStats : (user.user_metadata?.showModelStats !== undefined ? user.user_metadata.showModelStats : true),
-        showBookMeButton: user.showBookMeButton !== undefined ? user.showBookMeButton : (user.user_metadata?.showBookMeButton !== undefined ? user.user_metadata.showBookMeButton : true),
+        showBookMeButton:
+          profile?.show_book_me_button !== undefined
+            ? profile.show_book_me_button
+            : user.showBookMeButton !== undefined
+              ? user.showBookMeButton
+              : user.user_metadata?.showBookMeButton !== undefined
+                ? user.user_metadata.showBookMeButton
+                : (prev.showBookMeButton ?? true),
+        showBookMeProfileSection:
+          profile?.show_book_me_profile_section !== undefined
+            ? profile.show_book_me_profile_section
+            : user.user_metadata?.showBookMeProfileSection !== undefined
+              ? user.user_metadata.showBookMeProfileSection
+              : (prev.showBookMeProfileSection ?? true),
+        showBookMePortfolioSection:
+          profile?.show_book_me_portfolio !== undefined
+            ? profile.show_book_me_portfolio
+            : user.user_metadata?.showBookMePortfolioSection !== undefined
+              ? user.user_metadata.showBookMePortfolioSection
+              : (prev.showBookMePortfolioSection ?? true),
+        showBookMeLinksSection:
+          profile?.show_book_me_links_section !== undefined
+            ? profile.show_book_me_links_section
+            : user.user_metadata?.showBookMeLinksSection !== undefined
+              ? user.user_metadata.showBookMeLinksSection
+              : (prev.showBookMeLinksSection ?? true),
+        showBookMeCustomLinksSection:
+          profile?.show_book_me_custom_links_section !== undefined
+            ? profile.show_book_me_custom_links_section
+            : user.user_metadata?.showBookMeCustomLinksSection !== undefined
+              ? user.user_metadata.showBookMeCustomLinksSection
+              : (prev.showBookMeCustomLinksSection ?? true),
         showCustomLinksTitle: user.showCustomLinksTitle !== undefined ? user.showCustomLinksTitle : (user.user_metadata?.showCustomLinksTitle !== undefined ? user.user_metadata.showCustomLinksTitle : true),
         showProfileStats: user.showProfileStats !== undefined ? user.showProfileStats : (user.user_metadata?.showProfileStats !== undefined ? user.user_metadata.showProfileStats : true),
         showSocialLinks: user.showSocialLinks !== undefined ? user.showSocialLinks : (user.user_metadata?.showSocialLinks !== undefined ? user.user_metadata.showSocialLinks : true),
@@ -473,9 +508,45 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
       const isSuccess = profileFieldName ? !!result : !!result?.success;
       if (!isSuccess) {
         setFormData((prev) => ({ ...prev, [fieldName]: previousValue }));
+      } else if (profileFieldName) {
+        queryClient.invalidateQueries({ queryKey: ['profile'] });
+        const u = String(profile?.username || formData.username || '')
+          .trim()
+          .replace(/^@+/, '');
+        if (u) queryClient.invalidateQueries({ queryKey: ['publicProfile', u] });
       }
     } catch (error) {
       setFormData((prev) => ({ ...prev, [fieldName]: previousValue }));
+    }
+  };
+
+  /** Book Me master + per-section: DB row + user_metadata for public page fallbacks. */
+  const persistBookMeVisibilityToggle = async (formKey, dbKey, metaKey) => {
+    const previousValue = formData[formKey] ?? true;
+    const nextValue = !previousValue;
+    setFormData((prev) => ({ ...prev, [formKey]: nextValue }));
+    try {
+      let dbOk = false;
+      try {
+        const dbResult = await upsertProfile({ [dbKey]: nextValue });
+        dbOk = !!dbResult;
+      } catch (err) {
+        console.warn('profiles upsert failed for Book Me toggle (missing column or RLS?):', dbKey, err?.message || err);
+      }
+      const metaResult = await updateProfile({ [metaKey]: nextValue });
+      const metaOk = !!metaResult?.success;
+      if (!dbOk && !metaOk) {
+        setFormData((prev) => ({ ...prev, [formKey]: previousValue }));
+        return;
+      }
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
+      const u = String(profile?.username || formData.username || '')
+        .trim()
+        .replace(/^@+/, '');
+      if (u) queryClient.invalidateQueries({ queryKey: ['publicProfile', u] });
+    } catch (err) {
+      console.warn('Book Me visibility toggle failed:', err);
+      setFormData((prev) => ({ ...prev, [formKey]: previousValue }));
     }
   };
 
@@ -731,60 +802,111 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                     <ProfileSettings />
                   </div>
 
-                  {/* Book Me Button */}
+                  {/* Book Me Button (master + per section) */}
                   <div className="settingssection">
                     <div className="spacing_24"></div>
                     <h3>Book Me Button</h3>
-                    <div className="w-layout-hflex flex-block-9" style={{ alignItems: 'center', gap: '12px' }}>
-                      <label
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          cursor: 'pointer',
-                          gap: '10px',
-                          userSelect: 'none',
-                          flex: '0 0 auto'
-                        }}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          const newValue = !formData.showBookMeButton;
-                          setFormData(prev => ({ ...prev, showBookMeButton: newValue }));
-                          updateProfile({ ...formData, showBookMeButton: newValue }).then(result => {
-                            if (result.success) {
-                              console.log('Show Book Me Button toggle saved');
-                            }
-                          });
-                        }}
-                      >
+                    <p className="text_color_grey" style={{ margin: '0 0 12px', fontSize: '14px' }}>
+                      Control the Book Me call-to-action on your public page. Turn off the master switch to hide it everywhere.
+                    </p>
+                    {[
+                      {
+                        label: 'Show Book Me on public page',
+                        formKey: 'showBookMeButton',
+                        dbKey: 'show_book_me_button',
+                        metaKey: 'showBookMeButton',
+                        section: false,
+                      },
+                      {
+                        label: 'Show in profile section',
+                        formKey: 'showBookMeProfileSection',
+                        dbKey: 'show_book_me_profile_section',
+                        metaKey: 'showBookMeProfileSection',
+                        section: true,
+                      },
+                      {
+                        label: 'Show in portfolio section',
+                        formKey: 'showBookMePortfolioSection',
+                        dbKey: 'show_book_me_portfolio',
+                        metaKey: 'showBookMePortfolioSection',
+                        section: true,
+                      },
+                      {
+                        label: 'Show in bookings / links block',
+                        formKey: 'showBookMeLinksSection',
+                        dbKey: 'show_book_me_links_section',
+                        metaKey: 'showBookMeLinksSection',
+                        section: true,
+                      },
+                      {
+                        label: 'Show in My Links section',
+                        formKey: 'showBookMeCustomLinksSection',
+                        dbKey: 'show_book_me_custom_links_section',
+                        metaKey: 'showBookMeCustomLinksSection',
+                        section: true,
+                      },
+                    ].map(({ label, formKey, dbKey, metaKey, section }) => {
+                      const masterOff = (formData.showBookMeButton ?? true) === false;
+                      const disabled = section && masterOff;
+                      const on = (formData[formKey] ?? true) !== false;
+                      return (
                         <div
+                          key={formKey}
+                          className="w-layout-hflex flex-block-9"
                           style={{
-                            width: '44px',
-                            height: '24px',
-                            borderRadius: '12px',
-                            backgroundColor: (formData.showBookMeButton ?? true) ? '#783FF3' : '#ccc',
-                            position: 'relative',
-                            cursor: 'pointer',
-                            transition: 'background-color 0.2s',
-                            flexShrink: 0
+                            alignItems: 'center',
+                            gap: '12px',
+                            marginBottom: '10px',
+                            opacity: disabled ? 0.45 : 1,
+                            pointerEvents: disabled ? 'none' : 'auto',
                           }}
                         >
-                          <div
+                          <label
                             style={{
-                              width: '20px',
-                              height: '20px',
-                              borderRadius: '50%',
-                              backgroundColor: 'white',
-                              position: 'absolute',
-                              top: '2px',
-                              left: (formData.showBookMeButton ?? true) ? '22px' : '2px',
-                              transition: 'left 0.2s',
-                              boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                              display: 'flex',
+                              alignItems: 'center',
+                              cursor: disabled ? 'default' : 'pointer',
+                              gap: '10px',
+                              userSelect: 'none',
+                              flex: '0 0 auto',
                             }}
-                          />
+                            onClick={(e) => {
+                              e.preventDefault();
+                              if (disabled) return;
+                              persistBookMeVisibilityToggle(formKey, dbKey, metaKey);
+                            }}
+                          >
+                            <div
+                              style={{
+                                width: '44px',
+                                height: '24px',
+                                borderRadius: '12px',
+                                backgroundColor: on ? '#783FF3' : '#ccc',
+                                position: 'relative',
+                                cursor: disabled ? 'default' : 'pointer',
+                                transition: 'background-color 0.2s',
+                                flexShrink: 0,
+                              }}
+                            >
+                              <div
+                                style={{
+                                  width: '20px',
+                                  height: '20px',
+                                  borderRadius: '50%',
+                                  backgroundColor: 'white',
+                                  position: 'absolute',
+                                  top: '2px',
+                                  left: on ? '22px' : '2px',
+                                  transition: 'left 0.2s',
+                                  boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                                }}
+                              />
+                            </div>
+                          </label>
+                          <p style={{ margin: 0 }}>{label}</p>
                         </div>
-                      </label>
-                      <p style={{ margin: 0 }}>Show Book Me Button</p>
-                    </div>
+                      );
+                    })}
                   </div>
 
                   {/* Social Links */}
@@ -1087,6 +1209,68 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                       </label>
                       <p style={{ margin: 0 }}>Show Model Stats</p>
                     </div>
+                    <div
+                      className="w-layout-hflex flex-block-9"
+                      style={{
+                        alignItems: 'center',
+                        gap: '12px',
+                        marginTop: '12px',
+                        marginBottom: '8px',
+                        opacity: (formData.showBookMeButton ?? true) ? 1 : 0.45,
+                        pointerEvents: (formData.showBookMeButton ?? true) ? 'auto' : 'none',
+                      }}
+                    >
+                      <label
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          cursor: (formData.showBookMeButton ?? true) ? 'pointer' : 'default',
+                          gap: '10px',
+                          userSelect: 'none',
+                          flex: '0 0 auto',
+                        }}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          if (!(formData.showBookMeButton ?? true)) return;
+                          persistBookMeVisibilityToggle(
+                            'showBookMeProfileSection',
+                            'show_book_me_profile_section',
+                            'showBookMeProfileSection'
+                          );
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: '44px',
+                            height: '24px',
+                            borderRadius: '12px',
+                            backgroundColor: (formData.showBookMeProfileSection ?? true) ? '#783FF3' : '#ccc',
+                            position: 'relative',
+                            cursor: (formData.showBookMeButton ?? true) ? 'pointer' : 'default',
+                            transition: 'background-color 0.2s',
+                            flexShrink: 0,
+                          }}
+                        >
+                          <div
+                            style={{
+                              width: '20px',
+                              height: '20px',
+                              borderRadius: '50%',
+                              backgroundColor: 'white',
+                              position: 'absolute',
+                              top: '2px',
+                              left: (formData.showBookMeProfileSection ?? true) ? '22px' : '2px',
+                              transition: 'left 0.2s',
+                              boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                            }}
+                          />
+                        </div>
+                      </label>
+                      <p style={{ margin: 0 }}>Show Book Me in profile section</p>
+                    </div>
+                    <p className="text_color_grey" style={{ margin: '0 0 16px', fontSize: '13px', maxWidth: '560px' }}>
+                      Controls the Book Me button in the top profile area on your public page (near your headline and stats). Turn off the master Book Me switch in Profile settings to hide every Book Me button.
+                    </p>
                     <div className="stat_container">
                       <div className="personal_stats">
                         <div className="stat_item">
@@ -1423,6 +1607,67 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                     <p className="text_color_grey" style={{ marginBottom: '16px' }}>
                       Create albums and upload multiple images to each album
                     </p>
+                    <div
+                      className="w-layout-hflex flex-block-9"
+                      style={{
+                        alignItems: 'center',
+                        gap: '12px',
+                        marginBottom: '12px',
+                        opacity: (formData.showBookMeButton ?? true) ? 1 : 0.45,
+                        pointerEvents: (formData.showBookMeButton ?? true) ? 'auto' : 'none',
+                      }}
+                    >
+                      <label
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          cursor: (formData.showBookMeButton ?? true) ? 'pointer' : 'default',
+                          gap: '10px',
+                          userSelect: 'none',
+                          flex: '0 0 auto',
+                        }}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          if (!(formData.showBookMeButton ?? true)) return;
+                          persistBookMeVisibilityToggle(
+                            'showBookMePortfolioSection',
+                            'show_book_me_portfolio',
+                            'showBookMePortfolioSection'
+                          );
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: '44px',
+                            height: '24px',
+                            borderRadius: '12px',
+                            backgroundColor: (formData.showBookMePortfolioSection ?? true) ? '#783FF3' : '#ccc',
+                            position: 'relative',
+                            cursor: (formData.showBookMeButton ?? true) ? 'pointer' : 'default',
+                            transition: 'background-color 0.2s',
+                            flexShrink: 0,
+                          }}
+                        >
+                          <div
+                            style={{
+                              width: '20px',
+                              height: '20px',
+                              borderRadius: '50%',
+                              backgroundColor: 'white',
+                              position: 'absolute',
+                              top: '2px',
+                              left: (formData.showBookMePortfolioSection ?? true) ? '22px' : '2px',
+                              transition: 'left 0.2s',
+                              boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                            }}
+                          />
+                        </div>
+                      </label>
+                      <p style={{ margin: 0 }}>Show Book Me in portfolio section</p>
+                    </div>
+                    <p className="text_color_grey" style={{ margin: '0 0 16px', fontSize: '13px', maxWidth: '560px' }}>
+                      Controls the Book Me button below your image albums on the public page. Turn off the master Book Me switch in Profile settings to hide every Book Me button.
+                    </p>
                     
                     {albumsLoading ? (
                       <p className="text_color_grey">Loading albums...</p>
@@ -1576,62 +1821,6 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                     )}
                   </div>
                   
-                  <div style={{ display: 'none' }}>
-                    <div className="settingssection">
-                      <div className="spacing_24"></div>
-                      <h3>Book Me Button</h3>
-                      <div className="w-layout-hflex flex-block-9" style={{ alignItems: 'center', gap: '12px' }}>
-                        <label
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            cursor: 'pointer',
-                            gap: '10px',
-                            userSelect: 'none',
-                            flex: '0 0 auto'
-                          }}
-                          onClick={(e) => {
-                            e.preventDefault();
-                            const newValue = !formData.showBookMeButton;
-                            setFormData(prev => ({ ...prev, showBookMeButton: newValue }));
-                            updateProfile({ ...formData, showBookMeButton: newValue }).then(result => {
-                              if (result.success) {
-                                console.log('Show Book Me Button toggle saved');
-                              }
-                            });
-                          }}
-                        >
-                          <div
-                            style={{
-                              width: '44px',
-                              height: '24px',
-                              borderRadius: '12px',
-                              backgroundColor: (formData.showBookMeButton ?? true) ? '#783FF3' : '#ccc',
-                              position: 'relative',
-                              cursor: 'pointer',
-                              transition: 'background-color 0.2s',
-                              flexShrink: 0
-                            }}
-                          >
-                            <div
-                              style={{
-                                width: '20px',
-                                height: '20px',
-                                borderRadius: '50%',
-                                backgroundColor: 'white',
-                                position: 'absolute',
-                                top: '2px',
-                                left: (formData.showBookMeButton ?? true) ? '22px' : '2px',
-                                transition: 'left 0.2s',
-                                boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
-                              }}
-                            />
-                          </div>
-                        </label>
-                        <p style={{ margin: 0 }}>Show Book Me Button</p>
-                      </div>
-                    </div>
-                  </div>
                 </div>
               </div>
             )}
@@ -1966,7 +2155,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                                     <div style={{ width: '44px', height: '24px', borderRadius: '12px', backgroundColor: (formData.enableBookingsTitle ?? true) ? '#783FF3' : '#ccc', position: 'relative', cursor: 'pointer', transition: 'background-color 0.2s', flexShrink: 0 }}>
                                       <div style={{ width: '20px', height: '20px', borderRadius: '50%', backgroundColor: 'white', position: 'absolute', top: '2px', left: (formData.enableBookingsTitle ?? true) ? '22px' : '2px', transition: 'left 0.2s', boxShadow: '0 2px 4px rgba(0,0,0,0.2)' }} />
                                     </div>
-                                    <p style={{ margin: 0 }}>Enable Bookings Section Title</p>
+                                    <p style={{ margin: 0 }}>Enable Bookings Settings</p>
                                   </label>
                                 </div>
                                 <input 
@@ -2078,6 +2267,68 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                                     <p style={{ margin: 0 }}>Show Available For on public profile</p>
                                   </label>
                                 </div>
+                                <div
+                                  className="w-layout-hflex flex-block-9"
+                                  style={{
+                                    alignItems: 'center',
+                                    gap: '12px',
+                                    marginTop: '8px',
+                                    marginBottom: '8px',
+                                    opacity: (formData.showBookMeButton ?? true) ? 1 : 0.45,
+                                    pointerEvents: (formData.showBookMeButton ?? true) ? 'auto' : 'none',
+                                  }}
+                                >
+                                  <label
+                                    style={{
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      cursor: (formData.showBookMeButton ?? true) ? 'pointer' : 'default',
+                                      gap: '10px',
+                                      userSelect: 'none',
+                                      flex: '0 0 auto',
+                                    }}
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      if (!(formData.showBookMeButton ?? true)) return;
+                                      persistBookMeVisibilityToggle(
+                                        'showBookMeLinksSection',
+                                        'show_book_me_links_section',
+                                        'showBookMeLinksSection'
+                                      );
+                                    }}
+                                  >
+                                    <div
+                                      style={{
+                                        width: '44px',
+                                        height: '24px',
+                                        borderRadius: '12px',
+                                        backgroundColor: (formData.showBookMeLinksSection ?? true) ? '#783FF3' : '#ccc',
+                                        position: 'relative',
+                                        cursor: (formData.showBookMeButton ?? true) ? 'pointer' : 'default',
+                                        transition: 'background-color 0.2s',
+                                        flexShrink: 0,
+                                      }}
+                                    >
+                                      <div
+                                        style={{
+                                          width: '20px',
+                                          height: '20px',
+                                          borderRadius: '50%',
+                                          backgroundColor: 'white',
+                                          position: 'absolute',
+                                          top: '2px',
+                                          left: (formData.showBookMeLinksSection ?? true) ? '22px' : '2px',
+                                          transition: 'left 0.2s',
+                                          boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                                        }}
+                                      />
+                                    </div>
+                                  </label>
+                                  <p style={{ margin: 0 }}>Show Book Me in bookings section</p>
+                                </div>
+                                <p className="text_color_grey" style={{ margin: '0 0 16px', fontSize: '13px', maxWidth: '560px' }}>
+                                  Applies on your public page below the bookings block (title, hometown, description, tags). Turn off the master Book Me switch in Profile settings to hide every Book Me button.
+                                </p>
                                 <button type="submit" className="submit-button w-button">
                                   Save
                                 </button>
@@ -2193,62 +2444,6 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                               </div>
                             </div>
                           </div>
-                          <div style={{ display: 'none' }}>
-                            <div className="settingssection">
-                              <div className="spacing_24"></div>
-                              <h3>Book Me Button</h3>
-                              <div className="w-layout-hflex flex-block-9" style={{ alignItems: 'center', gap: '12px' }}>
-                                <label
-                                  style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    cursor: 'pointer',
-                                    gap: '10px',
-                                    userSelect: 'none',
-                                    flex: '0 0 auto'
-                                  }}
-                                  onClick={(e) => {
-                                    e.preventDefault();
-                                    const newValue = !formData.showBookMeButton;
-                                    setFormData(prev => ({ ...prev, showBookMeButton: newValue }));
-                                    updateProfile({ ...formData, showBookMeButton: newValue }).then(result => {
-                                      if (result.success) {
-                                        console.log('Show Book Me Button toggle saved');
-                                      }
-                                    });
-                                  }}
-                                >
-                                  <div
-                                    style={{
-                                      width: '44px',
-                                      height: '24px',
-                                      borderRadius: '12px',
-                                      backgroundColor: (formData.showBookMeButton ?? true) ? '#783FF3' : '#ccc',
-                                      position: 'relative',
-                                      cursor: 'pointer',
-                                      transition: 'background-color 0.2s',
-                                      flexShrink: 0
-                                    }}
-                                  >
-                                    <div
-                                      style={{
-                                        width: '20px',
-                                        height: '20px',
-                                        borderRadius: '50%',
-                                        backgroundColor: 'white',
-                                        position: 'absolute',
-                                        top: '2px',
-                                        left: (formData.showBookMeButton ?? true) ? '22px' : '2px',
-                                        transition: 'left 0.2s',
-                                        boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
-                                      }}
-                                    />
-                                  </div>
-                                </label>
-                                <p style={{ margin: 0 }}>Show Book Me Button</p>
-                              </div>
-                            </div>
-                          </div>
                         </div>
                       </div>
                     )}
@@ -2319,6 +2514,67 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                     </label>
                     <p style={{ margin: 0 }}>Show Custom Links</p>
                   </div>
+                  <div
+                    className="w-layout-hflex flex-block-9"
+                    style={{
+                      alignItems: 'center',
+                      gap: '12px',
+                      marginTop: '12px',
+                      opacity: (formData.showBookMeButton ?? true) ? 1 : 0.45,
+                      pointerEvents: (formData.showBookMeButton ?? true) ? 'auto' : 'none',
+                    }}
+                  >
+                    <label
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        cursor: (formData.showBookMeButton ?? true) ? 'pointer' : 'default',
+                        gap: '10px',
+                        userSelect: 'none',
+                        flex: '0 0 auto',
+                      }}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        if (!(formData.showBookMeButton ?? true)) return;
+                        persistBookMeVisibilityToggle(
+                          'showBookMeCustomLinksSection',
+                          'show_book_me_custom_links_section',
+                          'showBookMeCustomLinksSection'
+                        );
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: '44px',
+                          height: '24px',
+                          borderRadius: '12px',
+                          backgroundColor: (formData.showBookMeCustomLinksSection ?? true) ? '#783FF3' : '#ccc',
+                          position: 'relative',
+                          cursor: (formData.showBookMeButton ?? true) ? 'pointer' : 'default',
+                          transition: 'background-color 0.2s',
+                          flexShrink: 0,
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: '20px',
+                            height: '20px',
+                            borderRadius: '50%',
+                            backgroundColor: 'white',
+                            position: 'absolute',
+                            top: '2px',
+                            left: (formData.showBookMeCustomLinksSection ?? true) ? '22px' : '2px',
+                            transition: 'left 0.2s',
+                            boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                          }}
+                        />
+                      </div>
+                    </label>
+                    <p style={{ margin: 0 }}>Show Book Me in My Links section</p>
+                  </div>
+                  <p className="text_color_grey" style={{ margin: '8px 0 0', fontSize: '13px', maxWidth: '520px' }}>
+                    Appears below your custom link buttons on the public page. Turn off the master Book Me switch in Profile settings to hide all Book Me buttons.
+                  </p>
                   <div className="spacing_24"></div>
                   
                   {/* Existing Links List */}
