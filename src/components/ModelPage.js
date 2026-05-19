@@ -197,7 +197,8 @@ export default function JobRequestPopup() {
   const getBookingsTitleDisplay = () =>
     profile?.bookings_title ?? user?.user_metadata?.bookingsTitle ?? 'BOOKINGS';
 
-  const shouldShowBookingsHeading = () => {
+  /** Master: show BOOKINGS block (title, hometown, description, tags) — not Book Me. */
+  const shouldShowBookingsWidget = () => {
     if (profile?.show_bookings_title === false) return false;
     if (user?.user_metadata?.enableBookingsTitle === false) return false;
     return true;
@@ -222,10 +223,14 @@ export default function JobRequestPopup() {
   };
 
   const hasPublicBookingsBlock =
-    (shouldShowBookingsHeading() && String(getBookingsTitleDisplay()).trim() !== '') ||
-    (shouldShowHometownPublic() && getHometownDisplay() !== '') ||
-    (shouldShowBookingDescriptionPublic() && getBookingDescriptionDisplay() !== '') ||
-    (shouldShowAvailableForTags() && getPublicAvailableForTags().length > 0);
+    shouldShowBookingsWidget() &&
+    ((String(getBookingsTitleDisplay()).trim() !== '') ||
+      (shouldShowHometownPublic() && getHometownDisplay() !== '') ||
+      (shouldShowBookingDescriptionPublic() && getBookingDescriptionDisplay() !== '') ||
+      (shouldShowAvailableForTags() && getPublicAvailableForTags().length > 0));
+
+  const shouldShowBookMeInLinksArea =
+    shouldShowBookMeLinksSection() && canShowBookMeToVisitor;
 
   // Check if Social Links (icon row) should be shown
   const shouldShowSocialLinks = () => {
@@ -340,7 +345,12 @@ export default function JobRequestPopup() {
     }
     return true;
   };
-  
+
+  const showLinksSection =
+    hasPublicBookingsBlock ||
+    shouldShowBookMeInLinksArea ||
+    shouldShowCustomLinksTitle();
+
   // Get profile photo from ProfileSettings (profile_photo_path)
   const getProfileImage = () => {
     // First check if profile photo is enabled and exists in profile settings
@@ -908,13 +918,13 @@ export default function JobRequestPopup() {
         </div>
       </div>
 
-      {(hasPublicBookingsBlock || shouldShowCustomLinksTitle()) && (
+      {showLinksSection && (
       <div className="section links_sec">
         <div className="content_wrapper largebanner_btn">
           {hasPublicBookingsBlock && (
             <div style={{ width: '100%', maxWidth: '520px', margin: '0 auto' }}>
               <div className="spacing_48"></div>
-              {shouldShowBookingsHeading() && String(getBookingsTitleDisplay()).trim() !== '' && (
+              {String(getBookingsTitleDisplay()).trim() !== '' && (
                 <h4
                   style={{
                     textAlign: 'left',
@@ -996,12 +1006,16 @@ export default function JobRequestPopup() {
                   </div>
                 </>
               )}
-              {shouldShowBookMeLinksSection() && canShowBookMeToVisitor && (
-                <div style={{ textAlign: 'center', marginTop: '8px', width: '100%' }}>
-                  <div className="spacing_24" />
-                  {renderBookMeCta()}
-                </div>
+            </div>
+          )}
+          {shouldShowBookMeInLinksArea && (
+            <div style={{ width: '100%', maxWidth: '520px', margin: '0 auto', textAlign: 'center' }}>
+              {hasPublicBookingsBlock ? (
+                <div className="spacing_24" />
+              ) : (
+                <div className="spacing_48" />
               )}
+              {renderBookMeCta()}
             </div>
           )}
           {shouldShowCustomLinksTitle() && (

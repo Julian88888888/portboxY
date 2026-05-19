@@ -15,6 +15,9 @@ const TAB_ROUTES = { 'Tab 1': '/profile', 'Tab 2': '/portfolio', 'Tab 3': '/book
 
 const BOOKING_AVAILABLE_FOR_IDS = ['photoshoots', 'acting', 'runway', 'promo'];
 
+/** Set true to show mailto Email on Incoming Bookings cards. */
+const SHOW_INCOMING_BOOKING_EMAIL_BUTTON = false;
+
 const BookingAvailableForIcon = ({ type, color }) => {
   const stroke = color || 'currentColor';
   if (type === 'photoshoots') {
@@ -456,9 +459,9 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
         enableBookingsTitle:
           profile?.show_bookings_title !== undefined
             ? profile.show_bookings_title
-            : (user.user_metadata?.enableBookingsTitle !== undefined
+            : user.user_metadata?.enableBookingsTitle !== undefined
               ? user.user_metadata.enableBookingsTitle
-              : prev.enableBookingsTitle),
+              : (prev.enableBookingsTitle ?? true),
         showHometown:
           profile?.show_hometown !== undefined
             ? profile.show_hometown
@@ -517,6 +520,36 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
       }
     } catch (error) {
       setFormData((prev) => ({ ...prev, [fieldName]: previousValue }));
+    }
+  };
+
+  /** Master bookings widget on public page (BOOKINGS block only, not Book Me). */
+  const persistBookingsWidgetToggle = async () => {
+    const previousValue = formData.enableBookingsTitle ?? true;
+    const nextValue = !previousValue;
+    setFormData((prev) => ({ ...prev, enableBookingsTitle: nextValue }));
+    try {
+      let dbOk = false;
+      try {
+        const dbResult = await upsertProfile({ show_bookings_title: nextValue });
+        dbOk = !!dbResult;
+      } catch (err) {
+        console.warn('profiles upsert failed for bookings widget:', err?.message || err);
+      }
+      const metaResult = await updateProfile({ enableBookingsTitle: nextValue });
+      const metaOk = !!metaResult?.success;
+      if (!dbOk && !metaOk) {
+        setFormData((prev) => ({ ...prev, enableBookingsTitle: previousValue }));
+        return;
+      }
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
+      const u = String(profile?.username || formData.username || '')
+        .trim()
+        .replace(/^@+/, '');
+      if (u) queryClient.invalidateQueries({ queryKey: ['publicProfile', u] });
+    } catch (err) {
+      console.warn('Bookings widget toggle failed:', err);
+      setFormData((prev) => ({ ...prev, enableBookingsTitle: previousValue }));
     }
   };
 
@@ -2056,24 +2089,26 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                                       })}
                                     </span>
                                     <div className="dashboard-booking-incoming-footer-actions" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                                      <a
-                                        href={`mailto:${encodeURIComponent(booking.email)}?subject=${encodeURIComponent('Re: Your booking request')}`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        style={{
-                                          padding: '6px 14px',
-                                          backgroundColor: 'transparent',
-                                          color: '#5a6fc7',
-                                          border: '1px solid #9badde',
-                                          borderRadius: '6px',
-                                          cursor: 'pointer',
-                                          fontSize: '12px',
-                                          textDecoration: 'none',
-                                          fontWeight: '500'
-                                        }}
-                                      >
-                                        Email
-                                      </a>
+                                      {SHOW_INCOMING_BOOKING_EMAIL_BUTTON && (
+                                        <a
+                                          href={`mailto:${encodeURIComponent(booking.email)}?subject=${encodeURIComponent('Re: Your booking request')}`}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          style={{
+                                            padding: '6px 14px',
+                                            backgroundColor: 'transparent',
+                                            color: '#5a6fc7',
+                                            border: '1px solid #9badde',
+                                            borderRadius: '6px',
+                                            cursor: 'pointer',
+                                            fontSize: '12px',
+                                            textDecoration: 'none',
+                                            fontWeight: '500'
+                                          }}
+                                        >
+                                          Email
+                                        </a>
+                                      )}
                                       <button
                                         onClick={() => {
                                           setSelectedBookingForChat(booking);
@@ -2151,23 +2186,16 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                                 }}
                               >
                                 <div className="w-layout-hflex flex-block-9" style={{ alignItems: 'center', gap: '12px' }}>
-                                  <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', gap: '10px', userSelect: 'none', flex: '0 0 auto' }} onClick={(e) => { e.preventDefault(); setFormData(prev => ({ ...prev, enableBookingsTitle: !(prev.enableBookingsTitle ?? true) })); }}>
+                                  <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', gap: '10px', userSelect: 'none', flex: '0 0 auto' }} onClick={(e) => { e.preventDefault(); void persistBookingsWidgetToggle(); }}>
                                     <div style={{ width: '44px', height: '24px', borderRadius: '12px', backgroundColor: (formData.enableBookingsTitle ?? true) ? '#783FF3' : '#ccc', position: 'relative', cursor: 'pointer', transition: 'background-color 0.2s', flexShrink: 0 }}>
                                       <div style={{ width: '20px', height: '20px', borderRadius: '50%', backgroundColor: 'white', position: 'absolute', top: '2px', left: (formData.enableBookingsTitle ?? true) ? '22px' : '2px', transition: 'left 0.2s', boxShadow: '0 2px 4px rgba(0,0,0,0.2)' }} />
                                     </div>
                                     <p style={{ margin: 0 }}>Enable Bookings Settings</p>
                                   </label>
                                 </div>
-                                <input 
-                                  className="w-input" 
-                                  maxLength="256" 
-                                  name="bookingsTitle" 
-                                  placeholder="BOOKINGS" 
-                                  type="text" 
-                                  value={formData.bookingsTitle}
-                                  onChange={handleInputChange}
-                                  disabled
-                                />
+                                <p className="text_color_grey" style={{ margin: '8px 0 16px', fontSize: '13px', maxWidth: '560px' }}>
+                                  Shows or hides the BOOKINGS block on your public page (title, hometown, description, tags). Book Me is controlled separately.
+                                </p>
                                 <div className="spacing_24"></div>
                                 <label htmlFor="hometown">Hometown</label>
                                 <input 

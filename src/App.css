@@ -101,6 +101,50 @@
   background-color: #f5f5f5;
 }
 
+.booking-modal-from-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.booking-modal-from-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  flex-shrink: 0;
+}
+
+.booking-modal-from-avatar {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #783ff3;
+  flex-shrink: 0;
+}
+
+.booking-modal-from-handle {
+  font-size: 12px;
+  line-height: 1;
+  font-weight: 600;
+  color: #fff;
+  background: #783ff3;
+  padding: 5px 8px;
+  border-radius: 999px;
+  border: 1px solid #ffffff;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.booking-modal-from-handle--muted {
+  color: #666;
+  background: #f0f0f0;
+  border-color: #ddd;
+  box-shadow: none;
+  font-weight: 500;
+}
+
 /* Section titles */
 .section-title {
   font-size: 24px;

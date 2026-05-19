@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { FaTimes, FaCamera, FaVideo, FaWalking, FaMicrophone } from 'react-icons/fa';
 import { useAuth } from '../contexts/AuthContext';
 import { useProfile } from '../hooks/useProfile';
 import { createBooking, createGuestBooking } from '../services/bookingsService';
+import { getAvatarUrl } from '../services/profileService';
 
 const BookingModal = ({ isOpen, onClose, profile, onBookingCreated }) => {
   const { user } = useAuth();
@@ -24,6 +25,23 @@ const BookingModal = ({ isOpen, onClose, profile, onBookingCreated }) => {
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [createdBooking, setCreatedBooking] = useState(null);
   const isIdentityLocked = Boolean(user);
+
+  const clientAvatarSrc = useMemo(() => {
+    if (clientProfile?.show_profile_photo !== false && clientProfile?.profile_photo_path) {
+      return getAvatarUrl(clientProfile.profile_photo_path);
+    }
+    if (user?.profilePhotos?.length > 0) {
+      const mainPhoto = user.profilePhotos.find((photo) => photo.isMain);
+      return mainPhoto ? mainPhoto.url : user.profilePhotos[0].url;
+    }
+    return '/images/headshot_model.jpg';
+  }, [clientProfile?.show_profile_photo, clientProfile?.profile_photo_path, user?.profilePhotos]);
+
+  const clientUsername = useMemo(() => {
+    const raw = clientProfile?.username ?? user?.user_metadata?.username ?? '';
+    const handle = String(raw).trim().replace(/^@+/, '');
+    return handle || null;
+  }, [clientProfile?.username, user?.user_metadata?.username]);
 
   // Prefill email (and name) when modal opens and user is logged in
   useEffect(() => {
@@ -111,6 +129,12 @@ const BookingModal = ({ isOpen, onClose, profile, onBookingCreated }) => {
     setIsSubmitting(true);
     setSubmitError(null);
     setSubmitSuccess(false);
+
+    if (user && !String(formData.email || '').trim()) {
+      setSubmitError('Your account email is required to send a booking request.');
+      setIsSubmitting(false);
+      return;
+    }
 
     const bookingPayload = {
       name: formData.name,
@@ -296,35 +320,58 @@ const BookingModal = ({ isOpen, onClose, profile, onBookingCreated }) => {
             </div>
           )}
           
-          <div className="form-group">
-            <label htmlFor="name">Name</label>
-            <input
-              type="text"
-              id="name"
-              name="name"
-              value={formData.name}
-              onChange={handleInputChange}
-              placeholder="Full Name"
-              required
-              readOnly={isIdentityLocked || isSubmitting}
-              disabled={isSubmitting}
-            />
-          </div>
-          
-          <div className="form-group">
-            <label htmlFor="email">Email Address</label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              value={formData.email}
-              onChange={handleInputChange}
-              placeholder="@"
-              required
-              readOnly={isIdentityLocked || isSubmitting}
-              disabled={isSubmitting}
-            />
-          </div>
+          {isIdentityLocked ? (
+            <div className="form-group booking-modal-from">
+              <div className="booking-modal-from-row" aria-label="Booking request sender">
+                <span className="booking-modal-from-label">From</span>
+                <img
+                  src={clientAvatarSrc}
+                  alt=""
+                  className="booking-modal-from-avatar"
+                  loading="lazy"
+                  onError={(e) => {
+                    e.currentTarget.src = '/images/headshot_model.jpg';
+                  }}
+                />
+                {clientUsername ? (
+                  <span className="booking-modal-from-handle">@{clientUsername}</span>
+                ) : (
+                  <span className="booking-modal-from-handle booking-modal-from-handle--muted">
+                    Set username in Profile
+                  </span>
+                )}
+              </div>
+            </div>
+          ) : (
+            <>
+              <div className="form-group">
+                <label htmlFor="name">Name</label>
+                <input
+                  type="text"
+                  id="name"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleInputChange}
+                  placeholder="Full Name"
+                  required
+                  disabled={isSubmitting}
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="email">Email Address</label>
+                <input
+                  type="email"
+                  id="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  placeholder="your@email.com"
+                  required
+                  disabled={isSubmitting}
+                />
+              </div>
+            </>
+          )}
           
           <div className="form-group">
             <label htmlFor="dates">Dates Requesting</label>
