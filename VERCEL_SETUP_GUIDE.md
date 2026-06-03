@@ -70,6 +70,9 @@ git push
 - ✅ `REACT_APP_SUPABASE_URL` или `SUPABASE_URL`
 - ✅ `SUPABASE_SERVICE_ROLE_KEY` (для обхода RLS)
 - ✅ `REACT_APP_SUPABASE_ANON_KEY` (опционально, для клиентской части)
+- ✅ `REACT_APP_SITE_URL` = `https://portbox-y.vercel.app` (ссылки из email: подтверждение регистрации, сброс пароля)
+
+Подробнее: [SUPABASE_AUTH_URL_SETUP.md](./SUPABASE_AUTH_URL_SETUP.md)
 
 ## 🔍 Проверка текущих переменных:
 

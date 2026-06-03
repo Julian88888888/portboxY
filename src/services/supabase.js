@@ -11,6 +11,23 @@ export const getSupabaseConfig = () => ({
   isConfigured: !!(supabaseUrl && supabaseAnonKey)
 });
 
+/** Base URL for auth email links (confirm signup, reset password). */
+export const getAuthSiteUrl = () => {
+  const configured = (process.env.REACT_APP_SITE_URL || '').trim().replace(/\/$/, '');
+  if (configured) return configured;
+
+  if (typeof window !== 'undefined') {
+    const { origin } = window.location;
+    if (origin.includes('vercel.app')) return origin;
+    if (process.env.NODE_ENV === 'production' && !origin.includes('localhost')) {
+      return origin;
+    }
+    return origin;
+  }
+
+  return 'http://localhost:3000';
+};
+
 if (!supabaseUrl || !supabaseAnonKey) {
   const errorMsg = 'Missing Supabase environment variables. Please check your .env file or Vercel environment variables.';
   console.error(errorMsg);
@@ -105,11 +122,13 @@ export const supabaseAuth = {
     if (metadata.links) cleanMetadata.links = Array.isArray(metadata.links) ? metadata.links : [];
 
     try {
+      const emailRedirectTo = `${getAuthSiteUrl()}/`;
       const { data, error } = await supabase.auth.signUp({
         email: normalizedEmail,
         password: password,
         options: {
-          data: cleanMetadata, // Store additional user metadata
+          data: cleanMetadata,
+          emailRedirectTo,
         },
       });
 
@@ -270,7 +289,7 @@ export const supabaseAuth = {
   // Reset password for email
   resetPasswordForEmail: async (email) => {
     const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
+      redirectTo: `${getAuthSiteUrl()}/reset-password`,
     });
     return { data, error };
   },

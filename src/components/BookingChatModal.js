@@ -152,19 +152,6 @@ const BookingChatModal = ({ isOpen, onClose, booking }) => {
                     {new Date(booking.created_at).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' })}
                   </span>
                 )}
-                {!asClient && booking.email && (
-                  <>
-                    {' '}
-                    <a
-                      href={`mailto:${encodeURIComponent(booking.email)}?subject=${encodeURIComponent('Re: Your booking request')}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="booking-chat__email-link"
-                    >
-                      Email client
-                    </a>
-                  </>
-                )}
               </p>
             )}
             {(booking?.job_type || booking?.dates || booking?.location || booking?.pay_rate || booking?.details) && (

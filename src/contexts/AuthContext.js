@@ -56,6 +56,18 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Clear Supabase auth errors from email link hash (#error=...) after redirect
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.location.hash.includes('error=')) return;
+
+    const params = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+    const description = params.get('error_description') || params.get('error');
+    if (description) {
+      console.warn('Email confirmation link error:', description);
+    }
+    window.history.replaceState(null, '', window.location.pathname + window.location.search);
+  }, []);
+
   // Initialize auth state on app load
   useEffect(() => {
     const initializeAuth = async () => {
