@@ -25,7 +25,7 @@ export const getAuthSiteUrl = () => {
     return origin;
   }
 
-  return 'http://localhost:3000';
+  return 'https://portbox-y.vercel.app';
 };
 
 if (!supabaseUrl || !supabaseAnonKey) {
