@@ -4,6 +4,7 @@
  */
 
 import supabase from './supabase';
+import { validateImageFileSize } from '../utils/imageUploadLimits';
 
 // Auto-detect API URL based on environment
 const getApiBaseUrl = () => {
@@ -194,9 +195,9 @@ export const uploadImageToAlbum = async (albumId, imageFile) => {
       throw new Error('Only image files are allowed (JPG, PNG, GIF, WebP)');
     }
 
-    // Validate file size (10MB limit)
-    if (imageFile.size > 10 * 1024 * 1024) {
-      throw new Error('Image size must be less than 10MB');
+    const sizeCheck = validateImageFileSize(imageFile);
+    if (!sizeCheck.valid) {
+      throw new Error(sizeCheck.error);
     }
 
     const headers = await getAuthHeaders();

@@ -307,7 +307,7 @@ export default function EditProfile() {
       const validationErrors = [];
       const validFiles = files.filter(file => {
         const isValidType = file.type.startsWith('image/');
-        const isValidSize = file.size <= 5 * 1024 * 1024; // 5MB limit
+        const isValidSize = file.size <= 2 * 1024 * 1024; // 2MB limit
         
         console.log(`File ${file.name}: type=${file.type}, size=${file.size}, validType=${isValidType}, validSize=${isValidSize}`);
         
@@ -317,7 +317,7 @@ export default function EditProfile() {
         }
         
         if (!isValidSize) {
-          validationErrors.push(`${file.name}: Розмір файлу має бути менше 5MB`);
+          validationErrors.push(`${file.name}: Image must be 2 MB or smaller`);
           return false;
         }
         

@@ -1,5 +1,6 @@
 import supabase from './supabase';
 import { supabaseAuth } from './supabase';
+import { validateImageFileSize } from '../utils/imageUploadLimits';
 
 /**
  * Get current user's profile
@@ -264,9 +265,9 @@ export const uploadAvatar = async (file) => {
       throw new Error('Please select a JPG, PNG, or WebP image');
     }
 
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      throw new Error('Image size must be less than 5MB');
+    const sizeCheck = validateImageFileSize(file);
+    if (!sizeCheck.valid) {
+      throw new Error(sizeCheck.error);
     }
 
     const fileExt = file.name.split('.').pop();
@@ -314,9 +315,9 @@ export const uploadHeader = async (file) => {
       throw new Error('Please select a JPG, PNG, or WebP image');
     }
 
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      throw new Error('Image size must be less than 5MB');
+    const sizeCheck = validateImageFileSize(file);
+    if (!sizeCheck.valid) {
+      throw new Error(sizeCheck.error);
     }
 
     const fileExt = file.name.split('.').pop();

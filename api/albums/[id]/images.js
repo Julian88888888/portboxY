@@ -48,7 +48,7 @@ function parseFormData(req) {
     const bb = busboy({ 
       headers: req.headers,
       limits: {
-        fileSize: 10 * 1024 * 1024 // 10MB limit
+        fileSize: 2 * 1024 * 1024 // 2MB limit
       }
     });
     const fileData = {
@@ -301,11 +301,11 @@ module.exports = async (req, res) => {
       });
     }
 
-    // Validate file size (10MB limit)
-    if (fileData.buffer.length > 10 * 1024 * 1024) {
+    // Validate file size (2MB limit)
+    if (fileData.buffer.length > 2 * 1024 * 1024) {
       return res.status(400).json({
         success: false,
-        error: 'Image size must be less than 10MB'
+        error: 'Image must be 2 MB or smaller'
       });
     }
 

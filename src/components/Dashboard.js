@@ -10,6 +10,7 @@ import { getBookings, getBookingsAsClient, deleteBooking, updateBooking, formatB
 import ProfileSettings from './ProfileSettings';
 import BookingChatModal from './BookingChatModal';
 import './Dashboard.css';
+import { MAX_IMAGE_SIZE_HINT, validateImageFileSize } from '../utils/imageUploadLimits';
 
 const TAB_ROUTES = { 'Tab 1': '/profile', 'Tab 2': '/portfolio', 'Tab 3': '/bookings', 'Tab 4': '/links', 'Tab 5': '/settings' };
 
@@ -1778,7 +1779,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                                       fontSize: '12px',
                                       marginBottom: '4px'
                                     }}
-                                    title="Upload Images"
+                                    title={`Upload Images — ${MAX_IMAGE_SIZE_HINT}`}
                                   >
                                     📷 Add Images
                                   </button>
@@ -2997,6 +2998,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
 
               <div className="form-group" style={{ marginBottom: '16px' }}>
                 <label htmlFor="albumImage">Image {editingAlbum && '(leave empty to keep current)'}</label>
+                <p style={{ fontSize: '12px', color: '#666', margin: '4px 0 8px' }}>{MAX_IMAGE_SIZE_HINT}</p>
                 <input
                   type="file"
                   id="albumImage"
@@ -3004,6 +3006,12 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                   onChange={(e) => {
                     const file = e.target.files[0];
                     if (file) {
+                      const sizeCheck = validateImageFileSize(file);
+                      if (!sizeCheck.valid) {
+                        alert(sizeCheck.error);
+                        e.target.value = '';
+                        return;
+                      }
                       const reader = new FileReader();
                       reader.onloadend = () => {
                         setPortfolioFormData({
@@ -3208,6 +3216,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
 
               <div className="form-group" style={{ marginBottom: '16px' }}>
                 <label htmlFor="newAlbumImage">Cover Image (optional - can add later)</label>
+                <p style={{ fontSize: '12px', color: '#666', margin: '4px 0 8px' }}>{MAX_IMAGE_SIZE_HINT}</p>
                 <input
                   type="file"
                   id="newAlbumImage"
@@ -3215,6 +3224,12 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                   onChange={(e) => {
                     const file = e.target.files[0];
                     if (file) {
+                      const sizeCheck = validateImageFileSize(file);
+                      if (!sizeCheck.valid) {
+                        alert(sizeCheck.error);
+                        e.target.value = '';
+                        return;
+                      }
                       const reader = new FileReader();
                       reader.onloadend = () => {
                         setNewAlbumFormData({
@@ -3378,6 +3393,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
             >
               <div className="form-group" style={{ marginBottom: '16px' }}>
                 <label htmlFor="uploadImageFile">Select Image *</label>
+                <p style={{ fontSize: '12px', color: '#666', margin: '4px 0 8px' }}>{MAX_IMAGE_SIZE_HINT}</p>
                 <input
                   type="file"
                   id="uploadImageFile"
@@ -3385,12 +3401,13 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                   onChange={(e) => {
                     const file = e.target.files[0];
                     if (file) {
-                      // Validate file size (10MB)
-                      if (file.size > 10 * 1024 * 1024) {
-                        alert('Image size must be less than 10MB');
+                      const sizeCheck = validateImageFileSize(file);
+                      if (!sizeCheck.valid) {
+                        alert(sizeCheck.error);
+                        e.target.value = '';
                         return;
                       }
-                      
+
                       const reader = new FileReader();
                       reader.onloadend = () => {
                         setUploadImageFile(file);

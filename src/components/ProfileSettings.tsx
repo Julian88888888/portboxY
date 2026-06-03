@@ -80,8 +80,8 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
     }
 
     // Validate file size (5MB max)
-    if (file.size > 5 * 1024 * 1024) {
-      alert('Image size must be less than 5MB');
+    if (file.size > 2 * 1024 * 1024) {
+      alert('Image must be 2 MB or smaller');
       return;
     }
 
@@ -105,9 +105,10 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
 
   return (
     <div style={{ marginBottom: '24px' }}>
-      <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500 }}>
+      <label style={{ display: 'block', marginBottom: '4px', fontWeight: 500 }}>
         {label}
       </label>
+      <p style={{ fontSize: '12px', color: '#666', margin: '0 0 8px' }}>Max 2 MB per image</p>
       <div style={{ position: 'relative', display: 'inline-block' }}>
         <label
           htmlFor={`upload-${label}`}

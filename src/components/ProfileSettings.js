@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { MAX_IMAGE_SIZE_HINT, validateImageFileSize } from '../utils/imageUploadLimits';
 import { useAuth } from '../contexts/AuthContext';
 import { useProfile, useUpdateProfile, useCheckUsername, useUploadAvatar, useUploadHeader, useDeleteAvatar, useDeleteHeader, useProfileImageUrl, useHeaderImageUrl } from '../hooks/useProfile';
 import { getAvatarUrl, getHeaderUrl } from '../services/profileService';
@@ -196,9 +197,9 @@ export default function ProfileSettings() {
       return;
     }
 
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      setErrors(prev => ({ ...prev, profilePhoto: 'Image size must be less than 5MB' }));
+    const sizeCheck = validateImageFileSize(file);
+    if (!sizeCheck.valid) {
+      setErrors(prev => ({ ...prev, profilePhoto: sizeCheck.error }));
       return;
     }
 
@@ -259,8 +260,9 @@ export default function ProfileSettings() {
       return;
     }
 
-    if (file.size > 5 * 1024 * 1024) {
-      setErrors(prev => ({ ...prev, headerPhoto: 'Image size must be less than 5MB' }));
+    const sizeCheck = validateImageFileSize(file);
+    if (!sizeCheck.valid) {
+      setErrors(prev => ({ ...prev, headerPhoto: sizeCheck.error }));
       return;
     }
 
@@ -527,7 +529,7 @@ export default function ProfileSettings() {
                   <p style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>{errors.profilePhoto}</p>
                 )}
                 <p style={{ fontSize: '12px', color: '#666', marginTop: '4px', textAlign: 'center' }}>
-                  Click to upload
+                  Click to upload · {MAX_IMAGE_SIZE_HINT}
                 </p>
               </div>
               <div className="w-layout-hflex flex-block-9" style={{marginTop: '12px', alignItems: 'center', gap: '12px'}}>
@@ -650,7 +652,7 @@ export default function ProfileSettings() {
                   <p style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>{errors.headerPhoto}</p>
                 )}
                 <p style={{ fontSize: '12px', color: '#666', marginTop: '4px', textAlign: 'center' }}>
-                  Click to upload
+                  Click to upload · {MAX_IMAGE_SIZE_HINT}
                 </p>
               </div>
               <div className="w-layout-hflex flex-block-9" style={{marginTop: '12px', alignItems: 'center', gap: '12px'}}>

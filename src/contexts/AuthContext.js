@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabaseAuth } from '../services/supabase';
 import supabase from '../services/supabase';
+import { validateImageFileSize } from '../utils/imageUploadLimits';
 
 const AuthContext = createContext();
 
@@ -651,6 +652,11 @@ export const AuthProvider = ({ children }) => {
         return { success: false, error: 'Image file is required' };
       }
 
+      const sizeCheck = validateImageFileSize(imageFile);
+      if (!sizeCheck.valid) {
+        return { success: false, error: sizeCheck.error };
+      }
+
       // Upload image to Supabase Storage
       const fileExt = imageFile.name.split('.').pop();
       const uniqueId = Date.now() + '-' + Math.random().toString(36).substring(2, 9);
@@ -732,6 +738,11 @@ export const AuthProvider = ({ children }) => {
 
       // If new image file provided, upload it first
       if (albumData.imageFile) {
+        const sizeCheck = validateImageFileSize(albumData.imageFile);
+        if (!sizeCheck.valid) {
+          return { success: false, error: sizeCheck.error };
+        }
+
         const fileExt = albumData.imageFile.name.split('.').pop();
         const uniqueId = Date.now() + '-' + Math.random().toString(36).substring(2, 9);
         const fileName = `${user.id}/portfolio/${uniqueId}.${fileExt}`;
