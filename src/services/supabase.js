@@ -13,17 +13,17 @@ export const getSupabaseConfig = () => ({
 
 /** Base URL for auth email links (confirm signup, reset password). */
 export const getAuthSiteUrl = () => {
-  const configured = (process.env.REACT_APP_SITE_URL || '').trim().replace(/\/$/, '');
-  if (configured) return configured;
+  // const configured = (process.env.REACT_APP_SITE_URL || '').trim().replace(/\/$/, '');
+  // if (configured) return configured;
 
-  if (typeof window !== 'undefined') {
-    const { origin } = window.location;
-    if (origin.includes('vercel.app')) return origin;
-    if (process.env.NODE_ENV === 'production' && !origin.includes('localhost')) {
-      return origin;
-    }
-    return origin;
-  }
+  // if (typeof window !== 'undefined') {
+  //   const { origin } = window.location;
+  //   if (origin.includes('vercel.app')) return origin;
+  //   if (process.env.NODE_ENV === 'production' && !origin.includes('localhost')) {
+  //     return origin;
+  //   }
+  //   return origin;
+  // }
 
   return 'https://portbox-y.vercel.app';
 };
