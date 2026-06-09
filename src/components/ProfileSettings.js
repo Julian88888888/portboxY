@@ -21,7 +21,8 @@ const JOB_TYPES = [
     </svg>
   },
   { 
-    id: 'WardrobeStylist', 
+    id: 'WardrobeStylist',
+    label: 'Wardrobe Stylist',
     icon: <svg width="24" height="24" viewBox="0 0 24 24" strokeWidth="1.5" fill="none" xmlns="http://www.w3.org/2000/svg" color="#000000">
       <path d="M6 4H9C9 4 9 7 12 7C15 7 15 4 15 4H18M18 11V19.4C18 19.7314 17.7314 20 17.4 20H6.6C6.26863 20 6 19.7314 6 19.4L6 11" stroke="#000000" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"></path>
       <path d="M18 4L22.4429 5.77717C22.7506 5.90023 22.9002 6.24942 22.7772 6.55709L21.1509 10.6228C21.0597 10.8506 20.8391 11 20.5938 11H18" stroke="#000000" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"></path>
@@ -761,7 +762,7 @@ export default function ProfileSettings() {
                 className={`flex_wrapper flex_distribute link_block small_choice w-inline-block ${formData.job_type === job.id ? 'highlight_type' : ''}`}
                 style={{minWidth: '140px'}}
               >
-                <div>{job.id}</div>
+                <div>{job.label || job.id}</div>
                 <div className="icon_24x24 w-embed" style={{width: '24px', height: '24px', flexShrink: 0}}>{job.icon}</div>
               </a>
             ))}

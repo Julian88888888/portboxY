@@ -63,12 +63,11 @@ const SignUpModal = ({ isOpen, onClose, onSwitchToLogin }) => {
       const result = await register(registrationData);
       
       if (result.success) {
-        setSuccess('Account created successfully! Welcome to Model Link Portfolio.');
+        setSuccess('Signup successful! Check email inbox to confirm account.');
         setTimeout(() => {
           onClose();
-          // Optionally redirect or update app state
-          window.location.reload(); // Simple refresh for now
-        }, 2000);
+          window.location.reload();
+        }, 10000);
       } else {
         // Better error handling for Supabase errors
         let errorMessage = result.error || 'Registration failed. Please try again.';

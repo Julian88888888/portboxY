@@ -11,6 +11,8 @@ import ProfileSettings from './ProfileSettings';
 import BookingChatModal from './BookingChatModal';
 import './Dashboard.css';
 import { MAX_IMAGE_SIZE_HINT, validateImageFileSize } from '../utils/imageUploadLimits';
+import { formatJobType } from '../utils/formatJobType';
+import { getDisplayAge, getMaxDobForInput, normalizeDobForInput } from '../utils/dateOfBirth';
 
 const TAB_ROUTES = { 'Tab 1': '/profile', 'Tab 2': '/portfolio', 'Tab 3': '/bookings', 'Tab 4': '/links', 'Tab 5': '/settings' };
 
@@ -817,7 +819,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                       <div className="flex_wrapper flex_center">
                         <h3>{profile?.display_name || formData.name || 'User Name'}</h3>
                         <span className="button_icon accent_button small_btn">
-                          <span>{profile?.job_type || formData.jobType || 'Model'}</span>
+                          <span>{formatJobType(profile?.job_type || formData.jobType || 'Model')}</span>
                         </span>
                       </div>
                       <div className="spacing_8"></div>
@@ -1369,7 +1371,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                         </div>
                         <div className="stat_item">
                           <div className="stat_label" style={{fontWeight: '700'}}>AGE</div>
-                          <div className="stat_value" style={{fontWeight: '400'}}>{formData.age || '26'}</div>
+                          <div className="stat_value" style={{fontWeight: '400'}}>{getDisplayAge(formData.age)}</div>
                         </div>
                         <div className="stat_item">
                           <div className="stat_label" style={{fontWeight: '700'}}>GENDER</div>
@@ -1553,14 +1555,14 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                           value={formData.eyeColor}
                           onChange={handleInputChange}
                         />
-                        <label htmlFor="age">Age</label>
-                        <input 
-                          className="w-input" 
-                          maxLength="256" 
-                          name="age" 
-                          placeholder="D.O.B" 
-                          type="text" 
-                          value={formData.age}
+                        <label htmlFor="age">Date of Birth</label>
+                        <input
+                          id="age"
+                          className="w-input"
+                          name="age"
+                          type="date"
+                          max={getMaxDobForInput()}
+                          value={normalizeDobForInput(formData.age)}
                           onChange={handleInputChange}
                         />
                         <label htmlFor="gender">Gender</label>

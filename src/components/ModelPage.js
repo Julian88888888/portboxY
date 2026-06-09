@@ -6,6 +6,8 @@ import { getAvatarUrl, getHeaderUrl } from '../services/profileService';
 import { getAlbums, getAlbumImages, normalizeImageUrl } from '../services/albumsService';
 import { getCustomLinks } from '../services/customLinksService';
 import BookingModal from './BookingModal';
+import { formatJobType, isModelJobType } from '../utils/formatJobType';
+import { getDisplayAge } from '../utils/dateOfBirth';
 
 const days = [
   { key: "monday", label: "Mon", hours: "5 hours" },
@@ -418,6 +420,9 @@ export default function JobRequestPopup() {
       </span>
     );
 
+  const profileJobType = getUserValue('job_type', 'Model');
+  const showFullModelStats = isModelJobType(profileJobType);
+
   // Get profile data for BookingModal (include model id for guest booking)
   const getProfileDataForModal = () => {
     if (!profile) return null;
@@ -588,7 +593,7 @@ export default function JobRequestPopup() {
             <div className="flex_wrapper flex_center">
               <h3>{getUserValue('display_name', 'User Name')}</h3>
               <a href="#" className="button_icon accent_button small_btn w-inline-block">
-                <div>{getUserValue('job_type', 'Model')}</div>
+                <div>{formatJobType(getUserValue('job_type', 'Model'))}</div>
               </a>
             </div>
             <div className="spacing_8"></div>
@@ -708,7 +713,7 @@ export default function JobRequestPopup() {
             <div className="flex_wrapper flex_center">
               <h3>{getUserValue('display_name', 'User Name')}</h3>
               <a href="#" className="button_icon accent_button small_btn w-inline-block">
-                <div>{getUserValue('job_type', 'Model')}</div>
+                <div>{formatJobType(getUserValue('job_type', 'Model'))}</div>
               </a>
             </div>
             <div className="spacing_8" />
@@ -772,69 +777,73 @@ export default function JobRequestPopup() {
           {shouldShowModelStats() && (
             <div className="stat_container">
               <div className="stats_wrap_bottom">
-                <div className="stat_item">
-                  <div className="stat_title">HEIGHT</div>
-                  <div className="stat_descript">
-                    {getUserValue('heightFeet') && getUserValue('heightInches')
-                      ? `${getUserValue('heightFeet')}'${getUserValue('heightInches')}"`
-                      : "5'11\""}
-                  </div>
-                </div>
-                <div className="stat_item">
-                  <div className="stat_title">WEIGHT</div>
-                  <div className="stat_descript">
-                    {getUserValue('weight') 
-                      ? `${getUserValue('weight')} ${getUserValue('weightUnit', 'lbs')}`
-                      : '135 lbs'}
-                  </div>
-                </div>
-                <div className="stat_item">
-                  <div className="stat_title">BUST</div>
-                  <div className="stat_descript">
-                    {getUserValue('bust') 
-                      ? `${getUserValue('bust')}${getUserValue('bustSize', '')}`
-                      : '23A'}
-                  </div>
-                </div>
-                <div className="stat_item">
-                  <div className="stat_title">WAIST</div>
-                  <div className="stat_descript">
-                    {getUserValue('waist') 
-                      ? `${getUserValue('waist')} ${getUserValue('waistUnit', 'in')}`
-                      : '26 in'}
-                  </div>
-                </div>
-                <div className="stat_item">
-                  <div className="stat_title">HIPS</div>
-                  <div className="stat_descript">
-                    {getUserValue('hips') 
-                      ? `${getUserValue('hips')} ${getUserValue('hipsUnit', 'in')}`
-                      : '36 in'}
-                  </div>
-                </div>
-                <div className="stat_item">
-                  <div className="stat_title">SHOE</div>
-                  <div className="stat_descript">
-                    {getUserValue('shoe') 
-                      ? `${getUserValue('shoe')} ${getUserValue('shoeUnit', 'US')}`
-                      : '7 US'}
-                  </div>
-                </div>
-                <div className="stat_item">
-                  <div className="stat_title">HAIR COLOR</div>
-                  <div className="stat_descript">{getUserValue('hairColor', 'Black')}</div>
-                </div>
-                <div className="stat_item">
-                  <div className="stat_title">HAIR LENGTH</div>
-                  <div className="stat_descript">{getUserValue('hairLength', 'Long')}</div>
-                </div>
-                <div className="stat_item">
-                  <div className="stat_title">EYE COLOR</div>
-                  <div className="stat_descript">{getUserValue('eyeColor', 'Brown')}</div>
-                </div>
+                {showFullModelStats && (
+                  <>
+                    <div className="stat_item">
+                      <div className="stat_title">HEIGHT</div>
+                      <div className="stat_descript">
+                        {getUserValue('heightFeet') && getUserValue('heightInches')
+                          ? `${getUserValue('heightFeet')}'${getUserValue('heightInches')}"`
+                          : "5'11\""}
+                      </div>
+                    </div>
+                    <div className="stat_item">
+                      <div className="stat_title">WEIGHT</div>
+                      <div className="stat_descript">
+                        {getUserValue('weight')
+                          ? `${getUserValue('weight')} ${getUserValue('weightUnit', 'lbs')}`
+                          : '135 lbs'}
+                      </div>
+                    </div>
+                    <div className="stat_item">
+                      <div className="stat_title">BUST</div>
+                      <div className="stat_descript">
+                        {getUserValue('bust')
+                          ? `${getUserValue('bust')}${getUserValue('bustSize', '')}`
+                          : '23A'}
+                      </div>
+                    </div>
+                    <div className="stat_item">
+                      <div className="stat_title">WAIST</div>
+                      <div className="stat_descript">
+                        {getUserValue('waist')
+                          ? `${getUserValue('waist')} ${getUserValue('waistUnit', 'in')}`
+                          : '26 in'}
+                      </div>
+                    </div>
+                    <div className="stat_item">
+                      <div className="stat_title">HIPS</div>
+                      <div className="stat_descript">
+                        {getUserValue('hips')
+                          ? `${getUserValue('hips')} ${getUserValue('hipsUnit', 'in')}`
+                          : '36 in'}
+                      </div>
+                    </div>
+                    <div className="stat_item">
+                      <div className="stat_title">SHOE</div>
+                      <div className="stat_descript">
+                        {getUserValue('shoe')
+                          ? `${getUserValue('shoe')} ${getUserValue('shoeUnit', 'US')}`
+                          : '7 US'}
+                      </div>
+                    </div>
+                    <div className="stat_item">
+                      <div className="stat_title">HAIR COLOR</div>
+                      <div className="stat_descript">{getUserValue('hairColor', 'Black')}</div>
+                    </div>
+                    <div className="stat_item">
+                      <div className="stat_title">HAIR LENGTH</div>
+                      <div className="stat_descript">{getUserValue('hairLength', 'Long')}</div>
+                    </div>
+                    <div className="stat_item">
+                      <div className="stat_title">EYE COLOR</div>
+                      <div className="stat_descript">{getUserValue('eyeColor', 'Brown')}</div>
+                    </div>
+                  </>
+                )}
                 <div className="stat_item">
                   <div className="stat_title">AGE</div>
-                  <div className="stat_descript">{getUserValue('age', '26')}</div>
+                  <div className="stat_descript">{getDisplayAge(getUserValue('age', '26'))}</div>
                 </div>
                 <div className="stat_item">
                   <div className="stat_title">GENDER</div>
