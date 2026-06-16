@@ -284,10 +284,14 @@ export const AuthProvider = ({ children }) => {
         let errorMessage = error.message || 'Registration failed';
         
         if (error.message) {
+          const msgLower = error.message.toLowerCase();
           // Handle specific Supabase error codes
-          if (error.message.includes('User already registered') || 
-              error.message.includes('already registered') ||
-              error.status === 422) {
+          if (
+            msgLower.includes('user already registered') ||
+            msgLower.includes('already registered') ||
+            msgLower.includes('already exists') ||
+            msgLower.includes('email address is already registered')
+          ) {
             errorMessage = 'This email is already registered. Please sign in instead.';
           } else if (error.message.includes('Password')) {
             errorMessage = 'Password does not meet requirements. Please use at least 6 characters.';

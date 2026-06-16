@@ -140,6 +140,22 @@ export const supabaseAuth = {
         });
       }
 
+      // Email confirmation enabled: existing users get user object with empty identities (anti-enumeration)
+      if (
+        !error &&
+        data?.user &&
+        Array.isArray(data.user.identities) &&
+        data.user.identities.length === 0
+      ) {
+        return {
+          data: null,
+          error: {
+            message: 'User already registered',
+            status: 422,
+          },
+        };
+      }
+
       return { data, error };
     } catch (err) {
       console.error('Unexpected error in signUp:', err);

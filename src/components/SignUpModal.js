@@ -241,7 +241,12 @@ const SignUpModal = ({ isOpen, onClose, onSwitchToLogin }) => {
             </div>
           )}
           
-          <button type="submit" className="submit-button" disabled={isLoading}>
+          <button
+            type="submit"
+            className="submit-button"
+            disabled={isLoading || Boolean(success)}
+            style={success ? { backgroundColor: '#9ca3af', cursor: 'not-allowed' } : undefined}
+          >
             {isLoading ? (
               <>
                 <FaSpinner className="spinner" />
