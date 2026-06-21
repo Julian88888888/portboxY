@@ -4,7 +4,8 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../contexts/AuthContext';
 import { useProfile } from '../hooks/useProfile';
 import { getAvatarUrl, getHeaderUrl, upsertProfile } from '../services/profileService';
-import { createAlbum, getAlbums, uploadImageToAlbum, deleteAlbum, getAlbumImages, setCoverImage, normalizeImageUrl } from '../services/albumsService';
+import { createAlbum, getAlbums, uploadImageToAlbum, deleteAlbum, getAlbumImages, setCoverImage, normalizeImageUrl, seedStarterAlbumsIfNeeded, trimExcessStarterAlbumsIfNeeded, canCreateAlbum, canUploadImageToAlbum, MAX_ALBUMS_PER_USER, MAX_IMAGES_PER_ALBUM, getMaxAlbumsError, getMaxImagesError } from '../services/albumsService';
+import { validateMarkets } from '../utils/markets';
 import { getCustomLinks, createCustomLink, updateCustomLink, deleteCustomLink } from '../services/customLinksService';
 import { getBookings, getBookingsAsClient, deleteBooking, updateBooking, formatBookingClientHandle } from '../services/bookingsService';
 import ProfileSettings from './ProfileSettings';
@@ -12,6 +13,8 @@ import BookingChatModal from './BookingChatModal';
 import './Dashboard.css';
 import { MAX_IMAGE_SIZE_HINT, validateImageFileSize } from '../utils/imageUploadLimits';
 import { formatJobType } from '../utils/formatJobType';
+import ProfileAvailableForMultiSelect from './ProfileAvailableForMultiSelect';
+import { parseAvailableForSelections } from '../utils/availableFor';
 import { getDisplayAge, getMaxDobForInput, normalizeDobForInput } from '../utils/dateOfBirth';
 
 const TAB_ROUTES = { 'Tab 1': '/profile', 'Tab 2': '/portfolio', 'Tab 3': '/bookings', 'Tab 4': '/links', 'Tab 5': '/settings' };
@@ -166,9 +169,20 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
   // Load albums from new API
   useEffect(() => {
     const loadAlbums = async () => {
+      if (!user?.id) {
+        setAlbums([]);
+        setAlbumImages({});
+        setAlbumsLoading(false);
+        return;
+      }
+
       setAlbumsLoading(true);
       console.log('Loading albums...');
-      const result = await getAlbums();
+
+      await seedStarterAlbumsIfNeeded(user.id);
+      await trimExcessStarterAlbumsIfNeeded(user.id);
+
+      const result = await getAlbums(user.id);
       console.log('Albums loaded:', result);
       
       if (result.success) {
@@ -198,7 +212,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
       setAlbumsLoading(false);
     };
     loadAlbums();
-  }, []);
+  }, [user?.id]);
 
   // Load custom links
   useEffect(() => {
@@ -670,6 +684,13 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
       await saveBookingsSettings();
       return;
     }
+    if (formType === 'stats' || formType === 'model-stats') {
+      const marketsCheck = validateMarkets(formData.markets);
+      if (!marketsCheck.valid) {
+        alert(marketsCheck.error);
+        return;
+      }
+    }
     try {
       const payload = formType === 'social'
         ? {
@@ -1120,7 +1141,11 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                           </div>
                           <div className="stat_item">
                             <div className="stat_label">AVAILABLE FOR</div>
-                            <div className="stat_value">{formData.availableFor || 'Beauty, Editorial, Glamour, Print'}</div>
+                            <div className="stat_value">
+                              {parseAvailableForSelections(formData.availableFor).length > 0
+                                ? parseAvailableForSelections(formData.availableFor).join(', ')
+                                : 'Beauty, Editorial, Glamour, Print'}
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -1158,27 +1183,20 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                           className="w-input" 
                           maxLength="256" 
                           name="markets" 
-                          placeholder="Type Markets" 
+                          placeholder="Type Markets: i.e. Miami, Los Angeles, New York (Max 3)" 
                           type="text" 
                           id="markets"
                           value={formData.markets}
                           onChange={handleInputChange}
                           style={{fontSize: '13px', padding: '8px', marginBottom: '12px'}}
                         />
-                        <label htmlFor="availableFor" style={{fontSize: '12px', fontWeight: '500', marginBottom: '4px', display: 'block'}}>Available For</label>
-                        <select 
-                          id="availableFor" 
-                          name="availableFor" 
-                          className="dropdowntxt w-select"
+                        <label htmlFor="availableFor" style={{ fontSize: '12px', fontWeight: '500', marginBottom: '8px', display: 'block' }}>Available For</label>
+                        <ProfileAvailableForMultiSelect
+                          id="availableFor"
                           value={formData.availableFor}
-                          onChange={handleInputChange}
-                          style={{fontSize: '13px', padding: '8px', marginBottom: '12px'}}
-                        >
-                          <option value="">Select one...</option>
-                          <option value="Beauty">Beauty</option>
-                          <option value="Commercial">Commercial</option>
-                          <option value="Film">Film</option>
-                        </select>
+                          onChange={(nextValue) => setFormData((prev) => ({ ...prev, availableFor: nextValue }))}
+                          selectionLimit={6}
+                        />
                         <input type="submit" className="submit-button w-button" value="Save Profile Stats" style={{fontSize: '14px', padding: '10px 20px', marginTop: '8px'}} />
                       </form>
                       <div className="w-form-done" tabIndex="-1" role="region" aria-label="Email Form success">
@@ -1641,7 +1659,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                     <div className="spacing_24"></div>
                     <h3>Image Albums</h3>
                     <p className="text_color_grey" style={{ marginBottom: '16px' }}>
-                      Create albums and upload multiple images to each album
+                      Create albums and upload multiple images to each album (max {MAX_ALBUMS_PER_USER} albums, {MAX_IMAGES_PER_ALBUM} images per album)
                     </p>
                     <div
                       className="w-layout-hflex flex-block-9"
@@ -1766,6 +1784,11 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                                   <button
                                     onClick={(e) => {
                                       e.preventDefault();
+                                      const imageCount = albumImages[album.id]?.length || 0;
+                                      if (!canUploadImageToAlbum(imageCount)) {
+                                        alert(getMaxImagesError());
+                                        return;
+                                      }
                                       setSelectedAlbumId(album.id);
                                       setUploadImageFile(null);
                                       setUploadImagePreview(null);
@@ -1792,7 +1815,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                                         const result = await deleteAlbum(album.id);
                                         if (result.success) {
                                           // Reload albums
-                                          const reloadResult = await getAlbums();
+                                          const reloadResult = await getAlbums(user?.id);
                                           if (reloadResult.success) {
                                             setAlbums(reloadResult.data || []);
                                             // Remove from images map
@@ -1841,6 +1864,10 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                         
                         <button
                           onClick={() => {
+                            if (!canCreateAlbum(albums.length)) {
+                              alert(getMaxAlbumsError());
+                              return;
+                            }
                             setNewAlbumFormData({
                               title: '',
                               description: '',
@@ -1850,9 +1877,16 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                             setIsNewAlbumModalOpen(true);
                           }}
                           className="submit-button w-button"
+                          disabled={!canCreateAlbum(albums.length)}
+                          style={!canCreateAlbum(albums.length) ? { opacity: 0.5, cursor: 'not-allowed' } : undefined}
                         >
                           + Create New Album
                         </button>
+                        {!canCreateAlbum(albums.length) && (
+                          <p className="text_color_grey" style={{ marginTop: '8px', fontSize: '13px' }}>
+                            {getMaxAlbumsError()}
+                          </p>
+                        )}
                       </>
                     )}
                   </div>
@@ -3128,6 +3162,11 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                   return;
                 }
 
+                if (!canCreateAlbum(albums.length)) {
+                  alert(getMaxAlbumsError());
+                  return;
+                }
+
                 // Step 1: Create album
                 const albumResult = await createAlbum({
                   title: newAlbumFormData.title,
@@ -3154,7 +3193,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
 
                 // Reload all albums and images
                 setAlbumsLoading(true);
-                const reloadResult = await getAlbums();
+                const reloadResult = await getAlbums(user?.id);
                 console.log('Reload albums result:', reloadResult);
                 
                 if (reloadResult.success) {
@@ -3319,7 +3358,12 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-              <h3>Upload Image to Album</h3>
+              <div>
+                <h3 style={{ margin: 0 }}>Upload Image to Album</h3>
+                <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#666' }}>
+                  {(albumImages[selectedAlbumId]?.length || 0)} / {MAX_IMAGES_PER_ALBUM} images
+                </p>
+              </div>
               <button
                 onClick={() => {
                   setIsUploadImageModalOpen(false);
@@ -3350,7 +3394,17 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                   return;
                 }
 
-                const imageResult = await uploadImageToAlbum(selectedAlbumId, uploadImageFile);
+                const currentImageCount = albumImages[selectedAlbumId]?.length || 0;
+                if (!canUploadImageToAlbum(currentImageCount)) {
+                  alert(getMaxImagesError());
+                  return;
+                }
+
+                const imageResult = await uploadImageToAlbum(
+                  selectedAlbumId,
+                  uploadImageFile,
+                  currentImageCount
+                );
                 
                 if (!imageResult.success) {
                   alert(imageResult.error || 'Failed to upload image');
@@ -3361,7 +3415,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
 
                 // Reload all albums to update cover images
                 setAlbumsLoading(true);
-                const albumsResult = await getAlbums();
+                const albumsResult = await getAlbums(user?.id);
                 console.log('Reload albums after image upload:', albumsResult);
                 
                 if (albumsResult.success) {
@@ -3575,7 +3629,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                         const result = await setCoverImage(viewingAlbum.id, image.id);
                         if (result.success) {
                           // Reload albums to update cover
-                          const albumsResult = await getAlbums();
+                          const albumsResult = await getAlbums(user?.id);
                           if (albumsResult.success) {
                             setAlbums(albumsResult.data || []);
                             // Update viewing album

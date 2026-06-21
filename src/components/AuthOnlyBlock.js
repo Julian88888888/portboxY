@@ -67,7 +67,7 @@ function AuthOnlyBlock() {
         Portfolio-In-Link
       </span>
       <h2 style={{ margin: 0, fontSize: '18px', lineHeight: '1.2', fontWeight: 600, color: '#333' }}>
-        Welcome Back {user?.firstName || user?.user_metadata?.firstName || 'User'}
+        Welcome Back
       </h2>
       <div
         style={{

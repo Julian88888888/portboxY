@@ -89,7 +89,7 @@ const Sidebar = ({ onToggle }) => {
                 Portfolio-In-Link
               </Link>
               <h2 className="sidebar-auth-welcome">
-                Welcome Back {user?.firstName || user?.user_metadata?.firstName || 'User'}
+                Welcome Back
               </h2>
               {user?.email && (
                 <p className="sidebar-auth-email">Logged in as: {user.email}</p>

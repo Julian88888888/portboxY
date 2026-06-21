@@ -13,6 +13,7 @@
     "@supabase/supabase-js": "^2.86.0",
     "@tanstack/react-query": "^5.0.0",
     "busboy": "^1.6.0",
+    "multiselect-react-dropdown": "^2.0.25",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-icons": "^4.12.0",
