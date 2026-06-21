@@ -14,6 +14,12 @@ const { createClient } = require('@supabase/supabase-js');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs').promises;
+const {
+  MAX_ALBUMS_PER_USER,
+  MAX_IMAGES_PER_ALBUM,
+  getMaxAlbumsError,
+  getMaxImagesError,
+} = require('../utils/albumLimits');
 
 // Initialize Supabase client
 // In production, use environment variables
@@ -135,12 +141,38 @@ const uploadImageToStorage = async (file) => {
 };
 
 /**
+ * Resolve authenticated user from optional Bearer token (for GET /albums).
+ */
+const getOptionalUser = async (req) => {
+  if (req.user?.id) {
+    return req.user;
+  }
+
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+  if (!token || !supabase) {
+    return null;
+  }
+
+  try {
+    const { data: { user }, error } = await supabase.auth.getUser(token);
+    if (error || !user) {
+      return null;
+    }
+    return user;
+  } catch {
+    return null;
+  }
+};
+
+/**
  * POST /albums
  * Create a new album
  */
 const createAlbum = async (req, res) => {
   try {
     const { title, description } = req.body;
+    const userId = req.user?.id;
 
     // Validate input
     if (!title || title.trim().length === 0) {
@@ -153,13 +185,32 @@ const createAlbum = async (req, res) => {
     // If using Supabase
     if (supabase) {
       try {
+        if (userId) {
+          const { count, error: countError } = await supabase
+            .from('albums')
+            .select('id', { count: 'exact', head: true })
+            .eq('user_id', userId);
+
+          if (!countError && count >= MAX_ALBUMS_PER_USER) {
+            return res.status(400).json({
+              success: false,
+              error: getMaxAlbumsError(),
+            });
+          }
+        }
+
+        const insertPayload = {
+          title: title.trim(),
+          description: description ? description.trim() : null,
+          cover_image_id: null,
+        };
+        if (userId) {
+          insertPayload.user_id = userId;
+        }
+
         const { data, error } = await supabase
           .from('albums')
-          .insert({
-            title: title.trim(),
-            description: description ? description.trim() : null,
-            cover_image_id: null
-          })
+          .insert(insertPayload)
           .select()
           .single();
 
@@ -225,11 +276,19 @@ const createAlbum = async (req, res) => {
 const getAlbums = async (req, res) => {
   try {
     if (supabase) {
-      // Get all albums
-      const { data: albums, error } = await supabase
+      const authUser = await getOptionalUser(req);
+      const filterUserId = req.query.userId || authUser?.id;
+
+      let albumsQuery = supabase
         .from('albums')
         .select('id, title, description, cover_image_id, created_at')
         .order('created_at', { ascending: false });
+
+      if (filterUserId) {
+        albumsQuery = albumsQuery.eq('user_id', filterUserId);
+      }
+
+      const { data: albums, error } = await albumsQuery;
 
       if (error) {
         console.error('Database error:', error);
@@ -321,6 +380,18 @@ const uploadImageToAlbum = async (req, res) => {
         return res.status(404).json({
           success: false,
           error: 'Album not found'
+        });
+      }
+
+      const { count: imageCount, error: imageCountError } = await supabase
+        .from('images')
+        .select('id', { count: 'exact', head: true })
+        .eq('album_id', albumId);
+
+      if (!imageCountError && imageCount >= MAX_IMAGES_PER_ALBUM) {
+        return res.status(400).json({
+          success: false,
+          error: getMaxImagesError(),
         });
       }
 

@@ -5,6 +5,13 @@
 
 import supabase from './supabase';
 import { validateImageFileSize } from '../utils/imageUploadLimits';
+import {
+  MAX_ALBUMS_PER_USER,
+  MAX_IMAGES_PER_ALBUM,
+  STARTER_ALBUMS,
+  getMaxAlbumsError,
+  getMaxImagesError,
+} from '../utils/albumLimits';
 
 // Auto-detect API URL based on environment
 const getApiBaseUrl = () => {
@@ -141,17 +148,19 @@ export const createAlbum = async (albumData) => {
 
 /**
  * GET /albums
- * Get all albums with cover images
- * 
+ * Get albums for a user (authenticated user or public profile via userId).
+ *
+ * @param {string} [userId] - Optional user ID for public profile pages
  * @returns {Promise<Array>} Array of albums
  */
-export const getAlbums = async () => {
+export const getAlbums = async (userId = null) => {
   try {
-    const response = await fetch(`${getApiBaseUrl()}/albums`, {
+    const headers = await getAuthHeaders();
+    const query = userId ? `?userId=${encodeURIComponent(userId)}` : '';
+
+    const response = await fetch(`${getApiBaseUrl()}/albums${query}`, {
       method: 'GET',
-      headers: {
-        'Content-Type': 'application/json'
-      }
+      headers
     });
 
     const data = await response.json();
@@ -183,10 +192,14 @@ export const getAlbums = async () => {
  * @param {File} imageFile - Image file to upload
  * @returns {Promise<Object>} Uploaded image data
  */
-export const uploadImageToAlbum = async (albumId, imageFile) => {
+export const uploadImageToAlbum = async (albumId, imageFile, currentImageCount = null) => {
   try {
     if (!imageFile) {
       throw new Error('Image file is required');
+    }
+
+    if (currentImageCount !== null && currentImageCount >= MAX_IMAGES_PER_ALBUM) {
+      throw new Error(getMaxImagesError());
     }
 
     // Validate file type
@@ -312,6 +325,76 @@ export const setCoverImage = async (albumId, imageId) => {
     };
   }
 };
+
+/**
+ * Create starter albums for new accounts when none exist yet.
+ */
+export const seedStarterAlbumsIfNeeded = async (userId = null) => {
+  const existing = await getAlbums(userId);
+  if (!existing.success) {
+    return existing;
+  }
+
+  const albums = existing.data || [];
+  if (albums.length > 0) {
+    return { success: true, seeded: false };
+  }
+
+  for (const starter of STARTER_ALBUMS) {
+    const result = await createAlbum(starter);
+    if (!result.success) {
+      return result;
+    }
+  }
+
+  return { success: true, seeded: true };
+};
+
+/**
+ * Legacy cleanup: 4 empty starter albums -> keep 2 newest.
+ */
+export const trimExcessStarterAlbumsIfNeeded = async (userId = null) => {
+  const existing = await getAlbums(userId);
+  if (!existing.success) {
+    return existing;
+  }
+
+  const albums = existing.data || [];
+  if (albums.length !== 4) {
+    return { success: true, trimmed: false };
+  }
+
+  const imageResults = await Promise.all(
+    albums.map((album) => getAlbumImages(album.id))
+  );
+  const allEmpty = imageResults.every(
+    (result) => !result.success || (result.data || []).length === 0
+  );
+
+  if (!allEmpty) {
+    return { success: true, trimmed: false };
+  }
+
+  const sorted = [...albums].sort(
+    (a, b) => new Date(a.created_at) - new Date(b.created_at)
+  );
+  const toDelete = sorted.slice(0, 2);
+
+  for (const album of toDelete) {
+    const result = await deleteAlbum(album.id);
+    if (!result.success) {
+      return result;
+    }
+  }
+
+  return { success: true, trimmed: true };
+};
+
+export const canCreateAlbum = (albumCount) => albumCount < MAX_ALBUMS_PER_USER;
+
+export const canUploadImageToAlbum = (imageCount) => imageCount < MAX_IMAGES_PER_ALBUM;
+
+export { MAX_ALBUMS_PER_USER, MAX_IMAGES_PER_ALBUM, getMaxAlbumsError, getMaxImagesError };
 
 /**
  * DELETE /images/:id

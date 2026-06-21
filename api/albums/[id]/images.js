@@ -6,6 +6,9 @@
 const { createClient } = require('@supabase/supabase-js');
 const busboy = require('busboy');
 
+const MAX_IMAGES_PER_ALBUM = 20;
+const getMaxImagesError = () => `Maximum ${MAX_IMAGES_PER_ALBUM} images per album`;
+
 // Initialize Supabase client
 const supabaseUrl = process.env.REACT_APP_SUPABASE_URL || process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.REACT_APP_SUPABASE_ANON_KEY;
@@ -270,6 +273,18 @@ module.exports = async (req, res) => {
       return res.status(404).json({
         success: false,
         error: 'Album not found'
+      });
+    }
+
+    const { count: imageCount, error: imageCountError } = await supabase
+      .from('images')
+      .select('id', { count: 'exact', head: true })
+      .eq('album_id', albumId);
+
+    if (!imageCountError && imageCount >= MAX_IMAGES_PER_ALBUM) {
+      return res.status(400).json({
+        success: false,
+        error: getMaxImagesError(),
       });
     }
 

@@ -436,13 +436,19 @@ export default function JobRequestPopup() {
     };
   };
 
-  // Load albums on component mount
+  // Load albums when profile is available
   useEffect(() => {
     const loadAlbums = async () => {
+      if (!profile?.id) {
+        setAlbums([]);
+        setAlbumsLoading(false);
+        return;
+      }
+
       setAlbumsLoading(true);
-      console.log('ModelPage: Loading albums from', `${process.env.REACT_APP_API_URL || 'http://localhost:5002/api'}/albums`);
+      console.log('ModelPage: Loading albums for user', profile.id);
       try {
-        const result = await getAlbums();
+        const result = await getAlbums(profile.id);
         console.log('ModelPage: Albums result:', result);
         if (result.success) {
           const albumsData = result.data || [];
@@ -460,7 +466,7 @@ export default function JobRequestPopup() {
     };
 
     loadAlbums();
-  }, []);
+  }, [profile?.id]);
 
   // Load custom links on component mount
   useEffect(() => {

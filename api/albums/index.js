@@ -5,6 +5,11 @@
 
 const { createClient } = require('@supabase/supabase-js');
 
+const MAX_ALBUMS_PER_USER = 6;
+const MAX_IMAGES_PER_ALBUM = 20;
+const getMaxAlbumsError = () => `Maximum ${MAX_ALBUMS_PER_USER} albums allowed`;
+const getMaxImagesError = () => `Maximum ${MAX_IMAGES_PER_ALBUM} images per album`;
+
 // Initialize Supabase client
 const supabaseUrl = process.env.REACT_APP_SUPABASE_URL || process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.REACT_APP_SUPABASE_ANON_KEY;
@@ -67,11 +72,19 @@ module.exports = async (req, res) => {
   try {
     // GET /api/albums - Get all albums with cover images
     if (req.method === 'GET') {
-      // Get all albums
-      const { data: albums, error } = await supabase
+      const { error: authError, user } = await verifyToken(req);
+      const filterUserId = req.query.userId || (!authError && user ? user.id : null);
+
+      let albumsQuery = supabase
         .from('albums')
         .select('id, title, description, cover_image_id, created_at')
         .order('created_at', { ascending: false });
+
+      if (filterUserId) {
+        albumsQuery = albumsQuery.eq('user_id', filterUserId);
+      }
+
+      const { data: albums, error } = await albumsQuery;
 
       if (error) {
         console.error('Database error:', error);
@@ -139,12 +152,25 @@ module.exports = async (req, res) => {
         });
       }
 
+      const { count, error: countError } = await supabase
+        .from('albums')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', user.id);
+
+      if (!countError && count >= MAX_ALBUMS_PER_USER) {
+        return res.status(400).json({
+          success: false,
+          error: getMaxAlbumsError(),
+        });
+      }
+
       const { data, error } = await supabase
         .from('albums')
         .insert({
           title: title.trim(),
           description: description ? description.trim() : null,
-          cover_image_id: null
+          cover_image_id: null,
+          user_id: user.id,
         })
         .select()
         .single();
