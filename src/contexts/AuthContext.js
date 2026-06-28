@@ -19,6 +19,25 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [session, setSession] = useState(null);
 
+  /** Flatten Supabase user_metadata onto the app user so form fields persist after reload. */
+  const mapSessionUserToAppUser = (sessionUser, extras = {}) => {
+    if (!sessionUser) return null;
+    const userMetadata = sessionUser.user_metadata || {};
+    return {
+      ...sessionUser,
+      ...userMetadata,
+      firstName: userMetadata.firstName || '',
+      lastName: userMetadata.lastName || '',
+      phone: userMetadata.phone || '',
+      userType: userMetadata.userType || 'model',
+      profilePhotos: userMetadata.profilePhotos || extras.profilePhotos || [],
+      links: userMetadata.links || [],
+      portfolioAlbums: extras.portfolioAlbums || [],
+      socialLinks: userMetadata.socialLinks || sessionUser.socialLinks,
+      showSocialLinks: userMetadata.showSocialLinks,
+    };
+  };
+
   // Load portfolio albums from database for a specific user
   const loadPortfolioAlbumsForUser = async (userId) => {
     try {
@@ -84,24 +103,9 @@ export const AuthProvider = ({ children }) => {
 
         if (session?.user) {
           setSession(session);
-          setUser(session.user);
-          setIsAuthenticated(true);
-          
-          // Load additional user profile data from user metadata
-          const userMetadata = session.user.user_metadata || {};
-          const userData = {
-            ...session.user,
-            firstName: userMetadata.firstName || '',
-            lastName: userMetadata.lastName || '',
-            phone: userMetadata.phone || '',
-            userType: userMetadata.userType || 'model',
-            profilePhotos: userMetadata.profilePhotos || [],
-            links: userMetadata.links || [],
-            portfolioAlbums: [], // Will be loaded from database
-            socialLinks: userMetadata.socialLinks || session.user.socialLinks,
-            showSocialLinks: userMetadata.showSocialLinks,
-          };
+          const userData = mapSessionUserToAppUser(session.user);
           setUser(userData);
+          setIsAuthenticated(true);
           
           // Load portfolio albums from database
           if (session.user.id) {
@@ -125,19 +129,7 @@ export const AuthProvider = ({ children }) => {
         
         if (session?.user) {
           setSession(session);
-          const userMetadata = session.user.user_metadata || {};
-          const userData = {
-            ...session.user,
-            firstName: userMetadata.firstName || '',
-            lastName: userMetadata.lastName || '',
-            phone: userMetadata.phone || '',
-            userType: userMetadata.userType || 'model',
-            profilePhotos: userMetadata.profilePhotos || [],
-            links: userMetadata.links || [],
-            portfolioAlbums: [], // Will be loaded from database
-            socialLinks: userMetadata.socialLinks || session.user.socialLinks,
-            showSocialLinks: userMetadata.showSocialLinks,
-          };
+          const userData = mapSessionUserToAppUser(session.user);
           setUser(userData);
           setIsAuthenticated(true);
           
@@ -215,17 +207,7 @@ export const AuthProvider = ({ children }) => {
       }
 
       if (data?.user) {
-        const userMetadata = data.user.user_metadata || {};
-        const userData = {
-          ...data.user,
-          firstName: userMetadata.firstName || '',
-          lastName: userMetadata.lastName || '',
-          phone: userMetadata.phone || '',
-          userType: userMetadata.userType || 'model',
-          profilePhotos: userMetadata.profilePhotos || [],
-          links: userMetadata.links || [],
-          portfolioAlbums: [], // Will be loaded from database
-        };
+        const userData = mapSessionUserToAppUser(data.user);
         setUser(userData);
         setSession(data.session);
         setIsAuthenticated(true);
@@ -305,16 +287,12 @@ export const AuthProvider = ({ children }) => {
 
       // Check if user was created (even if email confirmation is required)
       if (data?.user) {
-        const userMetadata = data.user.user_metadata || {};
-        setUser({
-          ...data.user,
-          firstName: userMetadata.firstName || firstName || '',
-          lastName: userMetadata.lastName || lastName || '',
-          phone: userMetadata.phone || phone || '',
-          userType: userMetadata.userType || userType || 'model',
-          profilePhotos: userMetadata.profilePhotos || [],
-          links: userMetadata.links || [],
-        });
+        setUser(mapSessionUserToAppUser(data.user, {
+          firstName: firstName || '',
+          lastName: lastName || '',
+          phone: phone || '',
+          userType: userType || 'model',
+        }));
         
         // Session might be null if email confirmation is required
         if (data.session) {
@@ -369,19 +347,10 @@ export const AuthProvider = ({ children }) => {
       }
 
       if (data?.user) {
-        const userMetadata = data.user.user_metadata || {};
-        setUser({
-          ...data.user,
-          firstName: userMetadata.firstName || '',
-          lastName: userMetadata.lastName || '',
-          phone: userMetadata.phone || '',
-          userType: userMetadata.userType || 'model',
-          profilePhotos: userMetadata.profilePhotos || [],
-          links: userMetadata.links || [],
-          portfolioAlbums: userMetadata.portfolioAlbums || [],
-          socialLinks: userMetadata.socialLinks || data.user.socialLinks,
-          showSocialLinks: userMetadata.showSocialLinks,
-        });
+        setUser((prev) => ({
+          ...mapSessionUserToAppUser(data.user),
+          portfolioAlbums: prev?.portfolioAlbums || [],
+        }));
         return { success: true, data: data.user };
       }
 

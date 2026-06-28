@@ -369,15 +369,16 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
         vimeo: sl.vimeo || '',
         cashapp: sl.cashapp || ''
       };
+      const meta = user.user_metadata || {};
       setFormData(prev => ({
         ...prev,
-        username: user.username || '',
-        name: user.name || '',
-        bio: user.bio || '',
-        industry: user.industry || '',
-        status: user.status || '',
-        markets: user.markets || '',
-        availableFor: user.availableFor || '',
+        username: user.username || profile?.username || '',
+        name: user.name || profile?.display_name || '',
+        bio: user.bio || profile?.description || '',
+        industry: user.industry || meta.industry || '',
+        status: user.status || meta.status || '',
+        markets: user.markets || meta.markets || '',
+        availableFor: user.availableFor || meta.availableFor || '',
         showModelStats: user.showModelStats !== undefined ? user.showModelStats : (user.user_metadata?.showModelStats !== undefined ? user.user_metadata.showModelStats : true),
         showBookMeButton:
           profile?.show_book_me_button !== undefined
@@ -708,6 +709,15 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
         : formData;
       const result = await updateProfile(payload);
       if (result.success) {
+        if (formType === 'stats') {
+          setFormData((prev) => ({
+            ...prev,
+            industry: payload.industry ?? prev.industry,
+            status: payload.status ?? prev.status,
+            markets: payload.markets ?? prev.markets,
+            availableFor: payload.availableFor ?? prev.availableFor,
+          }));
+        }
         alert('Settings saved successfully!');
       } else {
         alert('Error saving settings: ' + (result.error || 'Unknown error'));
@@ -1192,6 +1202,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                         />
                         <label htmlFor="availableFor" style={{ fontSize: '12px', fontWeight: '500', marginBottom: '8px', display: 'block' }}>Available For</label>
                         <ProfileAvailableForMultiSelect
+                          key={`available-for-${formData.availableFor || 'empty'}`}
                           id="availableFor"
                           value={formData.availableFor}
                           onChange={(nextValue) => setFormData((prev) => ({ ...prev, availableFor: nextValue }))}
