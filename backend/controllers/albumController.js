@@ -83,9 +83,24 @@ if (supabaseUrl && supabaseServiceKey) {
 }
 
 /**
- * Upload image to storage
- * Returns URL of uploaded image
+ * Verify album belongs to the authenticated user
  */
+const verifyAlbumOwnership = async (albumId, userId) => {
+  const { data: album, error } = await supabase
+    .from('albums')
+    .select('id, user_id, cover_image_id')
+    .eq('id', albumId)
+    .single();
+
+  if (error || !album) {
+    return { ok: false, status: 404, error: 'Album not found' };
+  }
+  if (userId && album.user_id !== userId) {
+    return { ok: false, status: 403, error: 'Forbidden' };
+  }
+  return { ok: true, album };
+};
+
 const uploadImageToStorage = async (file) => {
   // If Supabase is configured, use it
   if (supabase) {
@@ -182,31 +197,34 @@ const createAlbum = async (req, res) => {
       });
     }
 
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        error: 'Unauthorized'
+      });
+    }
+
     // If using Supabase
     if (supabase) {
       try {
-        if (userId) {
-          const { count, error: countError } = await supabase
-            .from('albums')
-            .select('id', { count: 'exact', head: true })
-            .eq('user_id', userId);
+        const { count, error: countError } = await supabase
+          .from('albums')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', userId);
 
-          if (!countError && count >= MAX_ALBUMS_PER_USER) {
-            return res.status(400).json({
-              success: false,
-              error: getMaxAlbumsError(),
-            });
-          }
+        if (!countError && count >= MAX_ALBUMS_PER_USER) {
+          return res.status(400).json({
+            success: false,
+            error: getMaxAlbumsError(),
+          });
         }
 
         const insertPayload = {
           title: title.trim(),
           description: description ? description.trim() : null,
           cover_image_id: null,
+          user_id: userId,
         };
-        if (userId) {
-          insertPayload.user_id = userId;
-        }
 
         const { data, error } = await supabase
           .from('albums')
@@ -278,6 +296,13 @@ const getAlbums = async (req, res) => {
     if (supabase) {
       const authUser = await getOptionalUser(req);
       const filterUserId = req.query.userId || authUser?.id;
+
+      if (!filterUserId) {
+        return res.status(400).json({
+          success: false,
+          error: 'userId is required'
+        });
+      }
 
       let albumsQuery = supabase
         .from('albums')
@@ -357,6 +382,7 @@ const getAlbums = async (req, res) => {
 const uploadImageToAlbum = async (req, res) => {
   try {
     const { id: albumId } = req.params;
+    const userId = req.user?.id;
 
     if (!req.file) {
       return res.status(400).json({
@@ -369,19 +395,14 @@ const uploadImageToAlbum = async (req, res) => {
     const imageUrl = await uploadImageToStorage(req.file);
 
     if (supabase) {
-      // Check if album exists
-      const { data: album, error: albumError } = await supabase
-        .from('albums')
-        .select('id, cover_image_id')
-        .eq('id', albumId)
-        .single();
-
-      if (albumError || !album) {
-        return res.status(404).json({
+      const ownership = await verifyAlbumOwnership(albumId, userId);
+      if (!ownership.ok) {
+        return res.status(ownership.status).json({
           success: false,
-          error: 'Album not found'
+          error: ownership.error
         });
       }
+      const album = ownership.album;
 
       const { count: imageCount, error: imageCountError } = await supabase
         .from('images')
@@ -520,6 +541,7 @@ const setCoverImage = async (req, res) => {
   try {
     const { id: albumId } = req.params;
     const { image_id: imageId } = req.body;
+    const userId = req.user?.id;
 
     if (!imageId) {
       return res.status(400).json({
@@ -529,17 +551,11 @@ const setCoverImage = async (req, res) => {
     }
 
     if (supabase) {
-      // Verify album exists
-      const { data: album, error: albumError } = await supabase
-        .from('albums')
-        .select('id')
-        .eq('id', albumId)
-        .single();
-
-      if (albumError || !album) {
-        return res.status(404).json({
+      const ownership = await verifyAlbumOwnership(albumId, userId);
+      if (!ownership.ok) {
+        return res.status(ownership.status).json({
           success: false,
-          error: 'Album not found'
+          error: ownership.error
         });
       }
 
@@ -603,6 +619,7 @@ const setCoverImage = async (req, res) => {
 const deleteImage = async (req, res) => {
   try {
     const { id: imageId } = req.params;
+    const userId = req.user?.id;
 
     if (supabase) {
       // Get image info before deletion
@@ -616,6 +633,14 @@ const deleteImage = async (req, res) => {
         return res.status(404).json({
           success: false,
           error: 'Image not found'
+        });
+      }
+
+      const ownership = await verifyAlbumOwnership(image.album_id, userId);
+      if (!ownership.ok) {
+        return res.status(ownership.status).json({
+          success: false,
+          error: ownership.error
         });
       }
 
@@ -665,19 +690,14 @@ const deleteImage = async (req, res) => {
 const deleteAlbum = async (req, res) => {
   try {
     const { id: albumId } = req.params;
+    const userId = req.user?.id;
 
     if (supabase) {
-      // Check if album exists
-      const { data: album, error: albumError } = await supabase
-        .from('albums')
-        .select('id')
-        .eq('id', albumId)
-        .single();
-
-      if (albumError || !album) {
-        return res.status(404).json({
+      const ownership = await verifyAlbumOwnership(albumId, userId);
+      if (!ownership.ok) {
+        return res.status(ownership.status).json({
           success: false,
-          error: 'Album not found'
+          error: ownership.error
         });
       }
 

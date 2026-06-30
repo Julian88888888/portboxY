@@ -141,17 +141,34 @@ CREATE POLICY "Allow authenticated users to manage images"
     USING (true)
     WITH CHECK (true);
 
--- Optional: Add user_id column if you want to associate albums with users
--- Uncomment if needed:
--- ALTER TABLE albums ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE;
--- CREATE INDEX IF NOT EXISTS idx_albums_user_id ON albums(user_id);
--- 
--- Then update RLS policies:
--- DROP POLICY IF EXISTS "Allow authenticated users to manage albums" ON albums;
--- CREATE POLICY "Users can manage their own albums"
---     ON albums FOR ALL
---     USING (auth.uid() = user_id)
---     WITH CHECK (auth.uid() = user_id);
+-- Per-user albums: each user has their own albums
+ALTER TABLE albums ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE;
+CREATE INDEX IF NOT EXISTS idx_albums_user_id ON albums(user_id);
+
+DROP POLICY IF EXISTS "Allow authenticated users to manage albums" ON albums;
+DROP POLICY IF EXISTS "Anyone can view albums" ON albums;
+DROP POLICY IF EXISTS "Users can insert their own albums" ON albums;
+DROP POLICY IF EXISTS "Users can update their own albums" ON albums;
+DROP POLICY IF EXISTS "Users can delete their own albums" ON albums;
+
+CREATE POLICY "Anyone can view albums"
+    ON albums FOR SELECT
+    USING (true);
+
+CREATE POLICY "Users can insert their own albums"
+    ON albums FOR INSERT
+    WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update their own albums"
+    ON albums FOR UPDATE
+    USING (auth.uid() = user_id)
+    WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete their own albums"
+    ON albums FOR DELETE
+    USING (auth.uid() = user_id);
+
+-- Full migration (seed trigger, existing users): run migrate_albums_per_user.sql
 
 
 

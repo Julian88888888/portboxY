@@ -3,46 +3,10 @@
  * Handles GET /api/albums and POST /api/albums
  */
 
-const { createClient } = require('@supabase/supabase-js');
+const { supabase, verifyToken } = require('../_lib/albumsAuth');
 
 const MAX_ALBUMS_PER_USER = 6;
-const MAX_IMAGES_PER_ALBUM = 20;
 const getMaxAlbumsError = () => `Maximum ${MAX_ALBUMS_PER_USER} albums allowed`;
-const getMaxImagesError = () => `Maximum ${MAX_IMAGES_PER_ALBUM} images per album`;
-
-// Initialize Supabase client
-const supabaseUrl = process.env.REACT_APP_SUPABASE_URL || process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.REACT_APP_SUPABASE_ANON_KEY;
-
-const supabase = supabaseUrl && supabaseKey
-  ? createClient(supabaseUrl, supabaseKey)
-  : null;
-
-/**
- * Verify Supabase token from Authorization header
- */
-async function verifyToken(req) {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
-
-  if (!token) {
-    return { error: 'Access token required', user: null };
-  }
-
-  if (!supabase) {
-    return { error: 'Supabase not configured', user: null };
-  }
-
-  try {
-    const { data: { user }, error } = await supabase.auth.getUser(token);
-    if (error || !user) {
-      return { error: 'Invalid or expired token', user: null };
-    }
-    return { error: null, user };
-  } catch (error) {
-    return { error: 'Token verification failed', user: null };
-  }
-}
 
 /**
  * Main handler for Vercel Serverless Function
@@ -74,6 +38,13 @@ module.exports = async (req, res) => {
     if (req.method === 'GET') {
       const { error: authError, user } = await verifyToken(req);
       const filterUserId = req.query.userId || (!authError && user ? user.id : null);
+
+      if (!filterUserId) {
+        return res.status(400).json({
+          success: false,
+          error: 'userId is required'
+        });
+      }
 
       let albumsQuery = supabase
         .from('albums')

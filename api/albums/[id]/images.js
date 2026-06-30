@@ -3,45 +3,11 @@
  * Handles POST /api/albums/:id/images
  */
 
-const { createClient } = require('@supabase/supabase-js');
+const { supabase, verifyToken, getAlbumForUser } = require('../../_lib/albumsAuth');
 const busboy = require('busboy');
 
 const MAX_IMAGES_PER_ALBUM = 20;
 const getMaxImagesError = () => `Maximum ${MAX_IMAGES_PER_ALBUM} images per album`;
-
-// Initialize Supabase client
-const supabaseUrl = process.env.REACT_APP_SUPABASE_URL || process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.REACT_APP_SUPABASE_ANON_KEY;
-
-const supabase = supabaseUrl && supabaseKey
-  ? createClient(supabaseUrl, supabaseKey)
-  : null;
-
-/**
- * Verify Supabase token from Authorization header
- */
-async function verifyToken(req) {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
-
-  if (!token) {
-    return { error: 'Access token required', user: null };
-  }
-
-  if (!supabase) {
-    return { error: 'Supabase not configured', user: null };
-  }
-
-  try {
-    const { data: { user }, error } = await supabase.auth.getUser(token);
-    if (error || !user) {
-      return { error: 'Invalid or expired token', user: null };
-    }
-    return { error: null, user };
-  } catch (error) {
-    return { error: 'Token verification failed', user: null };
-  }
-}
 
 /**
  * Parse multipart/form-data and extract file
@@ -262,17 +228,12 @@ module.exports = async (req, res) => {
       });
     }
 
-    // Check if album exists
-    const { data: album, error: albumError } = await supabase
-      .from('albums')
-      .select('id, cover_image_id')
-      .eq('id', albumId)
-      .single();
-
-    if (albumError || !album) {
-      return res.status(404).json({
+    // Check if album exists and belongs to user
+    const { error: ownershipError, album, status: ownershipStatus } = await getAlbumForUser(albumId, user.id);
+    if (ownershipError) {
+      return res.status(ownershipStatus).json({
         success: false,
-        error: 'Album not found'
+        error: ownershipError
       });
     }
 
