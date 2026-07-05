@@ -5,6 +5,32 @@ import { useProfile } from '../hooks/useProfile';
 import { createBooking, createGuestBooking } from '../services/bookingsService';
 import { getAvatarUrl } from '../services/profileService';
 
+const PAY_CURRENCIES = [
+  { value: 'usd', label: '$', symbol: '$' },
+  { value: 'eur', label: 'Euro', symbol: '€' },
+  { value: 'mxn', label: 'Peso', symbol: '₱' },
+];
+
+const PAY_RATE_TYPES = [
+  { value: 'flat-rate', label: 'Flat Rate' },
+  { value: 'hourly', label: 'Hourly' },
+  { value: 'half-day', label: 'Half Day' },
+  { value: 'daily', label: 'Daily' },
+  { value: 'weekly', label: 'Weekly' },
+  { value: 'biweekly', label: 'Biweekly' },
+  { value: 'monthly', label: 'Monthly' },
+  { value: 'annually', label: 'Annual Salary' },
+  { value: 'per-task', label: 'Per Task' },
+];
+
+const formatPayRate = (offerAmount, payCurrency, payRate) => {
+  const amount = String(offerAmount || '').trim();
+  const currency = PAY_CURRENCIES.find((c) => c.value === payCurrency);
+  const rateType = PAY_RATE_TYPES.find((r) => r.value === payRate);
+  if (!amount || !currency || !rateType) return '';
+  return `${currency.symbol}${amount} · ${rateType.label}`;
+};
+
 const BookingModal = ({ isOpen, onClose, profile, onBookingCreated }) => {
   const { user } = useAuth();
   const { data: clientProfile } = useProfile();
@@ -15,6 +41,8 @@ const BookingModal = ({ isOpen, onClose, profile, onBookingCreated }) => {
     email: '',
     dates: '',
     location: '',
+    offerAmount: '',
+    payCurrency: 'usd',
     payRate: '',
     details: '',
     jobType: ''
@@ -142,7 +170,7 @@ const BookingModal = ({ isOpen, onClose, profile, onBookingCreated }) => {
       job_type: selectedJobType || formData.jobType,
       dates: formData.dates,
       location: formData.location,
-      pay_rate: formData.payRate,
+      pay_rate: formatPayRate(formData.offerAmount, formData.payCurrency, formData.payRate),
       details: formData.details,
       status: 'pending',
       ...(user && clientProfile?.username
@@ -167,6 +195,8 @@ const BookingModal = ({ isOpen, onClose, profile, onBookingCreated }) => {
           email: '',
           dates: '',
           location: '',
+          offerAmount: '',
+          payCurrency: 'usd',
           payRate: '',
           details: '',
           jobType: ''
@@ -198,6 +228,8 @@ const BookingModal = ({ isOpen, onClose, profile, onBookingCreated }) => {
         email: '',
         dates: '',
         location: '',
+        offerAmount: '',
+        payCurrency: 'usd',
         payRate: '',
         details: '',
         jobType: ''
@@ -430,17 +462,57 @@ const BookingModal = ({ isOpen, onClose, profile, onBookingCreated }) => {
           </div>
           
           <div className="form-group">
-            <label htmlFor="payRate">Pay Rate</label>
-            <input
-              type="text"
-              id="payRate"
-              name="payRate"
-              value={formData.payRate}
-              onChange={handleInputChange}
-              placeholder="Pay rate for job"
-              required
-              disabled={isSubmitting}
-            />
+            <label>Pay Rate</label>
+            <div className="pay-rate-row">
+              <div className="pay-rate-field">
+                <label htmlFor="offerAmount" className="pay-rate-sublabel">Offer Amount</label>
+                <input
+                  type="text"
+                  id="offerAmount"
+                  name="offerAmount"
+                  value={formData.offerAmount}
+                  onChange={handleInputChange}
+                  placeholder="Amount"
+                  required
+                  disabled={isSubmitting}
+                />
+              </div>
+              <div className="pay-rate-field pay-rate-field--currency">
+                <label htmlFor="payCurrency" className="pay-rate-sublabel">Currency</label>
+                <select
+                  id="payCurrency"
+                  name="payCurrency"
+                  value={formData.payCurrency}
+                  onChange={handleInputChange}
+                  required
+                  disabled={isSubmitting}
+                >
+                  {PAY_CURRENCIES.map((currency) => (
+                    <option key={currency.value} value={currency.value}>
+                      {currency.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="pay-rate-field">
+                <label htmlFor="payRate" className="pay-rate-sublabel">Pay Rate</label>
+                <select
+                  id="payRate"
+                  name="payRate"
+                  value={formData.payRate}
+                  onChange={handleInputChange}
+                  required
+                  disabled={isSubmitting}
+                >
+                  <option value="">Select...</option>
+                  {PAY_RATE_TYPES.map((rate) => (
+                    <option key={rate.value} value={rate.value}>
+                      {rate.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
           </div>
           
           <div className="form-group">

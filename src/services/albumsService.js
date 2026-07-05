@@ -307,7 +307,10 @@ export const setCoverImage = async (albumId, imageId) => {
       })
     });
 
-    const data = await response.json();
+    const contentType = response.headers.get('content-type') || '';
+    const data = contentType.includes('application/json')
+      ? await response.json()
+      : { error: await response.text() };
 
     if (!response.ok) {
       throw new Error(data.error || 'Failed to set cover image');

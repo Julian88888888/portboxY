@@ -8,6 +8,7 @@ import { getCustomLinks } from '../services/customLinksService';
 import BookingModal from './BookingModal';
 import { formatJobType, isModelJobType } from '../utils/formatJobType';
 import { getDisplayAge } from '../utils/dateOfBirth';
+import { ALBUM_PLACEHOLDER, getAlbumCoverSrc } from '../utils/albumPlaceholder';
 
 const days = [
   { key: "monday", label: "Mon", hours: "5 hours" },
@@ -910,11 +911,11 @@ export default function JobRequestPopup() {
                   >
                     <div className="product_image_wrapper">
                       <img 
-                        src={normalizeImageUrl(album.cover_image_url) || '/images/fashion-photo.jpg'} 
+                        src={getAlbumCoverSrc(album.cover_image_url, normalizeImageUrl)} 
                         alt={album.title} 
                         className="product_image fashionphoto"
                         onError={(e) => {
-                          e.target.src = '/images/fashion-photo.jpg';
+                          e.target.src = ALBUM_PLACEHOLDER;
                         }}
                       />
                       {shouldShowAlbumBadge() && <div className="discount_tag-top">{album.title || 'Album'}</div>}
@@ -1206,7 +1207,7 @@ export default function JobRequestPopup() {
                     }}
                   >
                     <img
-                      src={normalizeImageUrl(image.url) || '/images/fashion-photo.jpg'}
+                      src={normalizeImageUrl(image.url) || ALBUM_PLACEHOLDER}
                       alt={`${selectedAlbum.title} - Image ${index + 1}`}
                       style={{
                         width: '100%',
@@ -1216,7 +1217,7 @@ export default function JobRequestPopup() {
                         cursor: 'pointer'
                       }}
                       onError={(e) => {
-                        e.target.src = '/images/fashion-photo.jpg';
+                        e.target.src = ALBUM_PLACEHOLDER;
                       }}
                       onClick={() => {
                         // Open image in full size (optional - can be enhanced with lightbox)

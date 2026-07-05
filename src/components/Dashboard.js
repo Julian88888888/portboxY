@@ -13,6 +13,7 @@ import BookingChatModal from './BookingChatModal';
 import './Dashboard.css';
 import { MAX_IMAGE_SIZE_HINT, validateImageFileSize } from '../utils/imageUploadLimits';
 import { formatJobType } from '../utils/formatJobType';
+import { ALBUM_PLACEHOLDER, getAlbumCoverSrc } from '../utils/albumPlaceholder';
 import ProfileAvailableForMultiSelect from './ProfileAvailableForMultiSelect';
 import { parseAvailableForSelections } from '../utils/availableFor';
 import { getDisplayAge, getMaxDobForInput, normalizeDobForInput } from '../utils/dateOfBirth';
@@ -1747,11 +1748,11 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                                 <a href="#" className="product_item w-inline-block">
                                   <div className="product_image_wrapper">
                                     <img 
-                                      src={normalizeImageUrl(album.cover_image_url) || '/images/fashion-photo.jpg'} 
+                                      src={getAlbumCoverSrc(album.cover_image_url, normalizeImageUrl)} 
                                       alt={album.title} 
                                       className="product_image fashionphoto"
                                       onError={(e) => {
-                                        e.target.src = '/images/fashion-photo.jpg';
+                                        e.target.src = ALBUM_PLACEHOLDER;
                                       }}
                                     />
                                     <div className="discount_tag">Album</div>
@@ -3604,7 +3605,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                     }}
                   >
                     <img
-                      src={normalizeImageUrl(image.url) || '/images/fashion-photo.jpg'}
+                      src={normalizeImageUrl(image.url) || ALBUM_PLACEHOLDER}
                       alt="Album image"
                       style={{
                         width: '100%',
@@ -3614,7 +3615,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                       }}
                       onError={(e) => {
                         console.error('Failed to load image:', image.url, 'Normalized:', normalizeImageUrl(image.url));
-                        e.target.src = '/images/fashion-photo.jpg';
+                        e.target.src = ALBUM_PLACEHOLDER;
                       }}
                       onLoad={() => {
                         console.log('Image loaded successfully:', normalizeImageUrl(image.url));
