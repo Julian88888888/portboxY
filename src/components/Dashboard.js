@@ -1170,10 +1170,27 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                           onChange={handleInputChange}
                           style={{fontSize: '13px', padding: '8px', marginBottom: '12px'}}
                         >
-                          <option value="">Select one...</option>
-                          <option value="Fashion">Fashion</option>
-                          <option value="Glamour">Glamour</option>
-                          <option value="Commercial">Commercial</option>
+                          <option value="">-- select one --</option>
+                          <option value="fashion">Fashion</option>
+                          <option value="high-fashion">High-Fashion</option>
+                          <option value="editorial">Editorial</option>
+                          <option value="commercial">Commercial</option>
+                          <option value="lifestyle">Lifestyle</option>
+                          <option value="glamour">Glamour</option>
+                          <option value="art">Arts</option>
+                          <option value="advertising">Advertising</option>
+                          <option value="adult">Adult / Explicit</option>
+                          <option value="freelance">Freelance</option>
+                          <option value="promotions">Promotions</option>
+                          <option value="digital">Digital</option>
+                          <option value="social-media">Social Media</option>
+                          <option value="events">Events</option>
+                          <option value="fitness">Fitness</option>
+                          <option value="sports">Sports</option>
+                          <option value="entertainment">Entertainment</option>
+                          <option value="performance">Performance</option>
+                          <option value="film">Film</option>
+                          <option value="television">Television</option>
                         </select>
                         <label htmlFor="status" style={{fontSize: '12px', fontWeight: '500', marginBottom: '4px', display: 'block'}}>Status</label>
                         <select 
@@ -1615,11 +1632,22 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                           value={formData.ethnicity}
                           onChange={handleInputChange}
                         >
-                          <option value="">Select one...</option>
-                          <option value="White">White</option>
-                          <option value="Black">Black</option>
-                          <option value="Asian">Asian</option>
-                          <option value="Hispanic">Hispanic</option>
+                          <option value="">-- select one --</option>
+                          <option value="black" label="Black / African Descent">Black</option>
+                          <option value="white" label="White / European Descent or East Slavic">White</option>
+                          <option value="hispanic" label="Latin American / Hispanic / Spaniards">Hispanic</option>
+                          <option value="middle eastern" label="MENA (Middle East and North Africa)">MENA</option>
+                          <option value="asian-northeast" label="Northeast Asian (Tibetan, Korean, Japanese)">Asian (Northeast)</option>
+                          <option value="asian-southeast" label="Southeast Asian (Chinese, Thai, Malay, Filipino)">Asian (Southeast)</option>
+                          <option value="asian-central" label="Central Asian (Turkic, Iranian, Kazakhs, Uzbeks)">Asian (Central)</option>
+                          <option value="asian-south" label="South Asian / Indian (Pakistan, Bangladesh, Sri Lanka)">Indian / Asian (South)</option>
+                          <option value="asian-southwest" label="SWANA (Southwest Asia and North Africa)">SWANA</option>
+                          <option value="pacific islander" label="NHPI (Native Hawaiian and Pacific Islander)">NHPI</option>
+                          <option value="asian-american" label="AAPI (Asian American and Pacific Islander)">AAPI</option>
+                          <option value="native american" label="AIAN (American Indians and Alaska Natives)">Native American</option>
+                          <option value="indigenous-arctic" label=" Arctic (Inuit, Saami, Aleut)">Arctic</option>
+                          <option value="indigenous-other" label="Other Indigenous Peoples">Indigenous Peoples</option>
+                          <option value="multiracial" label="Multiracial / Ethnically Ambiguous">Multiracial</option>
                         </select>
                         <input type="submit" className="submit-button w-button" value="Save Model Stats" />
                       </form>
