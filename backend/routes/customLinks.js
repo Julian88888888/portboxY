@@ -8,20 +8,18 @@ const {
   deleteCustomLink
 } = require('../controllers/customLinksController');
 
-// All routes require authentication
-router.use(verifySupabaseToken);
+// GET is public when ?userId= is provided; otherwise requires auth
+router.get('/', (req, res, next) => {
+  if (req.query.userId) {
+    return getCustomLinks(req, res, next);
+  }
+  return verifySupabaseToken(req, res, () => getCustomLinks(req, res, next));
+});
 
-// GET /api/custom-links - Get all custom links for current user
-router.get('/', getCustomLinks);
-
-// POST /api/custom-links - Create a new custom link
-router.post('/', createCustomLink);
-
-// PUT /api/custom-links/:id - Update a custom link
-router.put('/:id', updateCustomLink);
-
-// DELETE /api/custom-links/:id - Delete a custom link
-router.delete('/:id', deleteCustomLink);
+// Mutations require authentication
+router.post('/', verifySupabaseToken, createCustomLink);
+router.put('/:id', verifySupabaseToken, updateCustomLink);
+router.delete('/:id', verifySupabaseToken, deleteCustomLink);
 
 module.exports = router;
 

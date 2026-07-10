@@ -87,24 +87,45 @@ module.exports = async (req, res) => {
   }
 
   try {
-    // Verify authentication for all methods
-    const { error: authError, user } = await verifyToken(req);
-    if (authError || !user) {
-      return res.status(401).json({
-        success: false,
-        message: authError || 'Unauthorized'
-      });
-    }
-
-    const userId = user.id;
-    console.log('User authenticated:', userId);
-
-    // GET /api/custom-links - Get all custom links for current user
+    // GET /api/custom-links — public when ?userId= is provided (enabled links only)
     if (req.method === 'GET') {
+      const filterUserId = req.query.userId;
+
+      if (filterUserId) {
+        const { data, error } = await supabase
+          .from('custom_links')
+          .select('id, title, url, icon_url, enabled, display_order, user_id, created_at')
+          .eq('user_id', filterUserId)
+          .eq('enabled', true)
+          .order('display_order', { ascending: true });
+
+        if (error) {
+          console.error('Database error:', error);
+          return res.status(500).json({
+            success: false,
+            message: 'Failed to get custom links',
+            error: error.message
+          });
+        }
+
+        return res.status(200).json({
+          success: true,
+          data: data || []
+        });
+      }
+
+      const { error: authError, user } = await verifyToken(req);
+      if (authError || !user) {
+        return res.status(401).json({
+          success: false,
+          message: authError || 'Unauthorized'
+        });
+      }
+
       const { data, error } = await supabase
         .from('custom_links')
         .select('*')
-        .eq('user_id', userId)
+        .eq('user_id', user.id)
         .order('display_order', { ascending: true });
 
       if (error) {
@@ -121,6 +142,18 @@ module.exports = async (req, res) => {
         data: data || []
       });
     }
+
+    // Mutations require authentication
+    const { error: authError, user } = await verifyToken(req);
+    if (authError || !user) {
+      return res.status(401).json({
+        success: false,
+        message: authError || 'Unauthorized'
+      });
+    }
+
+    const userId = user.id;
+    console.log('User authenticated:', userId);
 
     // POST /api/custom-links - Create a new custom link
     if (req.method === 'POST') {

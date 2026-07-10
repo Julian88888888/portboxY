@@ -80,13 +80,17 @@ const parseJsonResponse = async (response) => {
 };
 
 /**
- * Get all custom links for the current user
+ * Get custom links.
+ * @param {string} [userId] - Profile owner id for public pages (enabled links only, no auth required)
  */
-export const getCustomLinks = async () => {
+export const getCustomLinks = async (userId = null) => {
   try {
-    const headers = await getAuthHeaders();
-    
-    const response = await fetch(`${getApiBaseUrl()}/custom-links`, {
+    const headers = userId
+      ? { 'Content-Type': 'application/json' }
+      : await getAuthHeaders();
+    const query = userId ? `?userId=${encodeURIComponent(userId)}` : '';
+
+    const response = await fetch(`${getApiBaseUrl()}/custom-links${query}`, {
       method: 'GET',
       headers
     });

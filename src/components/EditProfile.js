@@ -640,11 +640,11 @@ export default function EditProfile() {
             </div>
 
             <div className="spacing_16" />
-            <label htmlFor="availableFor">Available For</label>
+            <label htmlFor="niche">Niche</label>
             <input
               className="w-input"
               type="text"
-              id="availableFor"
+              id="niche"
               name="availableFor"
               value={formData.availableFor}
               onChange={handleInputChange}

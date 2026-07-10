@@ -4,12 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useProfile } from '../hooks/useProfile';
 import { createBooking, createGuestBooking } from '../services/bookingsService';
 import { getAvatarUrl } from '../services/profileService';
-
-const PAY_CURRENCIES = [
-  { value: 'usd', label: '$', symbol: '$' },
-  { value: 'eur', label: 'Euro', symbol: '€' },
-  { value: 'mxn', label: 'Peso', symbol: '₱' },
-];
+import { PAY_CURRENCIES } from '../utils/currencies';
 
 const PAY_RATE_TYPES = [
   { value: 'flat-rate', label: 'Flat Rate' },
@@ -42,7 +37,7 @@ const BookingModal = ({ isOpen, onClose, profile, onBookingCreated }) => {
     dates: '',
     location: '',
     offerAmount: '',
-    payCurrency: 'usd',
+    payCurrency: 'USD',
     payRate: '',
     details: '',
     jobType: ''
@@ -196,7 +191,7 @@ const BookingModal = ({ isOpen, onClose, profile, onBookingCreated }) => {
           dates: '',
           location: '',
           offerAmount: '',
-          payCurrency: 'usd',
+          payCurrency: 'USD',
           payRate: '',
           details: '',
           jobType: ''
@@ -229,7 +224,7 @@ const BookingModal = ({ isOpen, onClose, profile, onBookingCreated }) => {
         dates: '',
         location: '',
         offerAmount: '',
-        payCurrency: 'usd',
+        payCurrency: 'USD',
         payRate: '',
         details: '',
         jobType: ''

@@ -1,18 +1,36 @@
 const { supabase } = require('../middleware/supabaseAuth');
 
 /**
- * Get all custom links for current user
- * GET /api/custom-links
+ * Get custom links
+ * GET /api/custom-links?userId= — public enabled links for a profile
+ * GET /api/custom-links — authenticated user's own links (all)
  */
 const getCustomLinks = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const filterUserId = req.query.userId;
+    const isPublicProfile = Boolean(filterUserId);
+    const userId = filterUserId || req.user?.id;
 
-    const { data, error } = await supabase
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication required or userId query parameter'
+      });
+    }
+
+    let query = supabase
       .from('custom_links')
-      .select('*')
+      .select(isPublicProfile
+        ? 'id, title, url, icon_url, enabled, display_order, user_id, created_at'
+        : '*')
       .eq('user_id', userId)
       .order('display_order', { ascending: true });
+
+    if (isPublicProfile) {
+      query = query.eq('enabled', true);
+    }
+
+    const { data, error } = await query;
 
     if (error) {
       throw error;

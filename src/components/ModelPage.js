@@ -293,7 +293,7 @@ export default function JobRequestPopup() {
     return links;
   };
 
-  // Check if Profile Stats (INDUSTRY, STATUS, MARKETS, AVAILABLE FOR) should be shown
+  // Check if Profile Stats (INDUSTRY, STATUS, MARKETS, NICHE) should be shown
   const shouldShowProfileStats = () => {
     if (profile?.showProfileStats !== undefined) {
       return profile.showProfileStats;
@@ -469,12 +469,10 @@ export default function JobRequestPopup() {
     loadAlbums();
   }, [profile?.id]);
 
-  // Load custom links on component mount
+  // Load custom links for the profile being viewed (works logged out too)
   useEffect(() => {
     const loadCustomLinks = async () => {
-      // Only load if user is authenticated
-      if (!user) {
-        console.log('ModelPage: User not authenticated, skipping custom links load');
+      if (!profile?.id) {
         setCustomLinks([]);
         setCustomLinksLoading(false);
         return;
@@ -482,19 +480,15 @@ export default function JobRequestPopup() {
 
       setCustomLinksLoading(true);
       try {
-        const result = await getCustomLinks();
+        const result = await getCustomLinks(profile.id);
         if (result.success) {
-          // Filter only enabled links and sort by display_order
           const enabledLinks = (result.data || [])
-            .filter(link => link.enabled)
+            .filter(link => link.enabled !== false)
             .sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
           console.log('ModelPage: Loaded', enabledLinks.length, 'custom links');
           setCustomLinks(enabledLinks);
         } else {
           console.error('ModelPage: Failed to load custom links:', result.error);
-          if (result.requiresAuth) {
-            console.warn('Custom links require authentication - user may need to log in again');
-          }
           setCustomLinks([]);
         }
       } catch (error) {
@@ -505,7 +499,7 @@ export default function JobRequestPopup() {
     };
 
     loadCustomLinks();
-  }, [user?.id]); // Use user.id instead of user object to prevent unnecessary re-renders
+  }, [profile?.id]);
 
   // Load images when album is selected
   const handleAlbumClick = async (album) => {
@@ -773,7 +767,7 @@ export default function JobRequestPopup() {
               </div>
             </div>
             <div className="stat_item">
-              <div className="stat_title">AVAILABLE FOR</div>
+              <div className="stat_title">NICHE</div>
               <div className="stat_descript">
                 {getUserValue('availableFor', 'Beauty, Editorial, Glamour, Print')}
               </div>

@@ -1151,7 +1151,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                             </div>
                           </div>
                           <div className="stat_item">
-                            <div className="stat_label">AVAILABLE FOR</div>
+                            <div className="stat_label">NICHE</div>
                             <div className="stat_value">
                               {parseAvailableForSelections(formData.availableFor).length > 0
                                 ? parseAvailableForSelections(formData.availableFor).join(', ')
@@ -1218,10 +1218,10 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                           onChange={handleInputChange}
                           style={{fontSize: '13px', padding: '8px', marginBottom: '12px'}}
                         />
-                        <label htmlFor="availableFor" style={{ fontSize: '12px', fontWeight: '500', marginBottom: '8px', display: 'block' }}>Available For</label>
+                        <label htmlFor="niche" style={{ fontSize: '12px', fontWeight: '500', marginBottom: '8px', display: 'block' }}>Niche</label>
                         <ProfileAvailableForMultiSelect
-                          key={`available-for-${formData.availableFor || 'empty'}`}
-                          id="availableFor"
+                          key={`niche-${formData.availableFor || 'empty'}`}
+                          id="niche"
                           value={formData.availableFor}
                           onChange={(nextValue) => setFormData((prev) => ({ ...prev, availableFor: nextValue }))}
                           selectionLimit={6}
@@ -1702,67 +1702,6 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                     <p className="text_color_grey" style={{ marginBottom: '16px' }}>
                       Create albums and upload multiple images to each album (max {MAX_ALBUMS_PER_USER} albums, {MAX_IMAGES_PER_ALBUM} images per album)
                     </p>
-                    <div
-                      className="w-layout-hflex flex-block-9"
-                      style={{
-                        alignItems: 'center',
-                        gap: '12px',
-                        marginBottom: '12px',
-                        opacity: (formData.showBookMeButton ?? true) ? 1 : 0.45,
-                        pointerEvents: (formData.showBookMeButton ?? true) ? 'auto' : 'none',
-                      }}
-                    >
-                      <label
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          cursor: (formData.showBookMeButton ?? true) ? 'pointer' : 'default',
-                          gap: '10px',
-                          userSelect: 'none',
-                          flex: '0 0 auto',
-                        }}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          if (!(formData.showBookMeButton ?? true)) return;
-                          persistBookMeVisibilityToggle(
-                            'showBookMePortfolioSection',
-                            'show_book_me_portfolio',
-                            'showBookMePortfolioSection'
-                          );
-                        }}
-                      >
-                        <div
-                          style={{
-                            width: '44px',
-                            height: '24px',
-                            borderRadius: '12px',
-                            backgroundColor: (formData.showBookMePortfolioSection ?? true) ? '#783FF3' : '#ccc',
-                            position: 'relative',
-                            cursor: (formData.showBookMeButton ?? true) ? 'pointer' : 'default',
-                            transition: 'background-color 0.2s',
-                            flexShrink: 0,
-                          }}
-                        >
-                          <div
-                            style={{
-                              width: '20px',
-                              height: '20px',
-                              borderRadius: '50%',
-                              backgroundColor: 'white',
-                              position: 'absolute',
-                              top: '2px',
-                              left: (formData.showBookMePortfolioSection ?? true) ? '22px' : '2px',
-                              transition: 'left 0.2s',
-                              boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
-                            }}
-                          />
-                        </div>
-                      </label>
-                      <p style={{ margin: 0 }}>Show Book Me in portfolio section</p>
-                    </div>
-                    <p className="text_color_grey" style={{ margin: '0 0 16px', fontSize: '13px', maxWidth: '560px' }}>
-                      Controls the Book Me button below your image albums on the public page. Turn off the master Book Me switch in Profile settings to hide every Book Me button.
-                    </p>
                     
                     {albumsLoading ? (
                       <p className="text_color_grey">Loading albums...</p>
@@ -1930,6 +1869,68 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                         )}
                       </>
                     )}
+                    <div
+                      className="w-layout-hflex flex-block-9"
+                      style={{
+                        alignItems: 'center',
+                        gap: '12px',
+                        marginTop: '24px',
+                        marginBottom: '12px',
+                        opacity: (formData.showBookMeButton ?? true) ? 1 : 0.45,
+                        pointerEvents: (formData.showBookMeButton ?? true) ? 'auto' : 'none',
+                      }}
+                    >
+                      <label
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          cursor: (formData.showBookMeButton ?? true) ? 'pointer' : 'default',
+                          gap: '10px',
+                          userSelect: 'none',
+                          flex: '0 0 auto',
+                        }}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          if (!(formData.showBookMeButton ?? true)) return;
+                          persistBookMeVisibilityToggle(
+                            'showBookMePortfolioSection',
+                            'show_book_me_portfolio',
+                            'showBookMePortfolioSection'
+                          );
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: '44px',
+                            height: '24px',
+                            borderRadius: '12px',
+                            backgroundColor: (formData.showBookMePortfolioSection ?? true) ? '#783FF3' : '#ccc',
+                            position: 'relative',
+                            cursor: (formData.showBookMeButton ?? true) ? 'pointer' : 'default',
+                            transition: 'background-color 0.2s',
+                            flexShrink: 0,
+                          }}
+                        >
+                          <div
+                            style={{
+                              width: '20px',
+                              height: '20px',
+                              borderRadius: '50%',
+                              backgroundColor: 'white',
+                              position: 'absolute',
+                              top: '2px',
+                              left: (formData.showBookMePortfolioSection ?? true) ? '22px' : '2px',
+                              transition: 'left 0.2s',
+                              boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                            }}
+                          />
+                        </div>
+                      </label>
+                      <p style={{ margin: 0 }}>Show Book Me in portfolio section</p>
+                    </div>
+                    <p className="text_color_grey" style={{ margin: '0 0 16px', fontSize: '13px', maxWidth: '560px' }}>
+                      Controls the Book Me button below your image albums on the public page. Turn off the master Book Me switch in Profile settings to hide every Book Me button.
+                    </p>
                   </div>
                   
                 </div>
@@ -3869,11 +3870,31 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
               </div>
 
               <div className="form-group" style={{ marginBottom: '16px' }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <label
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    width: 'auto',
+                    maxWidth: 'fit-content',
+                    margin: 0,
+                    fontSize: '13px',
+                    fontWeight: 500,
+                    cursor: 'pointer',
+                    color: '#444',
+                  }}
+                >
                   <input
                     type="checkbox"
                     checked={customLinkFormData.enabled}
                     onChange={(e) => setCustomLinkFormData({ ...customLinkFormData, enabled: e.target.checked })}
+                    style={{
+                      width: '14px',
+                      height: '14px',
+                      margin: 0,
+                      flexShrink: 0,
+                      cursor: 'pointer',
+                    }}
                   />
                   Enable this link
                 </label>

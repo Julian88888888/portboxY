@@ -1,9 +1,9 @@
 import React from 'react';
 import Multiselect from 'multiselect-react-dropdown';
 import {
-  PROFILE_AVAILABLE_FOR_OPTIONS,
-  parseAvailableForSelections,
+  PROFILE_NICHE_OPTIONS,
   formatAvailableForSelections,
+  resolveNicheOptions,
 } from '../utils/availableFor';
 import './ProfileAvailableForMultiSelect.css';
 
@@ -27,12 +27,20 @@ const MULTISELECT_STYLES = {
     border: '1px solid #e5e7eb',
     borderRadius: '6px',
     backgroundColor: '#fff',
-    maxHeight: '220px',
+    maxHeight: '280px',
   },
   option: {
     fontSize: '13px',
     padding: '10px 12px',
     color: '#374151',
+  },
+  groupHeading: {
+    fontSize: '11px',
+    fontWeight: 700,
+    letterSpacing: '0.04em',
+    color: '#6b7280',
+    backgroundColor: '#f9fafb',
+    padding: '8px 12px',
   },
   chips: {
     background: '#783FF3',
@@ -49,7 +57,7 @@ const MULTISELECT_STYLES = {
 };
 
 export default function ProfileAvailableForMultiSelect({ id, value, onChange, selectionLimit = 6 }) {
-  const selectedValues = parseAvailableForSelections(value);
+  const selectedValues = resolveNicheOptions(value);
 
   const handleChange = (selectedList) => {
     onChange(formatAvailableForSelections(selectedList));
@@ -58,17 +66,18 @@ export default function ProfileAvailableForMultiSelect({ id, value, onChange, se
   return (
     <div id={id} className="profile-available-for-multiselect">
       <Multiselect
-        options={PROFILE_AVAILABLE_FOR_OPTIONS}
+        options={PROFILE_NICHE_OPTIONS}
         selectedValues={selectedValues}
         onSelect={handleChange}
         onRemove={handleChange}
-        isObject={false}
+        displayValue="name"
+        groupBy="group"
         showCheckbox
         showArrow
         avoidHighlightFirstOption
         selectionLimit={selectionLimit}
-        placeholder="Select categories"
-        emptyRecordMsg="No categories found"
+        placeholder="Select niches"
+        emptyRecordMsg="No niches found"
         disablePreSelectedValues={false}
         style={MULTISELECT_STYLES}
       />
