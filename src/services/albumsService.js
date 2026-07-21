@@ -190,9 +190,11 @@ export const getAlbums = async (userId = null) => {
  * 
  * @param {string} albumId - Album ID
  * @param {File} imageFile - Image file to upload
+ * @param {number|null} currentImageCount - Optional current count for client-side limit check
+ * @param {string} [displaySize='M'] - Display size: S | M | L
  * @returns {Promise<Object>} Uploaded image data
  */
-export const uploadImageToAlbum = async (albumId, imageFile, currentImageCount = null) => {
+export const uploadImageToAlbum = async (albumId, imageFile, currentImageCount = null, displaySize = 'M') => {
   try {
     if (!imageFile) {
       throw new Error('Image file is required');
@@ -217,8 +219,10 @@ export const uploadImageToAlbum = async (albumId, imageFile, currentImageCount =
     // Remove Content-Type for FormData (browser will set it with boundary)
     delete headers['Content-Type'];
 
+    const normalizedSize = displaySize === 'S' || displaySize === 'L' ? displaySize : 'M';
     const formData = new FormData();
     formData.append('image', imageFile);
+    formData.append('display_size', normalizedSize);
 
     // Add albumId to URL as query parameter for Vercel compatibility
     // Vercel may have issues with nested dynamic routes, so we pass it in query too

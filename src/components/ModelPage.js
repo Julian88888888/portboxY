@@ -9,6 +9,7 @@ import BookingModal from './BookingModal';
 import { formatJobType, isModelJobType } from '../utils/formatJobType';
 import { getDisplayAge } from '../utils/dateOfBirth';
 import { ALBUM_PLACEHOLDER, getAlbumCoverSrc } from '../utils/albumPlaceholder';
+import { getAlbumCardGridStyle, getImageThumbGridStyle, normalizeDisplaySize } from '../utils/displaySize';
 
 const days = [
   { key: "monday", label: "Mon", hours: "5 hours" },
@@ -101,6 +102,7 @@ export default function JobRequestPopup() {
   const [selectedAlbum, setSelectedAlbum] = useState(null);
   const [albumImages, setAlbumImages] = useState([]);
   const [imagesLoading, setImagesLoading] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState(null);
   const [customLinks, setCustomLinks] = useState([]);
   const [customLinksLoading, setCustomLinksLoading] = useState(false);
 
@@ -884,30 +886,53 @@ export default function JobRequestPopup() {
               <p className="text_color_grey">No albums yet.</p>
             </div>
           ) : (
-            <div className="w-layout-grid blog_grid" style={{ marginBottom: '24px' }}>
-              {albums.map((album, index) => (
+            <div
+              className="w-layout-grid blog_grid portfolio-albums-grid"
+              style={{
+                marginBottom: '24px',
+                display: 'grid',
+                gridTemplateColumns: 'repeat(6, minmax(0, 1fr))',
+                gap: '20px',
+              }}
+            >
+              {albums.map((album, index) => {
+                const cardSizeStyle = getAlbumCardGridStyle(album.card_size);
+                return (
                 <div 
                   key={album.id || index} 
                   className="product_item w-inline-block" 
                   style={{ 
                     position: 'relative',
-                    cursor: 'pointer'
+                    cursor: 'pointer',
+                    gridColumn: cardSizeStyle.gridColumn,
+                    width: '100%',
                   }}
                   onClick={() => handleAlbumClick(album)}
                 >
                   <a 
                     href="#" 
                     className="product_item w-inline-block"
+                    style={{ display: 'block', width: '100%' }}
                     onClick={(e) => {
                       e.preventDefault();
                       handleAlbumClick(album);
                     }}
                   >
-                    <div className="product_image_wrapper">
+                    <div
+                      className="product_image_wrapper"
+                      style={{
+                        width: '100%',
+                        aspectRatio: cardSizeStyle.aspectRatio,
+                        borderRadius: '20px',
+                        overflow: 'hidden',
+                        background: '#f3f4f6',
+                      }}
+                    >
                       <img 
                         src={getAlbumCoverSrc(album.cover_image_url, normalizeImageUrl)} 
                         alt={album.title} 
                         className="product_image fashionphoto"
+                        style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
                         onError={(e) => {
                           e.target.src = ALBUM_PLACEHOLDER;
                         }}
@@ -920,7 +945,8 @@ export default function JobRequestPopup() {
                     {shouldShowAlbumDescription() && <p className="text_color_grey">{album.description || 'No description'}</p>}
                   </a>
                 </div>
-              ))}
+              );
+              })}
             </div>
           )}
           <div className="spacing_48"></div>
@@ -1115,6 +1141,7 @@ export default function JobRequestPopup() {
         <div
           className="modal-overlay" 
           onClick={() => {
+            setLightboxIndex(null);
             setIsAlbumModalOpen(false);
             setSelectedAlbum(null);
             setAlbumImages([]);
@@ -1151,6 +1178,7 @@ export default function JobRequestPopup() {
               <h2 style={{ margin: 0 }}>{selectedAlbum.title} - Images</h2>
               <button
                 onClick={() => {
+                  setLightboxIndex(null);
                   setIsAlbumModalOpen(false);
                   setSelectedAlbum(null);
                   setAlbumImages([]);
@@ -1184,18 +1212,29 @@ export default function JobRequestPopup() {
             ) : (
               <div style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
-                gap: '16px'
+                gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
+                gap: '12px'
               }}>
-                {albumImages.map((image, index) => (
-                  <div
+                {albumImages.map((image, index) => {
+                  const thumbStyle = getImageThumbGridStyle(image.display_size);
+                  return (
+                  <button
                     key={image.id || index}
+                    type="button"
+                    onClick={() => setLightboxIndex(index)}
                     style={{
                       position: 'relative',
                       borderRadius: '8px',
                       overflow: 'hidden',
-                      border: '1px solid #ddd',
-                      boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                      border: '1px solid #e5e7eb',
+                      boxShadow: '0 2px 4px rgba(0,0,0,0.08)',
+                      padding: 0,
+                      margin: 0,
+                      background: '#f3f4f6',
+                      cursor: 'pointer',
+                      width: '100%',
+                      gridColumn: thumbStyle.gridColumn,
+                      aspectRatio: thumbStyle.aspectRatio,
                     }}
                   >
                     <img
@@ -1203,24 +1242,148 @@ export default function JobRequestPopup() {
                       alt={`${selectedAlbum.title} - Image ${index + 1}`}
                       style={{
                         width: '100%',
-                        height: '200px',
+                        height: '100%',
                         objectFit: 'cover',
-                        display: 'block',
-                        cursor: 'pointer'
+                        display: 'block'
                       }}
                       onError={(e) => {
                         e.target.src = ALBUM_PLACEHOLDER;
                       }}
-                      onClick={() => {
-                        // Open image in full size (optional - can be enhanced with lightbox)
-                        window.open(normalizeImageUrl(image.url), '_blank');
-                      }}
                     />
-                  </div>
-                ))}
+                    <span
+                      style={{
+                        position: 'absolute',
+                        top: '6px',
+                        right: '6px',
+                        background: 'rgba(0,0,0,0.55)',
+                        color: '#fff',
+                        fontSize: '10px',
+                        fontWeight: 700,
+                        padding: '2px 6px',
+                        borderRadius: '4px',
+                      }}
+                    >
+                      {normalizeDisplaySize(image.display_size)}
+                    </span>
+                  </button>
+                );
+                })}
               </div>
             )}
           </div>
+        </div>
+      )}
+
+      {/* Album image lightbox */}
+      {lightboxIndex !== null && albumImages[lightboxIndex] && (
+        <div
+          className="modal-overlay"
+          onClick={() => setLightboxIndex(null)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.92)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 10001,
+            padding: '24px'
+          }}
+        >
+          <button
+            type="button"
+            onClick={() => setLightboxIndex(null)}
+            aria-label="Close image"
+            style={{
+              position: 'absolute',
+              top: '20px',
+              right: '24px',
+              background: 'transparent',
+              border: 'none',
+              color: '#fff',
+              fontSize: '36px',
+              lineHeight: 1,
+              cursor: 'pointer',
+              zIndex: 1
+            }}
+          >
+            ×
+          </button>
+          {albumImages.length > 1 && (
+            <>
+              <button
+                type="button"
+                aria-label="Previous image"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setLightboxIndex((prev) => (prev - 1 + albumImages.length) % albumImages.length);
+                }}
+                style={{
+                  position: 'absolute',
+                  left: '16px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'rgba(255,255,255,0.15)',
+                  border: 'none',
+                  color: '#fff',
+                  width: '44px',
+                  height: '44px',
+                  borderRadius: '50%',
+                  fontSize: '28px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
+                ‹
+              </button>
+              <button
+                type="button"
+                aria-label="Next image"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setLightboxIndex((prev) => (prev + 1) % albumImages.length);
+                }}
+                style={{
+                  position: 'absolute',
+                  right: '16px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'rgba(255,255,255,0.15)',
+                  border: 'none',
+                  color: '#fff',
+                  width: '44px',
+                  height: '44px',
+                  borderRadius: '50%',
+                  fontSize: '28px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
+                ›
+              </button>
+            </>
+          )}
+          <img
+            src={normalizeImageUrl(albumImages[lightboxIndex].url) || ALBUM_PLACEHOLDER}
+            alt={`${selectedAlbum?.title || 'Album'} - Image ${lightboxIndex + 1}`}
+            onClick={(e) => e.stopPropagation()}
+            onError={(e) => {
+              e.target.src = ALBUM_PLACEHOLDER;
+            }}
+            style={{
+              maxWidth: 'min(96vw, 1100px)',
+              maxHeight: '88vh',
+              width: 'auto',
+              height: 'auto',
+              objectFit: 'contain',
+              borderRadius: '8px',
+              boxShadow: '0 12px 40px rgba(0,0,0,0.45)'
+            }}
+          />
         </div>
       )}
 

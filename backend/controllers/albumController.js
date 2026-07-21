@@ -417,14 +417,30 @@ const uploadImageToAlbum = async (req, res) => {
       }
 
       // Insert image
-      const { data: image, error: imageError } = await supabase
+      const displaySize = req.body?.display_size === 'S' || req.body?.display_size === 'L'
+        ? req.body.display_size
+        : 'M';
+
+      let { data: image, error: imageError } = await supabase
         .from('images')
         .insert({
           album_id: albumId,
-          url: imageUrl
+          url: imageUrl,
+          display_size: displaySize
         })
         .select()
         .single();
+
+      if (imageError && /display_size/i.test(imageError.message || '')) {
+        ({ data: image, error: imageError } = await supabase
+          .from('images')
+          .insert({
+            album_id: albumId,
+            url: imageUrl
+          })
+          .select()
+          .single());
+      }
 
       if (imageError) {
         console.error('Database error:', imageError);
@@ -441,13 +457,22 @@ const uploadImageToAlbum = async (req, res) => {
         .eq('id', albumId)
         .single();
 
+      const isCover = updatedAlbum?.cover_image_id === image.id;
+      if (isCover) {
+        await supabase
+          .from('albums')
+          .update({ card_size: displaySize })
+          .eq('id', albumId);
+      }
+
       return res.status(201).json({
         success: true,
         data: {
           id: image.id,
           album_id: image.album_id,
           url: image.url,
-          is_cover: updatedAlbum.cover_image_id === image.id,
+          display_size: image.display_size || displaySize,
+          is_cover: isCover,
           created_at: image.created_at
         }
       });

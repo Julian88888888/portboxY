@@ -17,10 +17,46 @@ import { ALBUM_PLACEHOLDER, getAlbumCoverSrc } from '../utils/albumPlaceholder';
 import ProfileAvailableForMultiSelect from './ProfileAvailableForMultiSelect';
 import { parseAvailableForSelections } from '../utils/availableFor';
 import { getDisplayAge, getMaxDobForInput, normalizeDobForInput } from '../utils/dateOfBirth';
+import { DISPLAY_SIZE_OPTIONS, normalizeDisplaySize, getImageThumbGridStyle } from '../utils/displaySize';
 
 const TAB_ROUTES = { 'Tab 1': '/profile', 'Tab 2': '/portfolio', 'Tab 3': '/bookings', 'Tab 4': '/links', 'Tab 5': '/settings' };
 
 const BOOKING_AVAILABLE_FOR_IDS = ['photoshoots', 'acting', 'runway', 'promo'];
+
+const DisplaySizePicker = ({ value, onChange, label = 'Display size' }) => (
+  <div className="form-group" style={{ marginBottom: '16px' }}>
+    <label style={{ display: 'block', marginBottom: '8px' }}>{label}</label>
+    <div style={{ display: 'flex', gap: '8px' }}>
+      {DISPLAY_SIZE_OPTIONS.map((option) => {
+        const selected = normalizeDisplaySize(value) === option.id;
+        return (
+          <button
+            key={option.id}
+            type="button"
+            onClick={() => onChange(option.id)}
+            title={option.hint}
+            style={{
+              flex: 1,
+              padding: '10px 12px',
+              borderRadius: '8px',
+              border: selected ? '2px solid #783FF3' : '1px solid #e5e7eb',
+              background: selected ? '#f3e8ff' : '#fff',
+              color: selected ? '#4c1d95' : '#374151',
+              fontWeight: 700,
+              cursor: 'pointer',
+              fontSize: '14px',
+            }}
+          >
+            {option.label}
+            <div style={{ fontSize: '11px', fontWeight: 500, marginTop: '2px', opacity: 0.75 }}>
+              {option.hint}
+            </div>
+          </button>
+        );
+      })}
+    </div>
+  </div>
+);
 
 /** Set true to show mailto Email on Incoming Bookings cards. */
 const SHOW_INCOMING_BOOKING_EMAIL_BUTTON = false;
@@ -128,12 +164,14 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
     title: '',
     description: '',
     imageFile: null,
-    imagePreview: null
+    imagePreview: null,
+    displaySize: 'M'
   });
   const [isUploadImageModalOpen, setIsUploadImageModalOpen] = useState(false);
   const [selectedAlbumId, setSelectedAlbumId] = useState(null);
   const [uploadImageFile, setUploadImageFile] = useState(null);
   const [uploadImagePreview, setUploadImagePreview] = useState(null);
+  const [uploadImageDisplaySize, setUploadImageDisplaySize] = useState('M');
   const [albumImages, setAlbumImages] = useState({}); // albumId -> images array
   const [isViewImagesModalOpen, setIsViewImagesModalOpen] = useState(false);
   const [viewingAlbum, setViewingAlbum] = useState(null);
@@ -1771,6 +1809,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                                       setSelectedAlbumId(album.id);
                                       setUploadImageFile(null);
                                       setUploadImagePreview(null);
+                                      setUploadImageDisplaySize('M');
                                       setIsUploadImageModalOpen(true);
                                     }}
                                     style={{
@@ -3224,7 +3263,12 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
 
                 // Step 2: Upload image if provided
                 if (newAlbumFormData.imageFile) {
-                  const imageResult = await uploadImageToAlbum(albumId, newAlbumFormData.imageFile);
+                  const imageResult = await uploadImageToAlbum(
+                    albumId,
+                    newAlbumFormData.imageFile,
+                    null,
+                    newAlbumFormData.displaySize || 'M'
+                  );
                   if (!imageResult.success) {
                     alert(`Album created but image upload failed: ${imageResult.error}`);
                   } else {
@@ -3267,7 +3311,8 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                   title: '',
                   description: '',
                   imageFile: null,
-                  imagePreview: null
+                  imagePreview: null,
+                  displaySize: 'M'
                 });
               }}
             >
@@ -3338,6 +3383,12 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                   />
                 )}
               </div>
+
+              <DisplaySizePicker
+                value={newAlbumFormData.displaySize}
+                onChange={(displaySize) => setNewAlbumFormData({ ...newAlbumFormData, displaySize })}
+                label="Card size on public Portfolio"
+              />
 
               <div style={{ display: 'flex', gap: '12px', marginTop: '24px' }}>
                 <button
@@ -3444,7 +3495,8 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                 const imageResult = await uploadImageToAlbum(
                   selectedAlbumId,
                   uploadImageFile,
-                  currentImageCount
+                  currentImageCount,
+                  uploadImageDisplaySize
                 );
                 
                 if (!imageResult.success) {
@@ -3486,6 +3538,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                 setSelectedAlbumId(null);
                 setUploadImageFile(null);
                 setUploadImagePreview(null);
+                setUploadImageDisplaySize('M');
               }}
             >
               <div className="form-group" style={{ marginBottom: '16px' }}>
@@ -3530,6 +3583,12 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                 )}
               </div>
 
+              <DisplaySizePicker
+                value={uploadImageDisplaySize}
+                onChange={setUploadImageDisplaySize}
+                label="Display size"
+              />
+
               <div style={{ display: 'flex', gap: '12px', marginTop: '24px' }}>
                 <button
                   type="button"
@@ -3538,6 +3597,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                     setSelectedAlbumId(null);
                     setUploadImageFile(null);
                     setUploadImagePreview(null);
+                    setUploadImageDisplaySize('M');
                   }}
                   style={{
                     padding: '12px 24px',
@@ -3619,10 +3679,12 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
             {albumImages[viewingAlbum.id] && albumImages[viewingAlbum.id].length > 0 ? (
               <div style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+                gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
                 gap: '16px'
               }}>
-                {albumImages[viewingAlbum.id].map((image) => (
+                {albumImages[viewingAlbum.id].map((image) => {
+                  const thumbStyle = getImageThumbGridStyle(image.display_size);
+                  return (
                   <div
                     key={image.id}
                     style={{
@@ -3630,7 +3692,10 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                       borderRadius: '8px',
                       overflow: 'hidden',
                       border: viewingAlbum.cover_image_id === image.id ? '3px solid #007bff' : '1px solid #ddd',
-                      boxShadow: viewingAlbum.cover_image_id === image.id ? '0 0 10px rgba(0,123,255,0.5)' : 'none'
+                      boxShadow: viewingAlbum.cover_image_id === image.id ? '0 0 10px rgba(0,123,255,0.5)' : 'none',
+                      gridColumn: thumbStyle.gridColumn,
+                      aspectRatio: thumbStyle.aspectRatio,
+                      width: '100%'
                     }}
                   >
                     <img
@@ -3638,9 +3703,10 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                       alt="Album image"
                       style={{
                         width: '100%',
-                        height: '200px',
+                        height: '100%',
                         objectFit: 'cover',
-                        display: 'block'
+                        display: 'block',
+                        minHeight: '120px'
                       }}
                       onError={(e) => {
                         console.error('Failed to load image:', image.url, 'Normalized:', normalizeImageUrl(image.url));
@@ -3650,6 +3716,19 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                         console.log('Image loaded successfully:', normalizeImageUrl(image.url));
                       }}
                     />
+                    <div style={{
+                      position: 'absolute',
+                      top: '8px',
+                      right: '8px',
+                      background: 'rgba(0,0,0,0.65)',
+                      color: 'white',
+                      padding: '2px 6px',
+                      borderRadius: '4px',
+                      fontSize: '10px',
+                      fontWeight: 'bold'
+                    }}>
+                      {normalizeDisplaySize(image.display_size)}
+                    </div>
                     {viewingAlbum.cover_image_id === image.id && (
                       <div style={{
                         position: 'absolute',
@@ -3704,7 +3783,8 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                       {viewingAlbum.cover_image_id === image.id ? '✓ Cover' : 'Set as Cover'}
                     </button>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               <p className="text_color_grey" style={{ textAlign: 'center', padding: '40px' }}>

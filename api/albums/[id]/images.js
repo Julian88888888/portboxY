@@ -10,7 +10,7 @@ const MAX_IMAGES_PER_ALBUM = 20;
 const getMaxImagesError = () => `Maximum ${MAX_IMAGES_PER_ALBUM} images per album`;
 
 /**
- * Parse multipart/form-data and extract file
+ * Parse multipart/form-data and extract file + fields
  */
 function parseFormData(req) {
   return new Promise((resolve, reject) => {
@@ -25,6 +25,7 @@ function parseFormData(req) {
       filename: null,
       mimetype: null
     };
+    const fields = {};
     let fileFound = false;
 
     bb.on('file', (name, file, info) => {
@@ -48,11 +49,15 @@ function parseFormData(req) {
       }
     });
 
+    bb.on('field', (name, value) => {
+      fields[name] = value;
+    });
+
     bb.on('finish', () => {
       if (!fileFound) {
         reject(new Error('No image file found in form data. Make sure the field name is "image".'));
       } else {
-        resolve(fileData);
+        resolve({ ...fileData, fields });
       }
     });
 
@@ -71,6 +76,10 @@ function parseFormData(req) {
       reject(new Error('Request body is not readable'));
     }
   });
+}
+
+function normalizeDisplaySize(value) {
+  return value === 'S' || value === 'L' || value === 'M' ? value : 'M';
 }
 
 /**
@@ -162,15 +171,29 @@ module.exports = async (req, res) => {
       // Get all images for the album
       const { data: images, error: imagesError } = await supabase
         .from('images')
-        .select('id, album_id, url, created_at')
+        .select('id, album_id, url, display_size, created_at')
         .eq('album_id', albumId)
         .order('created_at', { ascending: false });
 
       if (imagesError) {
-        console.error('Database error:', imagesError);
-        return res.status(500).json({
-          success: false,
-          error: imagesError.message || 'Failed to fetch images'
+        // Fallback if display_size column is not migrated yet
+        const { data: fallbackImages, error: fallbackError } = await supabase
+          .from('images')
+          .select('id, album_id, url, created_at')
+          .eq('album_id', albumId)
+          .order('created_at', { ascending: false });
+
+        if (fallbackError) {
+          console.error('Database error:', imagesError);
+          return res.status(500).json({
+            success: false,
+            error: imagesError.message || 'Failed to fetch images'
+          });
+        }
+
+        return res.status(200).json({
+          success: true,
+          data: (fallbackImages || []).map((img) => ({ ...img, display_size: 'M' }))
         });
       }
 
@@ -292,15 +315,31 @@ module.exports = async (req, res) => {
       fileData.mimetype
     );
 
+    const displaySize = normalizeDisplaySize(fileData.fields?.display_size);
+
     // Insert image record
-    const { data: image, error: imageError } = await supabase
+    let image;
+    let imageError;
+    ({ data: image, error: imageError } = await supabase
       .from('images')
       .insert({
         album_id: albumId,
-        url: imageUrl
+        url: imageUrl,
+        display_size: displaySize
       })
       .select()
-      .single();
+      .single());
+
+    if (imageError && /display_size/i.test(imageError.message || '')) {
+      ({ data: image, error: imageError } = await supabase
+        .from('images')
+        .insert({
+          album_id: albumId,
+          url: imageUrl
+        })
+        .select()
+        .single());
+    }
 
     if (imageError) {
       console.error('Database error:', imageError);
@@ -310,12 +349,20 @@ module.exports = async (req, res) => {
       });
     }
 
-    // Check if cover was automatically set (by trigger)
+    // Check if cover was automatically set (by trigger) and sync album card_size
     const { data: updatedAlbum } = await supabase
       .from('albums')
       .select('cover_image_id')
       .eq('id', albumId)
       .single();
+
+    const isCover = updatedAlbum?.cover_image_id === image.id;
+    if (isCover) {
+      await supabase
+        .from('albums')
+        .update({ card_size: displaySize })
+        .eq('id', albumId);
+    }
 
       return res.status(201).json({
         success: true,
@@ -323,7 +370,8 @@ module.exports = async (req, res) => {
           id: image.id,
           album_id: image.album_id,
           url: image.url,
-          is_cover: updatedAlbum?.cover_image_id === image.id,
+          display_size: image.display_size || displaySize,
+          is_cover: isCover,
           created_at: image.created_at
         }
       });

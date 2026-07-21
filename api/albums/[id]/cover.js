@@ -68,12 +68,23 @@ module.exports = async (req, res) => {
       });
     }
 
-    const { data: image, error: imageError } = await supabase
+    let image;
+    let imageError;
+    ({ data: image, error: imageError } = await supabase
       .from('images')
-      .select('id, album_id')
+      .select('id, album_id, display_size')
       .eq('id', imageId)
       .eq('album_id', albumId)
-      .single();
+      .single());
+
+    if (imageError && /display_size/i.test(imageError.message || '')) {
+      ({ data: image, error: imageError } = await supabase
+        .from('images')
+        .select('id, album_id')
+        .eq('id', imageId)
+        .eq('album_id', albumId)
+        .single());
+    }
 
     if (imageError || !image) {
       return res.status(404).json({
@@ -82,14 +93,31 @@ module.exports = async (req, res) => {
       });
     }
 
-    const { data: updatedAlbum, error: updateError } = await supabase
+    const cardSize = image.display_size === 'S' || image.display_size === 'L' ? image.display_size : 'M';
+
+    let { data: updatedAlbum, error: updateError } = await supabase
       .from('albums')
-      .update({ cover_image_id: imageId })
+      .update({ cover_image_id: imageId, card_size: cardSize })
       .eq('id', albumId)
       .select()
       .single();
 
-    if (updateError) {
+    if (updateError && /card_size/i.test(updateError.message || '')) {
+      const retry = await supabase
+        .from('albums')
+        .update({ cover_image_id: imageId })
+        .eq('id', albumId)
+        .select()
+        .single();
+      if (retry.error) {
+        console.error('Update error:', retry.error);
+        return res.status(500).json({
+          success: false,
+          error: retry.error.message || 'Failed to set cover image'
+        });
+      }
+      updatedAlbum = retry.data;
+    } else if (updateError) {
       console.error('Update error:', updateError);
       return res.status(500).json({
         success: false,
@@ -118,6 +146,7 @@ module.exports = async (req, res) => {
         description: updatedAlbum.description,
         cover_image_id: updatedAlbum.cover_image_id,
         cover_image_url: coverImageUrl,
+        card_size: updatedAlbum.card_size || cardSize,
         created_at: updatedAlbum.created_at
       },
       message: 'Cover image updated successfully'

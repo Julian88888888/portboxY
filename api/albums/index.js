@@ -48,14 +48,28 @@ module.exports = async (req, res) => {
 
       let albumsQuery = supabase
         .from('albums')
-        .select('id, title, description, cover_image_id, created_at')
+        .select('id, title, description, cover_image_id, card_size, created_at')
         .order('created_at', { ascending: false });
 
       if (filterUserId) {
         albumsQuery = albumsQuery.eq('user_id', filterUserId);
       }
 
-      const { data: albums, error } = await albumsQuery;
+      let { data: albums, error } = await albumsQuery;
+
+      if (error && /card_size/i.test(error.message || '')) {
+        albumsQuery = supabase
+          .from('albums')
+          .select('id, title, description, cover_image_id, created_at')
+          .order('created_at', { ascending: false });
+        if (filterUserId) {
+          albumsQuery = albumsQuery.eq('user_id', filterUserId);
+        }
+        ({ data: albums, error } = await albumsQuery);
+        if (!error && albums) {
+          albums = albums.map((album) => ({ ...album, card_size: 'M' }));
+        }
+      }
 
       if (error) {
         console.error('Database error:', error);
@@ -92,6 +106,7 @@ module.exports = async (req, res) => {
         description: album.description,
         cover_image_id: album.cover_image_id,
         cover_image_url: album.cover_image_id ? coverImagesMap[album.cover_image_id] || null : null,
+        card_size: album.card_size || 'M',
         created_at: album.created_at
       }));
 
