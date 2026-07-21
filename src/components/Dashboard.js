@@ -1220,7 +1220,6 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                         />
                         <label htmlFor="niche" style={{ fontSize: '12px', fontWeight: '500', marginBottom: '8px', display: 'block' }}>Niche</label>
                         <ProfileAvailableForMultiSelect
-                          key={`niche-${formData.availableFor || 'empty'}`}
                           id="niche"
                           value={formData.availableFor}
                           onChange={(nextValue) => setFormData((prev) => ({ ...prev, availableFor: nextValue }))}

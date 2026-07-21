@@ -74,6 +74,7 @@ export default function ProfileAvailableForMultiSelect({ id, value, onChange, se
         groupBy="group"
         showCheckbox
         showArrow
+        closeOnSelect={false}
         avoidHighlightFirstOption
         selectionLimit={selectionLimit}
         placeholder="Select niches"

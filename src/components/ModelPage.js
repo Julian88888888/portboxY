@@ -1089,8 +1089,6 @@ export default function JobRequestPopup() {
       <div className="section footer_sec">
         <div className="content_wrapper content_align_center">
           <div className="spacing_24"></div>
-          <div className="line_divider"></div>
-          <div className="spacing_24"></div>
           <a href="#">Create A Free Model Link Portfolio</a>
           <div className="spacing_48"></div>
 
