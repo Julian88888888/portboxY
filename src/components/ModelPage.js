@@ -10,6 +10,7 @@ import { formatJobType, isModelJobType } from '../utils/formatJobType';
 import { getDisplayAge } from '../utils/dateOfBirth';
 import { ALBUM_PLACEHOLDER, getAlbumCoverSrc } from '../utils/albumPlaceholder';
 import { getAlbumCardGridStyle, getImageThumbGridStyle, normalizeDisplaySize } from '../utils/displaySize';
+import { formatEthnicityLabel } from '../utils/ethnicity';
 
 const days = [
   { key: "monday", label: "Mon", hours: "5 hours" },
@@ -854,7 +855,7 @@ export default function JobRequestPopup() {
                 </div>
                 <div className="stat_item">
                   <div className="stat_title">ETHNICITY</div>
-                  <div className="stat_descript">{getUserValue('ethnicity', 'White')}</div>
+                  <div className="stat_descript">{formatEthnicityLabel(getUserValue('ethnicity', ''))}</div>
                 </div>
               </div>
             </div>

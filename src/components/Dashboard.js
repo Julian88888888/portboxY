@@ -18,6 +18,7 @@ import ProfileAvailableForMultiSelect from './ProfileAvailableForMultiSelect';
 import { parseAvailableForSelections } from '../utils/availableFor';
 import { getDisplayAge, getMaxDobForInput, normalizeDobForInput } from '../utils/dateOfBirth';
 import { DISPLAY_SIZE_OPTIONS, normalizeDisplaySize, getImageThumbGridStyle } from '../utils/displaySize';
+import { formatEthnicityLabel } from '../utils/ethnicity';
 
 const TAB_ROUTES = { 'Tab 1': '/profile', 'Tab 2': '/portfolio', 'Tab 3': '/bookings', 'Tab 4': '/links', 'Tab 5': '/settings' };
 
@@ -1327,7 +1328,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                           />
                         </div>
                       </label>
-                      <p style={{ margin: 0 }}>Show Model Stats</p>
+                      <p style={{ margin: 0 }}>Show Personal Stats</p>
                     </div>
                     <div
                       className="w-layout-hflex flex-block-9"
@@ -1463,7 +1464,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                         </div>
                         <div className="stat_item">
                           <div className="stat_label" style={{fontWeight: '700'}}>ETHNICITY</div>
-                          <div className="stat_value" style={{fontWeight: '400'}}>{formData.ethnicity || 'White'}</div>
+                          <div className="stat_value" style={{fontWeight: '400'}}>{formatEthnicityLabel(formData.ethnicity)}</div>
                         </div>
                       </div>
                     </div>
@@ -1687,7 +1688,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                           value={formData.eyeColor}
                           onChange={handleInputChange}
                         />
-                        <input type="submit" className="submit-button w-button" value="Save Model Stats" />
+                        <input type="submit" className="submit-button w-button" value="Save Personal Stats" />
                       </form>
                       <div className="w-form-done" tabIndex="-1" role="region" aria-label="Email Form success">
                         <div>Thank you! Your submission has been received!</div>
