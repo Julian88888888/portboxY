@@ -262,6 +262,11 @@
   border-color: var(--blue-violet, #783ff3);
 }
 
+/* Date of Birth: open calendar on click anywhere; keep native icon visible */
+.dob-date-input {
+  cursor: pointer;
+}
+
 .w-select {
   width: 100%;
   padding: 6px 16px;
