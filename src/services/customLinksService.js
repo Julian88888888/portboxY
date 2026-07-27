@@ -1,4 +1,5 @@
 import supabase from './supabase';
+import { validateImageFileSize } from '../utils/imageUploadLimits';
 
 // Auto-detect API URL based on environment
 const getApiBaseUrl = () => {
@@ -371,4 +372,71 @@ export const deleteCustomLink = async (linkId) => {
     };
   }
 };
+
+/**
+ * Upload a custom link icon to Supabase Storage and return its public URL.
+ * Path: {userId}/custom-link-icons/{timestamp}-{filename}
+ */
+export const uploadCustomLinkIcon = async (file) => {
+  try {
+    if (!file) {
+      throw new Error('No file selected');
+    }
+
+    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+    if (sessionError || !sessionData?.session?.user) {
+      throw new Error('User not authenticated');
+    }
+
+    const user = sessionData.session.user;
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml'];
+    if (!allowedTypes.includes(file.type)) {
+      throw new Error('Please select a JPG, PNG, WebP, GIF, or SVG image');
+    }
+
+    const sizeCheck = validateImageFileSize(file);
+    if (!sizeCheck.valid) {
+      throw new Error(sizeCheck.error);
+    }
+
+    const timestamp = Date.now();
+    const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+    const filePath = `${user.id}/custom-link-icons/${timestamp}-${sanitizedFileName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('profile-photos')
+      .upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: false,
+        contentType: file.type,
+      });
+
+    if (uploadError) {
+      console.error('Custom link icon upload error:', uploadError);
+      throw new Error(uploadError.message || 'Failed to upload icon');
+    }
+
+    const { data: urlData } = supabase.storage
+      .from('profile-photos')
+      .getPublicUrl(filePath);
+
+    const publicUrl = urlData?.publicUrl;
+    if (!publicUrl) {
+      throw new Error('Failed to get icon URL');
+    }
+
+    return {
+      success: true,
+      url: publicUrl,
+      path: filePath,
+    };
+  } catch (error) {
+    console.error('Error uploading custom link icon:', error);
+    return {
+      success: false,
+      error: error.message || 'Failed to upload icon',
+    };
+  }
+};
+
 

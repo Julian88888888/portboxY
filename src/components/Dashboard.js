@@ -6,7 +6,7 @@ import { useProfile } from '../hooks/useProfile';
 import { getAvatarUrl, getHeaderUrl, upsertProfile } from '../services/profileService';
 import { createAlbum, getAlbums, uploadImageToAlbum, deleteAlbum, getAlbumImages, setCoverImage, normalizeImageUrl, seedStarterAlbumsIfNeeded, trimExcessStarterAlbumsIfNeeded, canCreateAlbum, canUploadImageToAlbum, MAX_ALBUMS_PER_USER, MAX_IMAGES_PER_ALBUM, getMaxAlbumsError, getMaxImagesError } from '../services/albumsService';
 import { validateMarkets } from '../utils/markets';
-import { getCustomLinks, createCustomLink, updateCustomLink, deleteCustomLink } from '../services/customLinksService';
+import { getCustomLinks, createCustomLink, updateCustomLink, deleteCustomLink, uploadCustomLinkIcon } from '../services/customLinksService';
 import { getBookings, getBookingsAsClient, deleteBooking, updateBooking, formatBookingClientHandle } from '../services/bookingsService';
 import ProfileSettings from './ProfileSettings';
 import BookingChatModal from './BookingChatModal';
@@ -188,6 +188,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
     icon_url: '',
     enabled: true
   });
+  const [customLinkIconUploading, setCustomLinkIconUploading] = useState(false);
 
   // Bookings state
   const [bookings, setBookings] = useState([]);
@@ -1474,12 +1475,26 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                         <label htmlFor="age">Date of Birth</label>
                         <input
                           id="age"
-                          className="w-input"
+                          className="w-input dob-date-input"
                           name="age"
                           type="date"
                           max={getMaxDobForInput()}
                           value={normalizeDobForInput(formData.age)}
                           onChange={handleInputChange}
+                          onClick={(e) => {
+                            try {
+                              e.currentTarget.showPicker?.();
+                            } catch (_) {
+                              /* ignore if browser blocks showPicker */
+                            }
+                          }}
+                          onFocus={(e) => {
+                            try {
+                              e.currentTarget.showPicker?.();
+                            } catch (_) {
+                              /* ignore if browser blocks showPicker */
+                            }
+                          }}
                         />
                         <label htmlFor="gender">Gender</label>
                         <select 
@@ -3922,7 +3937,48 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
               </div>
 
               <div className="form-group" style={{ marginBottom: '16px' }}>
-                <label htmlFor="customLinkIcon">Icon URL (optional)</label>
+                <label htmlFor="customLinkIconFile">Icon (optional)</label>
+                <p style={{ fontSize: '12px', color: '#666', margin: '4px 0 8px' }}>
+                  Upload an image · {MAX_IMAGE_SIZE_HINT}
+                </p>
+                <input
+                  type="file"
+                  id="customLinkIconFile"
+                  accept="image/jpeg,image/jpg,image/png,image/webp,image/gif,image/svg+xml"
+                  disabled={customLinkIconUploading}
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+
+                    const sizeCheck = validateImageFileSize(file);
+                    if (!sizeCheck.valid) {
+                      alert(sizeCheck.error);
+                      e.target.value = '';
+                      return;
+                    }
+
+                    setCustomLinkIconUploading(true);
+                    const result = await uploadCustomLinkIcon(file);
+                    setCustomLinkIconUploading(false);
+                    e.target.value = '';
+
+                    if (!result.success) {
+                      alert(result.error || 'Failed to upload icon');
+                      return;
+                    }
+
+                    setCustomLinkFormData((prev) => ({
+                      ...prev,
+                      icon_url: result.url,
+                    }));
+                  }}
+                />
+                {customLinkIconUploading && (
+                  <p style={{ fontSize: '12px', color: '#666', marginTop: '8px' }}>Uploading icon…</p>
+                )}
+                <label htmlFor="customLinkIcon" style={{ display: 'block', marginTop: '12px' }}>
+                  Or paste Icon URL
+                </label>
                 <input
                   type="url"
                   id="customLinkIcon"
@@ -3932,20 +3988,36 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                   placeholder="https://example.com/icon.png"
                 />
                 {customLinkFormData.icon_url && (
-                  <img
-                    src={customLinkFormData.icon_url}
-                    alt="Icon preview"
-                    style={{
-                      width: '40px',
-                      height: '40px',
-                      marginTop: '8px',
-                      borderRadius: '4px',
-                      objectFit: 'cover'
-                    }}
-                    onError={(e) => {
-                      e.target.style.display = 'none';
-                    }}
-                  />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '8px' }}>
+                    <img
+                      src={customLinkFormData.icon_url}
+                      alt="Icon preview"
+                      style={{
+                        width: '40px',
+                        height: '40px',
+                        borderRadius: '4px',
+                        objectFit: 'cover',
+                        border: '1px solid #e5e7eb',
+                      }}
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setCustomLinkFormData({ ...customLinkFormData, icon_url: '' })}
+                      style={{
+                        padding: '6px 12px',
+                        background: '#f5f5f5',
+                        border: '1px solid #ddd',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        fontSize: '12px',
+                      }}
+                    >
+                      Remove icon
+                    </button>
+                  </div>
                 )}
               </div>
 
@@ -4008,6 +4080,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                   type="submit"
                   className="submit-button w-button"
                   style={{ flex: 1 }}
+                  disabled={customLinkIconUploading}
                 >
                   {editingCustomLink ? 'Update Link' : 'Create Link'}
                 </button>
