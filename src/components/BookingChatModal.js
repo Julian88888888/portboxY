@@ -7,6 +7,7 @@ import {
   sendGuestBookingMessage,
   formatBookingClientHandle
 } from '../services/bookingsService';
+import { formatPayRateDisplay } from '../utils/payRate';
 import './BookingChat.css';
 
 const BookingChatModal = ({ isOpen, onClose, booking }) => {
@@ -159,7 +160,7 @@ const BookingChatModal = ({ isOpen, onClose, booking }) => {
                 {booking.job_type && <div className="booking-chat__detail">Job Type: {booking.job_type}</div>}
                 {booking.dates && <div className="booking-chat__detail">Dates: {booking.dates}</div>}
                 {booking.location && <div className="booking-chat__detail">Location: {booking.location}</div>}
-                {booking.pay_rate && <div className="booking-chat__detail">Pay Rate: {booking.pay_rate}</div>}
+                {booking.pay_rate && <div className="booking-chat__detail">Pay Rate: {formatPayRateDisplay(booking.pay_rate)}</div>}
                 {booking.details && <div className="booking-chat__detail booking-chat__detail--block">Details: {booking.details}</div>}
               </div>
             )}

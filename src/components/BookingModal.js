@@ -5,26 +5,7 @@ import { useProfile } from '../hooks/useProfile';
 import { createBooking, createGuestBooking } from '../services/bookingsService';
 import { getAvatarUrl } from '../services/profileService';
 import { PAY_CURRENCIES } from '../utils/currencies';
-
-const PAY_RATE_TYPES = [
-  { value: 'flat-rate', label: 'Flat Rate' },
-  { value: 'hourly', label: 'Hourly' },
-  { value: 'half-day', label: 'Half Day' },
-  { value: 'daily', label: 'Daily' },
-  { value: 'weekly', label: 'Weekly' },
-  { value: 'biweekly', label: 'Biweekly' },
-  { value: 'monthly', label: 'Monthly' },
-  { value: 'annually', label: 'Annual Salary' },
-  { value: 'per-task', label: 'Per Task' },
-];
-
-const formatPayRate = (offerAmount, payCurrency, payRate) => {
-  const amount = String(offerAmount || '').trim();
-  const currency = PAY_CURRENCIES.find((c) => c.value === payCurrency);
-  const rateType = PAY_RATE_TYPES.find((r) => r.value === payRate);
-  if (!amount || !currency || !rateType) return '';
-  return `${currency.symbol}${amount} · ${rateType.label}`;
-};
+import { PAY_RATE_TYPES, formatPayRate } from '../utils/payRate';
 
 const BookingModal = ({ isOpen, onClose, profile, onBookingCreated }) => {
   const { user } = useAuth();

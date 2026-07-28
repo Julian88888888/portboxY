@@ -19,6 +19,7 @@ import { parseAvailableForSelections } from '../utils/availableFor';
 import { getDisplayAge, getMaxDobForInput, normalizeDobForInput } from '../utils/dateOfBirth';
 import { DISPLAY_SIZE_OPTIONS, normalizeDisplaySize, getImageThumbGridStyle } from '../utils/displaySize';
 import { formatEthnicityLabel } from '../utils/ethnicity';
+import { formatPayRateDisplay } from '../utils/payRate';
 
 const TAB_ROUTES = { 'Tab 1': '/profile', 'Tab 2': '/portfolio', 'Tab 3': '/bookings', 'Tab 4': '/links', 'Tab 5': '/settings' };
 
@@ -2087,7 +2088,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
 
                                         {b.pay_rate && (
                                           <div style={{ marginBottom: '4px', fontSize: '14px' }}>
-                                            <strong>Pay Rate:</strong> {b.pay_rate}
+                                            <strong>Pay Rate:</strong> {formatPayRateDisplay(b.pay_rate)}
                                           </div>
                                         )}
 
@@ -2198,7 +2199,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                                     {booking.job_type && <div><span style={{ color: '#888' }}>Job Type</span> · {booking.job_type}</div>}
                                     {booking.dates && <div><span style={{ color: '#888' }}>Dates</span> · {booking.dates}</div>}
                                     {booking.location && <div><span style={{ color: '#888' }}>Location</span> · {booking.location}</div>}
-                                    {booking.pay_rate && <div><span style={{ color: '#888' }}>Pay Rate</span> · {booking.pay_rate}</div>}
+                                    {booking.pay_rate && <div><span style={{ color: '#888' }}>Pay Rate</span> · {formatPayRateDisplay(booking.pay_rate)}</div>}
                                   </div>
                                   {booking.details && (
                                     <div style={{ marginBottom: '12px', padding: '10px 12px', backgroundColor: 'rgba(0,0,0,0.03)', borderRadius: '6px', fontSize: '13px', color: '#555', whiteSpace: 'pre-wrap', borderLeft: '3px solid #ddd' }}>
