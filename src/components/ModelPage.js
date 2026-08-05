@@ -11,6 +11,8 @@ import { getDisplayAge } from '../utils/dateOfBirth';
 import { ALBUM_PLACEHOLDER, getAlbumCoverSrc } from '../utils/albumPlaceholder';
 import { getAlbumCardGridStyle, getImageThumbGridStyle, normalizeDisplaySize } from '../utils/displaySize';
 import { formatEthnicityLabel } from '../utils/ethnicity';
+import { formatIndustryLabel } from '../utils/industry';
+import { formatNicheDisplay } from '../utils/availableFor';
 
 const days = [
   { key: "monday", label: "Mon", hours: "5 hours" },
@@ -753,7 +755,7 @@ export default function JobRequestPopup() {
           <div className="stats_wrap">
             <div className="stat_item">
               <div className="stat_title">INDUSTRY</div>
-              <div className="stat_descript">{getUserValue('industry', 'Fashion')}</div>
+              <div className="stat_descript">{formatIndustryLabel(getUserValue('industry', ''))}</div>
             </div>
             <div className="stat_item">
               <div className="stat_title">STATUS</div>
@@ -772,7 +774,7 @@ export default function JobRequestPopup() {
             <div className="stat_item">
               <div className="stat_title">NICHE</div>
               <div className="stat_descript">
-                {getUserValue('availableFor', 'Beauty, Editorial, Glamour, Print')}
+                {formatNicheDisplay(getUserValue('availableFor', ''))}
               </div>
             </div>
           </div>
@@ -786,16 +788,20 @@ export default function JobRequestPopup() {
                     <div className="stat_item">
                       <div className="stat_title">HEIGHT</div>
                       <div className="stat_descript">
-                        {getUserValue('heightFeet') && getUserValue('heightInches')
-                          ? `${getUserValue('heightFeet')}'${getUserValue('heightInches')}"`
-                          : "5'11\""}
+                        {(!getUserValue('heightUnit') || getUserValue('heightUnit') === 'FeetInches')
+                          ? (getUserValue('heightFeet') && getUserValue('heightInches')
+                            ? `${getUserValue('heightFeet')}'${getUserValue('heightInches')}"`
+                            : "5'11\"")
+                          : (getUserValue('heightFeet')
+                            ? `${getUserValue('heightFeet')} ${({ Centimeters: 'cm', Inches: 'in', Meters: 'm' }[getUserValue('heightUnit')] || getUserValue('heightUnit'))}`
+                            : "5'11\"")}
                       </div>
                     </div>
                     <div className="stat_item">
                       <div className="stat_title">WEIGHT</div>
                       <div className="stat_descript">
                         {getUserValue('weight')
-                          ? `${getUserValue('weight')} ${getUserValue('weightUnit', 'lbs')}`
+                          ? `${getUserValue('weight')} ${({ Pounds: 'lbs', Kilograms: 'kg', Grams: 'g' }[getUserValue('weightUnit')] || getUserValue('weightUnit', 'lbs')}`
                           : '135 lbs'}
                       </div>
                     </div>
@@ -803,7 +809,7 @@ export default function JobRequestPopup() {
                       <div className="stat_title">BUST</div>
                       <div className="stat_descript">
                         {getUserValue('bust')
-                          ? `${getUserValue('bust')}${getUserValue('bustSize', '')}`
+                          ? `${getUserValue('bust')}${getUserValue('cupSize') || getUserValue('bustSize', '')}${getUserValue('bustUnit') ? ` ${({ Centimeters: 'cm', Inches: 'in' }[getUserValue('bustUnit')] || getUserValue('bustUnit'))}` : ''}`
                           : '23A'}
                       </div>
                     </div>
@@ -811,7 +817,7 @@ export default function JobRequestPopup() {
                       <div className="stat_title">WAIST</div>
                       <div className="stat_descript">
                         {getUserValue('waist')
-                          ? `${getUserValue('waist')} ${getUserValue('waistUnit', 'in')}`
+                          ? `${getUserValue('waist')} ${({ Centimeters: 'cm', Inches: 'in' }[getUserValue('waistUnit')] || getUserValue('waistUnit', 'in')}`
                           : '26 in'}
                       </div>
                     </div>
@@ -819,7 +825,7 @@ export default function JobRequestPopup() {
                       <div className="stat_title">HIPS</div>
                       <div className="stat_descript">
                         {getUserValue('hips')
-                          ? `${getUserValue('hips')} ${getUserValue('hipsUnit', 'in')}`
+                          ? `${getUserValue('hips')} ${({ Centimeters: 'cm', Inches: 'in' }[getUserValue('hipsUnit')] || getUserValue('hipsUnit', 'in')}`
                           : '36 in'}
                       </div>
                     </div>
@@ -827,7 +833,7 @@ export default function JobRequestPopup() {
                       <div className="stat_title">SHOE</div>
                       <div className="stat_descript">
                         {getUserValue('shoe')
-                          ? `${getUserValue('shoe')} ${getUserValue('shoeUnit', 'US')}`
+                          ? `${getUserValue('shoe')} ${({ Millimeters: 'mm', Centimeters: 'cm', Inches: 'in' }[getUserValue('shoeUnit')] || getUserValue('shoeUnit', 'US')}`
                           : '7 US'}
                       </div>
                     </div>

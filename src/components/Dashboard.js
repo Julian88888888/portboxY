@@ -15,11 +15,13 @@ import { MAX_IMAGE_SIZE_HINT, validateImageFileSize } from '../utils/imageUpload
 import { formatJobType } from '../utils/formatJobType';
 import { ALBUM_PLACEHOLDER, getAlbumCoverSrc } from '../utils/albumPlaceholder';
 import ProfileAvailableForMultiSelect from './ProfileAvailableForMultiSelect';
-import { parseAvailableForSelections } from '../utils/availableFor';
+import { formatNicheDisplay } from '../utils/availableFor';
 import { getDisplayAge, getMaxDobForInput, normalizeDobForInput } from '../utils/dateOfBirth';
 import { DISPLAY_SIZE_OPTIONS, normalizeDisplaySize, getImageThumbGridStyle } from '../utils/displaySize';
 import { formatEthnicityLabel } from '../utils/ethnicity';
-import { formatPayRateDisplay } from '../utils/payRate';
+import { formatPayRateDisplay, PAY_RATE_TYPES } from '../utils/payRate';
+import { PAY_CURRENCIES } from '../utils/currencies';
+import { formatIndustryLabel, INDUSTRY_OPTIONS } from '../utils/industry';
 
 const TAB_ROUTES = { 'Tab 1': '/profile', 'Tab 2': '/portfolio', 'Tab 3': '/bookings', 'Tab 4': '/links', 'Tab 5': '/settings' };
 
@@ -358,7 +360,8 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
     weight: '',
     weightUnit: '',
     bust: '',
-    bustSize: '',
+    cupSize: '',
+    bustUnit: '',
     waist: '',
     waistUnit: '',
     hips: '',
@@ -484,7 +487,8 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
         weight: user.weight || '',
         weightUnit: user.weightUnit || '',
         bust: user.bust || '',
-        bustSize: user.bustSize || '',
+        cupSize: user.cupSize || user.bustSize || '',
+        bustUnit: user.bustUnit || '',
         waist: user.waist || '',
         waistUnit: user.waistUnit || '',
         hips: user.hips || '',
@@ -1175,7 +1179,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                         }}>
                           <div className="stat_item">
                             <div className="stat_label">INDUSTRY</div>
-                            <div className="stat_value">{formData.industry || 'Fashion'}</div>
+                            <div className="stat_value">{formatIndustryLabel(formData.industry)}</div>
                           </div>
                           <div className="stat_item">
                             <div className="stat_label">STATUS</div>
@@ -1194,9 +1198,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                           <div className="stat_item">
                             <div className="stat_label">NICHE</div>
                             <div className="stat_value">
-                              {parseAvailableForSelections(formData.availableFor).length > 0
-                                ? parseAvailableForSelections(formData.availableFor).join(', ')
-                                : 'Beauty, Editorial, Glamour, Print'}
+                              {formatNicheDisplay(formData.availableFor)}
                             </div>
                           </div>
                         </div>
@@ -1212,26 +1214,11 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                           style={{fontSize: '13px', padding: '8px', marginBottom: '12px'}}
                         >
                           <option value="">-- select one --</option>
-                          <option value="fashion">Fashion</option>
-                          <option value="high-fashion">High-Fashion</option>
-                          <option value="editorial">Editorial</option>
-                          <option value="commercial">Commercial</option>
-                          <option value="lifestyle">Lifestyle</option>
-                          <option value="glamour">Glamour</option>
-                          <option value="art">Arts</option>
-                          <option value="advertising">Advertising</option>
-                          <option value="adult">Adult / Explicit</option>
-                          <option value="freelance">Freelance</option>
-                          <option value="promotions">Promotions</option>
-                          <option value="digital">Digital</option>
-                          <option value="social-media">Social Media</option>
-                          <option value="events">Events</option>
-                          <option value="fitness">Fitness</option>
-                          <option value="sports">Sports</option>
-                          <option value="entertainment">Entertainment</option>
-                          <option value="performance">Performance</option>
-                          <option value="film">Film</option>
-                          <option value="television">Television</option>
+                          {INDUSTRY_OPTIONS.map((opt) => (
+                            <option key={opt.value} value={opt.value}>
+                              {opt.label}
+                            </option>
+                          ))}
                         </select>
                         <label htmlFor="status" style={{fontSize: '12px', fontWeight: '500', marginBottom: '4px', display: 'block'}}>Status</label>
                         <select 
@@ -1399,16 +1386,20 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                         <div className="stat_item">
                           <div className="stat_label" style={{fontWeight: '700'}}>HEIGHT</div>
                           <div className="stat_value" style={{fontWeight: '400'}}>
-                            {formData.heightFeet && formData.heightInches
-                              ? `${formData.heightFeet}'${formData.heightInches}"`
-                              : "5'11\""}
+                            {(!formData.heightUnit || formData.heightUnit === 'FeetInches')
+                              ? (formData.heightFeet && formData.heightInches
+                                ? `${formData.heightFeet}'${formData.heightInches}"`
+                                : "5'11\"")
+                              : (formData.heightFeet
+                                ? `${formData.heightFeet} ${({ Centimeters: 'cm', Inches: 'in', Meters: 'm' }[formData.heightUnit] || formData.heightUnit)}`
+                                : "5'11\"")}
                           </div>
                         </div>
                         <div className="stat_item">
                           <div className="stat_label" style={{fontWeight: '700'}}>WEIGHT</div>
                           <div className="stat_value" style={{fontWeight: '400'}}>
                             {formData.weight
-                              ? `${formData.weight} ${formData.weightUnit || 'lbs'}`
+                              ? `${formData.weight} ${({ Pounds: 'lbs', Kilograms: 'kg', Grams: 'g' }[formData.weightUnit] || formData.weightUnit || 'lbs'}`
                               : '135 lbs'}
                           </div>
                         </div>
@@ -1416,7 +1407,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                           <div className="stat_label" style={{fontWeight: '700'}}>BUST</div>
                           <div className="stat_value" style={{fontWeight: '400'}}>
                             {formData.bust
-                              ? `${formData.bust}${formData.bustSize || ''}`
+                              ? `${formData.bust}${formData.cupSize || ''}${formData.bustUnit ? ` ${({ Centimeters: 'cm', Inches: 'in' }[formData.bustUnit] || formData.bustUnit)}` : ''}`
                               : '23A'}
                           </div>
                         </div>
@@ -1424,7 +1415,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                           <div className="stat_label" style={{fontWeight: '700'}}>WAIST</div>
                           <div className="stat_value" style={{fontWeight: '400'}}>
                             {formData.waist
-                              ? `${formData.waist} ${formData.waistUnit || 'in'}`
+                              ? `${formData.waist} ${({ Centimeters: 'cm', Inches: 'in' }[formData.waistUnit] || formData.waistUnit || 'in')}`
                               : '26 in'}
                           </div>
                         </div>
@@ -1432,7 +1423,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                           <div className="stat_label" style={{fontWeight: '700'}}>HIPS</div>
                           <div className="stat_value" style={{fontWeight: '400'}}>
                             {formData.hips
-                              ? `${formData.hips} ${formData.hipsUnit || 'in'}`
+                              ? `${formData.hips} ${({ Centimeters: 'cm', Inches: 'in' }[formData.hipsUnit] || formData.hipsUnit || 'in')}`
                               : '36 in'}
                           </div>
                         </div>
@@ -1440,7 +1431,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                           <div className="stat_label" style={{fontWeight: '700'}}>SHOE</div>
                           <div className="stat_value" style={{fontWeight: '400'}}>
                             {formData.shoe
-                              ? `${formData.shoe} ${formData.shoeUnit || 'US'}`
+                              ? `${formData.shoe} ${({ Millimeters: 'mm', Centimeters: 'cm', Inches: 'in' }[formData.shoeUnit] || formData.shoeUnit || 'US')}`
                               : '7 US'}
                           </div>
                         </div>
@@ -1562,8 +1553,10 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                           onChange={handleInputChange}
                         >
                           <option value="">Select one...</option>
-                          <option value="FeetInches">Feet (') & Inches (")</option>
-                          <option value="MetersCentimeters">Meters (m) & Centimeters (cm)</option>
+                          <option value="FeetInches">in</option>
+                          <option value="Centimeters">cm</option>
+                          <option value="Inches">in</option>
+                          <option value="Meters">m</option>
                         </select>
                         <label htmlFor="weight">Weight</label>
                         <input 
@@ -1583,11 +1576,11 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                           onChange={handleInputChange}
                         >
                           <option value="">Select one...</option>
-                          <option value="Pounds">Pounds (lbs)</option>
-                          <option value="Kilograms">Kilograms (kg)</option>
-                          <option value="Grams">Grams (g)</option>
+                          <option value="Pounds">lbs</option>
+                          <option value="Kilograms">kg</option>
+                          <option value="Grams">g</option>
                         </select>
-                        <label htmlFor="bust">Bust Size</label>
+                        <label htmlFor="bust">Cup Size</label>
                         <input 
                           className="w-input" 
                           maxLength="256" 
@@ -1598,10 +1591,10 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                           onChange={handleInputChange}
                         />
                         <select 
-                          id="bustSize" 
-                          name="bustSize" 
+                          id="cupSize" 
+                          name="cupSize" 
                           className="dropdowntxt w-select"
-                          value={formData.bustSize}
+                          value={formData.cupSize}
                           onChange={handleInputChange}
                         >
                           <option value="">Select one...</option>
@@ -1609,6 +1602,33 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                           <option value="B">B</option>
                           <option value="C">C</option>
                           <option value="D">D</option>
+                          <option value="DD">DD</option>
+                          <option value="E">E</option>
+                          <option value="DDD">DDD</option>
+                          <option value="F">F</option>
+                          <option value="G">G</option>
+                          <option value="H">H</option>
+                          <option value="FF">FF</option>
+                          <option value="I">I</option>
+                          <option value="J">J</option>
+                          <option value="GG">GG</option>
+                          <option value="K">K</option>
+                        </select>
+                        <select
+                          id="bustUnit"
+                          name="bustUnit"
+                          className="dropdowntxt w-select"
+                          value={formData.bustUnit}
+                          onChange={handleInputChange}
+                        >
+                          <option value="">Select one...</option>
+                          <option value="US">US</option>
+                          <option value="UK">UK</option>
+                          <option value="EU">EU</option>
+                          <option value="FR">FR</option>
+                          <option value="AU">AU</option>
+                          <option value="Centimeters">cm</option>
+                          <option value="Inches">in</option>
                         </select>
                         <label htmlFor="waist">Waist Size</label>
                         <input 
@@ -1628,8 +1648,8 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                           onChange={handleInputChange}
                         >
                           <option value="">Select one...</option>
-                          <option value="Centimeters">Centimeters (cm)</option>
-                          <option value="Inches">Inches (in)</option>
+                          <option value="Centimeters">cm</option>
+                          <option value="Inches">in</option>
                         </select>
                         <label htmlFor="hips">Hip Size</label>
                         <input 
@@ -1649,8 +1669,8 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                           onChange={handleInputChange}
                         >
                           <option value="">Select one...</option>
-                          <option value="Centimeters">Centimeters (cm)</option>
-                          <option value="Inches">Inches (in)</option>
+                          <option value="Centimeters">cm</option>
+                          <option value="Inches">in</option>
                         </select>
                         <label htmlFor="shoe">Shoe Size</label>
                         <input 
@@ -1670,9 +1690,16 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                           onChange={handleInputChange}
                         >
                           <option value="">Select one...</option>
-                          <option value="USUK">US/UK</option>
+                          <option value="US">US</option>
+                          <option value="UK">UK</option>
                           <option value="EU">EU</option>
-                          <option value="JPCNKR">JP/CN/KR</option>
+                          <option value="CN">CN</option>
+                          <option value="JP">JP</option>
+                          <option value="AU">AU</option>
+                          <option value="KR">KR</option>
+                          <option value="Millimeters">mm</option>
+                          <option value="Centimeters">cm</option>
+                          <option value="Inches">in</option>
                         </select>
                         <label htmlFor="hairColor">Hair Color</label>
                         <input 
@@ -1685,15 +1712,36 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                           onChange={handleInputChange}
                         />
                         <label htmlFor="hairLength">Hair Length</label>
-                        <input 
-                          className="w-input" 
-                          maxLength="256" 
-                          name="hairLength" 
-                          placeholder="i.e Long" 
-                          type="text" 
+                        <select
+                          id="hairLength"
+                          name="hairLength"
+                          className="dropdowntxt w-select"
                           value={formData.hairLength}
                           onChange={handleInputChange}
-                        />
+                        >
+                          <option value="">Select one...</option>
+                          <option value="No Hair">No Hair</option>
+                          <option value="Buzz Cut">Buzz Cut</option>
+                          <option value="Short Hair">Short Hair</option>
+                          <option value="Ear Length">Ear Length</option>
+                          <option value="Chin Length">Chin Length</option>
+                          <option value="Neck Line">Neck Line</option>
+                          <option value="Shoulder Length">Shoulder Length</option>
+                          <option value="Past Shoulder">Past Shoulder</option>
+                          <option value="Shoulder Blades">Shoulder Blades</option>
+                          <option value="Mid Back">Mid Back</option>
+                          <option value="Waist Line">Waist Line</option>
+                          <option value="Lower Back">Lower Back</option>
+                          <option value="Down To Bottom">Down To Bottom</option>
+                          <option value="Tail Bone">Tail Bone</option>
+                          <option value="Hips">Hips</option>
+                          <option value="Classic Length">Classic Length</option>
+                          <option value="Mid Thigh">Mid Thigh</option>
+                          <option value="Knee Length">Knee Length</option>
+                          <option value="Calf Length">Calf Length</option>
+                          <option value="Ankle Length">Ankle Length</option>
+                          <option value="Floor Length">Floor Length</option>
+                        </select>
                         <label htmlFor="eyeColor">Eye Color</label>
                         <input 
                           className="w-input" 
@@ -2577,16 +2625,25 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                                 <input 
                                   className="w-input" 
                                   maxLength="256" 
-                                  name="payRate" 
+                                  name="offerAmount" 
                                   placeholder="Pay rate for job" 
                                   type="text" 
-                                  id="payRate"
+                                  id="offerAmount"
                                 />
-                                <select id="payRateUnit" name="payRateUnit" className="dropdowntxt w-select">
+                                <select id="currency" name="currency" className="dropdowntxt w-select" defaultValue="USD">
+                                  {PAY_CURRENCIES.map((currency) => (
+                                    <option key={currency.value} value={currency.value}>
+                                      {currency.label}
+                                    </option>
+                                  ))}
+                                </select>
+                                <select id="payRate" name="payRate" className="dropdowntxt w-select">
                                   <option value="">Select one...</option>
-                                  <option value="Per Hour">Per Hour</option>
-                                  <option value="Per Day">Per Day</option>
-                                  <option value="Per Project">Per Project</option>
+                                  {PAY_RATE_TYPES.map((rate) => (
+                                    <option key={rate.value} value={rate.value}>
+                                      {rate.label}
+                                    </option>
+                                  ))}
                                 </select>
                                 <label htmlFor="jobDetails">Job Details</label>
                                 <textarea 

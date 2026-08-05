@@ -123,8 +123,18 @@ export const parseAvailableForSelections = (value) =>
 export const formatAvailableForSelections = (selections) =>
   (Array.isArray(selections) ? selections : [])
     .map((item) => {
-      if (typeof item === 'string') return item.trim();
-      return String(item?.name || item?.id || '').trim();
+      if (typeof item === 'string') {
+        const token = item.trim();
+        if (!token) return '';
+        const byId = PROFILE_NICHE_OPTIONS.find((o) => o.id === token);
+        if (byId) return byId.id;
+        const byName = PROFILE_NICHE_OPTIONS.find(
+          (o) => o.name.toLowerCase() === token.toLowerCase()
+        );
+        if (byName) return byName.id;
+        return token;
+      }
+      return String(item?.id || item?.name || '').trim();
     })
     .filter(Boolean)
     .join(', ');
@@ -142,4 +152,10 @@ export const resolveNicheOptions = (value) => {
       return { id: token, name: token, group: 'Other' };
     })
     .filter(Boolean);
+};
+
+export const formatNicheDisplay = (value, fallback = 'Beauty, Editorial, Glamour, Print') => {
+  const resolved = resolveNicheOptions(value);
+  if (!resolved.length) return fallback;
+  return resolved.map((o) => o.name).join(', ');
 };
