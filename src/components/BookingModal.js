@@ -31,15 +31,15 @@ const BookingModal = ({ isOpen, onClose, profile, onBookingCreated }) => {
   const isIdentityLocked = Boolean(user);
 
   const clientAvatarSrc = useMemo(() => {
-    if (clientProfile?.show_profile_photo !== false && clientProfile?.profile_photo_path) {
+    if (clientProfile?.profile_photo_path) {
       return getAvatarUrl(clientProfile.profile_photo_path);
     }
     if (user?.profilePhotos?.length > 0) {
       const mainPhoto = user.profilePhotos.find((photo) => photo.isMain);
       return mainPhoto ? mainPhoto.url : user.profilePhotos[0].url;
     }
-    return '/images/headshot_model.jpg';
-  }, [clientProfile?.show_profile_photo, clientProfile?.profile_photo_path, user?.profilePhotos]);
+    return '/images/default-avatar.svg';
+  }, [clientProfile?.profile_photo_path, user?.profilePhotos]);
 
   const clientUsername = useMemo(() => {
     const raw = clientProfile?.username ?? user?.user_metadata?.username ?? '';
@@ -233,7 +233,7 @@ const BookingModal = ({ isOpen, onClose, profile, onBookingCreated }) => {
           <>
             <div className="profile-wrapper">
               <img 
-                src={profile.profileImage || "/images/headshot_model.jpg"} 
+                src={profile.profileImage || "/images/default-avatar.svg"} 
                 alt={profile.displayName || "Profile"} 
                 className="profile-image"
                 style={{ width: '80px', height: '80px' }}
@@ -338,7 +338,7 @@ const BookingModal = ({ isOpen, onClose, profile, onBookingCreated }) => {
                   className="booking-modal-from-avatar"
                   loading="lazy"
                   onError={(e) => {
-                    e.currentTarget.src = '/images/headshot_model.jpg';
+                    e.currentTarget.src = '/images/default-avatar.svg';
                   }}
                 />
                 {clientUsername ? (

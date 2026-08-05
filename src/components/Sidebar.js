@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { NavLink, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useProfile } from '../hooks/useProfile';
 import './Sidebar.css';
 
 const MOBILE_MAX = 767;
 
 const Sidebar = ({ onToggle }) => {
   const { logout, user } = useAuth();
+  const { data: profile } = useProfile();
   const [isOpen, setIsOpen] = useState(true);
   const [isMobile, setIsMobile] = useState(
     () => typeof window !== 'undefined' && window.innerWidth <= MOBILE_MAX
@@ -46,6 +48,12 @@ const Sidebar = ({ onToggle }) => {
   const closeMobileDrawer = () => {
     if (isMobile) setMobileDrawerOpen(false);
   };
+
+  const loggedInUsername = String(
+    profile?.username || user?.username || user?.user_metadata?.username || ''
+  )
+    .trim()
+    .replace(/^@+/, '');
 
   const navClass = ({ isActive }) => `nav-item ${isActive ? 'active' : ''}`;
 
@@ -91,8 +99,8 @@ const Sidebar = ({ onToggle }) => {
               <h2 className="sidebar-auth-welcome">
                 Welcome Back
               </h2>
-              {user?.email && (
-                <p className="sidebar-auth-email">Logged in as: {user.email}</p>
+              {loggedInUsername && (
+                <p className="sidebar-auth-email">Logged in as: @{loggedInUsername}</p>
               )}
             </div>
           )}

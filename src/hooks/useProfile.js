@@ -150,7 +150,7 @@ export const useProfileImageUrl = () => {
   const { data: profile } = useProfile();
   
   if (!profile?.profile_photo_path) {
-    return '/images/headshot_model.jpg';
+    return '/images/default-avatar.svg';
   }
   
   return getAvatarUrl(profile.profile_photo_path);

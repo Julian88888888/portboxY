@@ -2343,6 +2343,14 @@ a {
   height: 1px;
 }
 
+.footer_sec {
+  border-top: none;
+}
+
+.footer_sec .line_divider {
+  display: none;
+}
+
 .spacing_8 {
   height: 8px;
 }

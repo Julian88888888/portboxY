@@ -85,7 +85,7 @@ const PublicProfile: React.FC<PublicProfileProps> = ({ userId }) => {
               boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
             }}
             onError={(e) => {
-              (e.target as HTMLImageElement).src = '/images/headshot_model.jpg';
+              (e.target as HTMLImageElement).src = '/images/default-avatar.svg';
             }}
           />
         ) : (

@@ -9,15 +9,16 @@ function AuthOnlyBlock() {
   const { data: profile } = useProfile();
 
   const avatarSrc = useMemo(() => {
-    if (profile?.show_profile_photo && profile?.profile_photo_path) {
+    // Header avatar always shows the photo; show_profile_photo only hides it on the public page
+    if (profile?.profile_photo_path) {
       return getAvatarUrl(profile.profile_photo_path);
     }
     if (user?.profilePhotos && user.profilePhotos.length > 0) {
       const mainPhoto = user.profilePhotos.find((photo) => photo.isMain);
       return mainPhoto ? mainPhoto.url : user.profilePhotos[0].url;
     }
-    return '/images/headshot_model.jpg';
-  }, [profile?.show_profile_photo, profile?.profile_photo_path, user?.profilePhotos]);
+    return '/images/default-avatar.svg';
+  }, [profile?.profile_photo_path, user?.profilePhotos]);
 
   const displayUsername = useMemo(() => {
     const raw = profile?.username ?? user?.user_metadata?.username ?? '';
@@ -83,7 +84,7 @@ function AuthOnlyBlock() {
           loading="lazy"
           className="prodile_image small_img"
           onError={(e) => {
-            e.target.src = '/images/headshot_model.jpg';
+            e.target.src = '/images/default-avatar.svg';
           }}
           style={{
             width: 50,

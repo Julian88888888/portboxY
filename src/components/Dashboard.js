@@ -22,6 +22,7 @@ import { formatEthnicityLabel } from '../utils/ethnicity';
 import { formatPayRateDisplay, PAY_RATE_TYPES } from '../utils/payRate';
 import { PAY_CURRENCIES } from '../utils/currencies';
 import { formatIndustryLabel, INDUSTRY_OPTIONS } from '../utils/industry';
+import { formatUnitLabel } from '../utils/unitLabels';
 
 const TAB_ROUTES = { 'Tab 1': '/profile', 'Tab 2': '/portfolio', 'Tab 3': '/bookings', 'Tab 4': '/links', 'Tab 5': '/settings' };
 
@@ -774,8 +775,8 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
   };
 
   const getProfileImage = () => {
-    // First check if profile photo is enabled and exists in profile settings
-    if (profile?.show_profile_photo && profile?.profile_photo_path) {
+    // Dashboard avatar always shows the uploaded photo (show_profile_photo only hides it on the public page)
+    if (profile?.profile_photo_path) {
       return getAvatarUrl(profile.profile_photo_path);
     }
     
@@ -784,7 +785,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
       const mainPhoto = user.profilePhotos.find(photo => photo.isMain);
       return mainPhoto ? mainPhoto.url : user.profilePhotos[0].url;
     }
-    return '/images/headshot_model.jpg';
+    return '/images/default-avatar.svg';
   };
 
   // Get header photo URL for background (only if toggle is ON)
@@ -797,8 +798,6 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
   };
 
   const headerBackgroundUrl = getHeaderBackgroundUrl();
-  const showProfileDescription = profile?.show_description ?? profile?.showProfileDescription ?? formData.showProfileDescription ?? true;
-  const profileDescriptionText = profile?.description || formData.bio || 'I am a professional model with many years of experience working for top brands all over the world.';
 
   const jobTypes = [
     { 
@@ -875,7 +874,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
               alt="" 
               className="prodile_image small_img"
               onError={(e) => {
-                e.target.src = '/images/headshot_model.jpg';
+                e.target.src = '/images/default-avatar.svg';
               }}
             />
           </Link>
@@ -883,7 +882,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
       </div>
       
       <section>
-        <div className="spacing_48"></div>
+        <div className={activeTab === 'Tab 1' ? 'spacing_16' : 'spacing_48'}></div>
         <div className="tabs w-tabs">
           <div className="tabs-content w-tab-content">
             {/* Tab 1: Profile */}
@@ -892,9 +891,10 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                 <div className="w-layout-vflex flex-block-8">
                   {/* Profile Settings */}
                   <div className="settingssection">
-                    <div className="text_wrapper text_align_center">
-                      <div className="flex_wrapper flex_center">
-                        <h3>{profile?.display_name || formData.name || 'User Name'}</h3>
+                    <h3 style={{ textAlign: 'left', margin: '0 0 24px' }}>Profile Settings</h3>
+                    <div className="text_wrapper text_align_center" style={{ width: '100%' }}>
+                      <div className="flex_wrapper flex_center" style={{ justifyContent: 'center' }}>
+                        <h3 style={{ margin: 0 }}>{profile?.display_name || formData.name || 'User Name'}</h3>
                         <span className="button_icon accent_button small_btn">
                           <span>{formatJobType(profile?.job_type || formData.jobType || 'Model')}</span>
                         </span>
@@ -903,14 +903,8 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                       {(profile?.username || formData.username) && (
                         <p className="username_txt">@{profile?.username || formData.username}</p>
                       )}
-                      {showProfileDescription && (profile?.description || formData.bio) && (
-                        <p className="text_color_grey text_width_medium">
-                          {profileDescriptionText}
-                        </p>
-                      )}
                     </div>
                     <div className="spacing_24"></div>
-                    <h3>Profile Settings</h3>
                     {/* Profile Photo and Header Settings Component */}
                     <ProfileSettings />
                   </div>
@@ -1391,7 +1385,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                                 ? `${formData.heightFeet}'${formData.heightInches}"`
                                 : "5'11\"")
                               : (formData.heightFeet
-                                ? `${formData.heightFeet} ${({ Centimeters: 'cm', Inches: 'in', Meters: 'm' }[formData.heightUnit] || formData.heightUnit)}`
+                                ? `${formData.heightFeet} ${formatUnitLabel(formData.heightUnit)}`
                                 : "5'11\"")}
                           </div>
                         </div>
@@ -1399,7 +1393,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                           <div className="stat_label" style={{fontWeight: '700'}}>WEIGHT</div>
                           <div className="stat_value" style={{fontWeight: '400'}}>
                             {formData.weight
-                              ? `${formData.weight} ${({ Pounds: 'lbs', Kilograms: 'kg', Grams: 'g' }[formData.weightUnit] || formData.weightUnit || 'lbs'}`
+                              ? `${formData.weight} ${formatUnitLabel(formData.weightUnit, 'lbs')}`
                               : '135 lbs'}
                           </div>
                         </div>
@@ -1407,7 +1401,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                           <div className="stat_label" style={{fontWeight: '700'}}>BUST</div>
                           <div className="stat_value" style={{fontWeight: '400'}}>
                             {formData.bust
-                              ? `${formData.bust}${formData.cupSize || ''}${formData.bustUnit ? ` ${({ Centimeters: 'cm', Inches: 'in' }[formData.bustUnit] || formData.bustUnit)}` : ''}`
+                              ? `${formData.bust}${formData.cupSize || ''}${formData.bustUnit ? ` ${formatUnitLabel(formData.bustUnit)}` : ''}`
                               : '23A'}
                           </div>
                         </div>
@@ -1415,7 +1409,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                           <div className="stat_label" style={{fontWeight: '700'}}>WAIST</div>
                           <div className="stat_value" style={{fontWeight: '400'}}>
                             {formData.waist
-                              ? `${formData.waist} ${({ Centimeters: 'cm', Inches: 'in' }[formData.waistUnit] || formData.waistUnit || 'in')}`
+                              ? `${formData.waist} ${formatUnitLabel(formData.waistUnit, 'in')}`
                               : '26 in'}
                           </div>
                         </div>
@@ -1423,7 +1417,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                           <div className="stat_label" style={{fontWeight: '700'}}>HIPS</div>
                           <div className="stat_value" style={{fontWeight: '400'}}>
                             {formData.hips
-                              ? `${formData.hips} ${({ Centimeters: 'cm', Inches: 'in' }[formData.hipsUnit] || formData.hipsUnit || 'in')}`
+                              ? `${formData.hips} ${formatUnitLabel(formData.hipsUnit, 'in')}`
                               : '36 in'}
                           </div>
                         </div>
@@ -1431,7 +1425,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                           <div className="stat_label" style={{fontWeight: '700'}}>SHOE</div>
                           <div className="stat_value" style={{fontWeight: '400'}}>
                             {formData.shoe
-                              ? `${formData.shoe} ${({ Millimeters: 'mm', Centimeters: 'cm', Inches: 'in' }[formData.shoeUnit] || formData.shoeUnit || 'US')}`
+                              ? `${formData.shoe} ${formatUnitLabel(formData.shoeUnit, 'US')}`
                               : '7 US'}
                           </div>
                         </div>
@@ -3044,8 +3038,6 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
       
       <div className="section footer_sec">
         <div className="content_wrapper content_align_center">
-          <div className="spacing_24"></div>
-          <div className="line_divider"></div>
           <div className="spacing_24"></div>
           <div className="spacing_48"></div>
           <div className="text_wrapper text_align_center">

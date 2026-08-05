@@ -489,7 +489,11 @@
 .footer_sec {
   margin-top: 48px;
   padding-top: 48px;
-  border-top: 1px solid #dee2e5;
+  border-top: none;
+}
+
+.footer_sec .line_divider {
+  display: none;
 }
 
 @media screen and (max-width: 991px) {

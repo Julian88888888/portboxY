@@ -13,6 +13,7 @@ import { getAlbumCardGridStyle, getImageThumbGridStyle, normalizeDisplaySize } f
 import { formatEthnicityLabel } from '../utils/ethnicity';
 import { formatIndustryLabel } from '../utils/industry';
 import { formatNicheDisplay } from '../utils/availableFor';
+import { formatUnitLabel } from '../utils/unitLabels';
 
 const days = [
   { key: "monday", label: "Mon", hours: "5 hours" },
@@ -359,21 +360,21 @@ export default function JobRequestPopup() {
     shouldShowBookMeInLinksArea ||
     shouldShowCustomLinksTitle();
 
-  // Get profile photo from ProfileSettings (profile_photo_path)
-  const getProfileImage = () => {
-    // First check if profile photo is enabled and exists in profile settings
-    if (profile?.show_profile_photo && profile?.profile_photo_path) {
+  // Get profile photo for public page (respects show_profile_photo toggle)
+  const showProfilePhoto = profile?.show_profile_photo !== false;
+  const resolveProfileImageUrl = () => {
+    if (profile?.profile_photo_path) {
       return getAvatarUrl(profile.profile_photo_path);
     }
-    
-    // Fallback to old method (profilePhotos) if profile settings not available
     if (user?.profilePhotos && user.profilePhotos.length > 0) {
       const mainPhoto = user.profilePhotos.find(photo => photo.isMain);
       return mainPhoto ? mainPhoto.url : user.profilePhotos[0].url;
     }
-    
-    return '/images/headshot_model.jpg'; // Fallback to default image
+    return '/images/default-avatar.svg';
   };
+
+  // Central avatar on public page only — hidden when toggle is off
+  const profileImageUrl = showProfilePhoto ? resolveProfileImageUrl() : null;
 
   // Get header photo URL for background (only if toggle is ON)
   const getHeaderBackgroundUrl = () => {
@@ -438,7 +439,7 @@ export default function JobRequestPopup() {
       username: getUserValue('username'),
       jobType: getUserValue('job_type', 'Model'),
       description: getUserValue('description'),
-      profileImage: getProfileImage()
+      profileImage: resolveProfileImageUrl()
     };
   };
 
@@ -583,17 +584,19 @@ export default function JobRequestPopup() {
             }} />
           )}
           <div className="profile_wrapper" style={{ position: 'relative', zIndex: 1 }}>
+            {profileImageUrl && (
             <img 
-              src={getProfileImage()} 
+              src={profileImageUrl} 
               loading="lazy" 
               style={{opacity: 1, transform: "translate3d(0px, 0px, 0px) scale3d(1, 1, 1) rotateX(0deg) rotateY(0deg) rotateZ(0deg) skew(0deg, 0deg)", transformStyle: "preserve-3d"}} 
               data-w-id="30764f4a-1ca9-b0b6-0704-64b5f3b87ec8" 
               alt={user?.name || "Profile"} 
               className="prodile_image" 
               onError={(e) => {
-                e.target.src = '/images/headshot_model.jpg';
+                e.target.src = '/images/default-avatar.svg';
               }}
             />
+            )}
           </div>
           <div className="text_wrapper text_align_center">
             <div className="flex_wrapper flex_center">
@@ -685,8 +688,8 @@ export default function JobRequestPopup() {
     )}
       <section 
         className="section home_sec"
-        style={{
-          backgroundImage: `linear-gradient(#ffffff05 82%, #f3f5f8bd 94%, #eef2f5), url('${headerBackgroundUrl || '/images/preview_48e3aa10-7b99-11e4-bb3d-ff03371996b1.jpg'}')`,
+        style={headerBackgroundUrl ? {
+          backgroundImage: `linear-gradient(#ffffff05 82%, #f3f5f8bd 94%, #eef2f5), url('${headerBackgroundUrl}')`,
           backgroundPosition: '0 0, 50% 0',
           backgroundRepeat: 'repeat, no-repeat',
           backgroundSize: 'auto, cover',
@@ -697,22 +700,31 @@ export default function JobRequestPopup() {
           marginBottom: '-184px',
           paddingBottom: '20px',
           display: 'flex'
+        } : {
+          backgroundImage: 'none',
+          backgroundColor: '#eef2f5',
+          height: '120px',
+          marginBottom: '0',
+          paddingBottom: '0',
+          display: 'block'
         }}
       ></section>
       <div className="section profile_sec">
         <div className="content_wrapper content_align_center">
           <div className="spacing_48" />
           <div className="profile_wrapper">
+            {profileImageUrl && (
             <img
-              src={getProfileImage()}
+              src={profileImageUrl}
               loading="lazy"
               data-w-id="a631810c-b7df-495c-c9a7-03835c973869"
               alt={user?.name || "Profile"}
               className="prodile_image"
               onError={(e) => {
-                e.target.src = '/images/headshot_model.jpg';
+                e.target.src = '/images/default-avatar.svg';
               }}
             />
+            )}
           </div>
           <div className="spacing_24" />
           <div className="text_wrapper text_align_center">
@@ -793,7 +805,7 @@ export default function JobRequestPopup() {
                             ? `${getUserValue('heightFeet')}'${getUserValue('heightInches')}"`
                             : "5'11\"")
                           : (getUserValue('heightFeet')
-                            ? `${getUserValue('heightFeet')} ${({ Centimeters: 'cm', Inches: 'in', Meters: 'm' }[getUserValue('heightUnit')] || getUserValue('heightUnit'))}`
+                            ? `${getUserValue('heightFeet')} ${formatUnitLabel(getUserValue('heightUnit'))}`
                             : "5'11\"")}
                       </div>
                     </div>
@@ -801,7 +813,7 @@ export default function JobRequestPopup() {
                       <div className="stat_title">WEIGHT</div>
                       <div className="stat_descript">
                         {getUserValue('weight')
-                          ? `${getUserValue('weight')} ${({ Pounds: 'lbs', Kilograms: 'kg', Grams: 'g' }[getUserValue('weightUnit')] || getUserValue('weightUnit', 'lbs')}`
+                          ? `${getUserValue('weight')} ${formatUnitLabel(getUserValue('weightUnit'), 'lbs')}`
                           : '135 lbs'}
                       </div>
                     </div>
@@ -809,7 +821,7 @@ export default function JobRequestPopup() {
                       <div className="stat_title">BUST</div>
                       <div className="stat_descript">
                         {getUserValue('bust')
-                          ? `${getUserValue('bust')}${getUserValue('cupSize') || getUserValue('bustSize', '')}${getUserValue('bustUnit') ? ` ${({ Centimeters: 'cm', Inches: 'in' }[getUserValue('bustUnit')] || getUserValue('bustUnit'))}` : ''}`
+                          ? `${getUserValue('bust')}${getUserValue('cupSize') || getUserValue('bustSize', '')}${getUserValue('bustUnit') ? ` ${formatUnitLabel(getUserValue('bustUnit'))}` : ''}`
                           : '23A'}
                       </div>
                     </div>
@@ -817,7 +829,7 @@ export default function JobRequestPopup() {
                       <div className="stat_title">WAIST</div>
                       <div className="stat_descript">
                         {getUserValue('waist')
-                          ? `${getUserValue('waist')} ${({ Centimeters: 'cm', Inches: 'in' }[getUserValue('waistUnit')] || getUserValue('waistUnit', 'in')}`
+                          ? `${getUserValue('waist')} ${formatUnitLabel(getUserValue('waistUnit'), 'in')}`
                           : '26 in'}
                       </div>
                     </div>
@@ -825,7 +837,7 @@ export default function JobRequestPopup() {
                       <div className="stat_title">HIPS</div>
                       <div className="stat_descript">
                         {getUserValue('hips')
-                          ? `${getUserValue('hips')} ${({ Centimeters: 'cm', Inches: 'in' }[getUserValue('hipsUnit')] || getUserValue('hipsUnit', 'in')}`
+                          ? `${getUserValue('hips')} ${formatUnitLabel(getUserValue('hipsUnit'), 'in')}`
                           : '36 in'}
                       </div>
                     </div>
@@ -833,7 +845,7 @@ export default function JobRequestPopup() {
                       <div className="stat_title">SHOE</div>
                       <div className="stat_descript">
                         {getUserValue('shoe')
-                          ? `${getUserValue('shoe')} ${({ Millimeters: 'mm', Centimeters: 'cm', Inches: 'in' }[getUserValue('shoeUnit')] || getUserValue('shoeUnit', 'US')}`
+                          ? `${getUserValue('shoe')} ${formatUnitLabel(getUserValue('shoeUnit'), 'US')}`
                           : '7 US'}
                       </div>
                     </div>

@@ -6,8 +6,6 @@ export default function FooterSection() {
     <div className="section footer_sec">
       <div className="content_wrapper content_align_center">
         <div className="spacing_24" />
-        <div className="line_divider" />
-        <div className="spacing_24" />
 
         <a href="#">Create A Free Model Link Portfolio</a>
 

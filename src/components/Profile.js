@@ -30,7 +30,7 @@ const Profile = ({ onBookMe }) => {
         
         <div className="profile-wrapper">
           <img 
-            src="/images/headshot_model.jpg" 
+            src="/images/default-avatar.svg" 
             alt="Mary Adams" 
             className="profile-image"
           />
