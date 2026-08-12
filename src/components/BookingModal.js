@@ -438,7 +438,6 @@ const BookingModal = ({ isOpen, onClose, profile, onBookingCreated }) => {
           </div>
           
           <div className="form-group">
-            <label>Pay Rate</label>
             <div className="pay-rate-row">
               <div className="pay-rate-field">
                 <label htmlFor="offerAmount" className="pay-rate-sublabel">Offer Amount</label>
@@ -471,7 +470,6 @@ const BookingModal = ({ isOpen, onClose, profile, onBookingCreated }) => {
                 </select>
               </div>
               <div className="pay-rate-field">
-                <label htmlFor="payRate" className="pay-rate-sublabel">Pay Rate</label>
                 <select
                   id="payRate"
                   name="payRate"
@@ -479,6 +477,7 @@ const BookingModal = ({ isOpen, onClose, profile, onBookingCreated }) => {
                   onChange={handleInputChange}
                   required
                   disabled={isSubmitting}
+                  aria-label="Pay Rate"
                 >
                   <option value="">Select...</option>
                   {PAY_RATE_TYPES.map((rate) => (

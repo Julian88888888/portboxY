@@ -4,7 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../contexts/AuthContext';
 import { useProfile } from '../hooks/useProfile';
 import { getAvatarUrl, getHeaderUrl, upsertProfile } from '../services/profileService';
-import { createAlbum, getAlbums, uploadImageToAlbum, deleteAlbum, getAlbumImages, setCoverImage, normalizeImageUrl, seedStarterAlbumsIfNeeded, trimExcessStarterAlbumsIfNeeded, canCreateAlbum, canUploadImageToAlbum, MAX_ALBUMS_PER_USER, MAX_IMAGES_PER_ALBUM, getMaxAlbumsError, getMaxImagesError } from '../services/albumsService';
+import { createAlbum, getAlbums, uploadImageToAlbum, deleteAlbum, deleteImage, updateAlbum, getAlbumImages, setCoverImage, normalizeImageUrl, seedStarterAlbumsIfNeeded, trimExcessStarterAlbumsIfNeeded, canCreateAlbum, canUploadImageToAlbum, MAX_ALBUMS_PER_USER, MAX_IMAGES_PER_ALBUM, getMaxAlbumsError, getMaxImagesError } from '../services/albumsService';
 import { validateMarkets } from '../utils/markets';
 import { getCustomLinks, createCustomLink, updateCustomLink, deleteCustomLink, uploadCustomLinkIcon } from '../services/customLinksService';
 import { getBookings, getBookingsAsClient, deleteBooking, updateBooking, formatBookingClientHandle } from '../services/bookingsService';
@@ -172,6 +172,13 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
     imagePreview: null,
     displaySize: 'M'
   });
+  const [isEditAlbumModalOpen, setIsEditAlbumModalOpen] = useState(false);
+  const [editAlbumFormData, setEditAlbumFormData] = useState({
+    id: null,
+    title: '',
+    description: ''
+  });
+  const [editAlbumSaving, setEditAlbumSaving] = useState(false);
   const [isUploadImageModalOpen, setIsUploadImageModalOpen] = useState(false);
   const [selectedAlbumId, setSelectedAlbumId] = useState(null);
   const [uploadImageFile, setUploadImageFile] = useState(null);
@@ -1886,6 +1893,30 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                                     📷 Add Images
                                   </button>
                                   <button
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      setEditAlbumFormData({
+                                        id: album.id,
+                                        title: album.title || '',
+                                        description: album.description || ''
+                                      });
+                                      setIsEditAlbumModalOpen(true);
+                                    }}
+                                    style={{
+                                      background: 'rgba(120,63,243,0.9)',
+                                      border: 'none',
+                                      borderRadius: '4px',
+                                      padding: '4px 8px',
+                                      color: 'white',
+                                      cursor: 'pointer',
+                                      fontSize: '12px',
+                                      marginBottom: '4px'
+                                    }}
+                                    title="Edit album title and description"
+                                  >
+                                    ✏️ Edit
+                                  </button>
+                                  <button
                                     onClick={async (e) => {
                                       e.preventDefault();
                                       if (window.confirm('Are you sure you want to delete this album?')) {
@@ -3484,6 +3515,159 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
         </div>
       )}
 
+      {/* Edit Album Title & Description Modal */}
+      {isEditAlbumModalOpen && editAlbumFormData.id && (
+        <div
+          className="modal-overlay"
+          onClick={() => {
+            if (!editAlbumSaving) {
+              setIsEditAlbumModalOpen(false);
+              setEditAlbumFormData({ id: null, title: '', description: '' });
+            }
+          }}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0,0,0,0.7)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000
+          }}
+        >
+          <div
+            className="modal-content"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: 'white',
+              borderRadius: '12px',
+              padding: '24px',
+              maxWidth: '600px',
+              width: '90%',
+              maxHeight: '90vh',
+              overflow: 'auto'
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h3 style={{ margin: 0 }}>Edit Album</h3>
+              <button
+                type="button"
+                onClick={() => {
+                  if (!editAlbumSaving) {
+                    setIsEditAlbumModalOpen(false);
+                    setEditAlbumFormData({ id: null, title: '', description: '' });
+                  }
+                }}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '24px',
+                  cursor: 'pointer',
+                  padding: '0',
+                  width: '30px',
+                  height: '30px'
+                }}
+              >
+                ×
+              </button>
+            </div>
+
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                if (!editAlbumFormData.title || editAlbumFormData.title.trim().length === 0) {
+                  alert('Please enter an album title');
+                  return;
+                }
+                setEditAlbumSaving(true);
+                const result = await updateAlbum(editAlbumFormData.id, {
+                  title: editAlbumFormData.title,
+                  description: editAlbumFormData.description || null
+                });
+                setEditAlbumSaving(false);
+                if (!result.success) {
+                  alert(result.error || 'Failed to update album');
+                  return;
+                }
+                const reloadResult = await getAlbums(user?.id);
+                if (reloadResult.success) {
+                  setAlbums(reloadResult.data || []);
+                  if (viewingAlbum?.id === editAlbumFormData.id) {
+                    const updated = (reloadResult.data || []).find((a) => a.id === editAlbumFormData.id);
+                    if (updated) setViewingAlbum(updated);
+                  }
+                }
+                setIsEditAlbumModalOpen(false);
+                setEditAlbumFormData({ id: null, title: '', description: '' });
+              }}
+            >
+              <div style={{ marginBottom: '16px' }}>
+                <label htmlFor="editAlbumTitle" style={{ display: 'block', marginBottom: '8px', fontWeight: 500 }}>
+                  Album Title
+                </label>
+                <input
+                  id="editAlbumTitle"
+                  className="w-input"
+                  type="text"
+                  maxLength={256}
+                  required
+                  disabled={editAlbumSaving}
+                  value={editAlbumFormData.title}
+                  onChange={(e) => setEditAlbumFormData({ ...editAlbumFormData, title: e.target.value })}
+                  placeholder="Album title"
+                />
+              </div>
+              <div style={{ marginBottom: '16px' }}>
+                <label htmlFor="editAlbumDescription" style={{ display: 'block', marginBottom: '8px', fontWeight: 500 }}>
+                  Description
+                </label>
+                <textarea
+                  id="editAlbumDescription"
+                  className="w-input"
+                  maxLength={2000}
+                  rows={4}
+                  disabled={editAlbumSaving}
+                  value={editAlbumFormData.description}
+                  onChange={(e) => setEditAlbumFormData({ ...editAlbumFormData, description: e.target.value })}
+                  placeholder="Album description (optional)"
+                />
+              </div>
+              <div style={{ display: 'flex', gap: '12px', marginTop: '24px' }}>
+                <button
+                  type="button"
+                  disabled={editAlbumSaving}
+                  onClick={() => {
+                    setIsEditAlbumModalOpen(false);
+                    setEditAlbumFormData({ id: null, title: '', description: '' });
+                  }}
+                  style={{
+                    padding: '12px 24px',
+                    background: '#f5f5f5',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    flex: 1
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="submit-button w-button"
+                  disabled={editAlbumSaving}
+                  style={{ flex: 1 }}
+                >
+                  {editAlbumSaving ? 'Saving...' : 'Save Changes'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* Upload Image to Album Modal */}
       {isUploadImageModalOpen && selectedAlbumId && (
         <div 
@@ -3810,6 +3994,14 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                         COVER
                       </div>
                     )}
+                    <div style={{
+                      position: 'absolute',
+                      bottom: '8px',
+                      left: '8px',
+                      right: '8px',
+                      display: 'flex',
+                      gap: '6px'
+                    }}>
                     <button
                       onClick={async () => {
                         const result = await setCoverImage(viewingAlbum.id, image.id);
@@ -3831,23 +4023,62 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                       }}
                       disabled={viewingAlbum.cover_image_id === image.id}
                       style={{
-                        position: 'absolute',
-                        bottom: '8px',
-                        left: '8px',
-                        right: '8px',
+                        flex: 1,
                         background: viewingAlbum.cover_image_id === image.id ? '#6c757d' : '#28a745',
                         color: 'white',
                         border: 'none',
                         borderRadius: '4px',
-                        padding: '6px 12px',
+                        padding: '6px 8px',
                         cursor: viewingAlbum.cover_image_id === image.id ? 'not-allowed' : 'pointer',
-                        fontSize: '12px',
+                        fontSize: '11px',
                         fontWeight: 'bold'
                       }}
                       title={viewingAlbum.cover_image_id === image.id ? 'This is already the cover' : 'Set as cover image'}
                     >
-                      {viewingAlbum.cover_image_id === image.id ? '✓ Cover' : 'Set as Cover'}
+                      {viewingAlbum.cover_image_id === image.id ? '✓ Cover' : 'Set Cover'}
                     </button>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        if (!window.confirm('Delete this image from the album? This cannot be undone.')) {
+                          return;
+                        }
+                        const albumId = viewingAlbum.id;
+                        const result = await deleteImage(image.id);
+                        if (!result.success) {
+                          alert(result.error || 'Failed to delete image');
+                          return;
+                        }
+                        const imagesResult = await getAlbumImages(albumId);
+                        setAlbumImages((prev) => ({
+                          ...prev,
+                          [albumId]: imagesResult.success ? (imagesResult.data || []) : []
+                        }));
+                        const albumsResult = await getAlbums(user?.id);
+                        if (albumsResult.success) {
+                          setAlbums(albumsResult.data || []);
+                          const updatedAlbum = albumsResult.data.find((a) => a.id === albumId);
+                          if (updatedAlbum) {
+                            setViewingAlbum(updatedAlbum);
+                          }
+                        }
+                      }}
+                      style={{
+                        flex: '0 0 auto',
+                        background: '#dc3545',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        padding: '6px 10px',
+                        cursor: 'pointer',
+                        fontSize: '11px',
+                        fontWeight: 'bold'
+                      }}
+                      title="Delete image"
+                    >
+                      Delete
+                    </button>
+                    </div>
                   </div>
                   );
                 })}

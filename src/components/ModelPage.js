@@ -583,8 +583,8 @@ export default function JobRequestPopup() {
               pointerEvents: 'none'
             }} />
           )}
+          {profileImageUrl && (
           <div className="profile_wrapper" style={{ position: 'relative', zIndex: 1 }}>
-            {profileImageUrl && (
             <img 
               src={profileImageUrl} 
               loading="lazy" 
@@ -596,8 +596,8 @@ export default function JobRequestPopup() {
                 e.target.src = '/images/default-avatar.svg';
               }}
             />
-            )}
           </div>
+          )}
           <div className="text_wrapper text_align_center">
             <div className="flex_wrapper flex_center">
               <h3>{getUserValue('display_name', 'User Name')}</h3>
@@ -711,9 +711,9 @@ export default function JobRequestPopup() {
       ></section>
       <div className="section profile_sec">
         <div className="content_wrapper content_align_center">
-          <div className="spacing_48" />
+          <div className={profileImageUrl ? 'spacing_48' : 'spacing_24'} />
+          {profileImageUrl && (
           <div className="profile_wrapper">
-            {profileImageUrl && (
             <img
               src={profileImageUrl}
               loading="lazy"
@@ -724,9 +724,9 @@ export default function JobRequestPopup() {
                 e.target.src = '/images/default-avatar.svg';
               }}
             />
-            )}
           </div>
-          <div className="spacing_24" />
+          )}
+          {profileImageUrl && <div className="spacing_24" />}
           <div className="text_wrapper text_align_center">
             <div className="flex_wrapper flex_center">
               <h3>{getUserValue('display_name', 'User Name')}</h3>
@@ -794,7 +794,7 @@ export default function JobRequestPopup() {
           <div className="spacing_24" />
           {shouldShowModelStats() && (
             <div className="stat_container">
-              <div className="stats_wrap_bottom">
+              <div className={`stats_wrap_bottom${showFullModelStats ? '' : ' stats_wrap_bottom--compact'}`}>
                 {showFullModelStats && (
                   <>
                     <div className="stat_item">
