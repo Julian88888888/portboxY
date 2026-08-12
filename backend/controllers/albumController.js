@@ -761,6 +761,114 @@ const deleteAlbum = async (req, res) => {
   }
 };
 
+/**
+ * PUT /albums/:id
+ * Update album title and/or description
+ */
+const updateAlbum = async (req, res) => {
+  try {
+    const { id: albumId } = req.params;
+    const userId = req.user?.id;
+    const { title, description } = req.body || {};
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        error: 'Unauthorized'
+      });
+    }
+
+    if (title !== undefined && (!title || String(title).trim().length === 0)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Title is required'
+      });
+    }
+
+    if (title === undefined && description === undefined) {
+      return res.status(400).json({
+        success: false,
+        error: 'No fields to update'
+      });
+    }
+
+    if (supabase) {
+      const ownership = await verifyAlbumOwnership(albumId, userId);
+      if (!ownership.ok) {
+        return res.status(ownership.status).json({
+          success: false,
+          error: ownership.error
+        });
+      }
+
+      const updateData = {};
+      if (title !== undefined) {
+        updateData.title = String(title).trim();
+      }
+      if (description !== undefined) {
+        updateData.description = description ? String(description).trim() : null;
+      }
+
+      const { data: updatedAlbum, error: updateError } = await supabase
+        .from('albums')
+        .update(updateData)
+        .eq('id', albumId)
+        .select('id, title, description, cover_image_id, created_at')
+        .single();
+
+      if (updateError) {
+        console.error('Database error:', updateError);
+        return res.status(500).json({
+          success: false,
+          error: updateError.message || 'Failed to update album'
+        });
+      }
+
+      let coverImageUrl = null;
+      if (updatedAlbum.cover_image_id) {
+        const { data: coverImage } = await supabase
+          .from('images')
+          .select('url')
+          .eq('id', updatedAlbum.cover_image_id)
+          .single();
+        if (coverImage) {
+          coverImageUrl = coverImage.url;
+        }
+      }
+
+      return res.json({
+        success: true,
+        data: {
+          id: updatedAlbum.id,
+          title: updatedAlbum.title,
+          description: updatedAlbum.description,
+          cover_image_id: updatedAlbum.cover_image_id,
+          cover_image_url: coverImageUrl,
+          created_at: updatedAlbum.created_at
+        }
+      });
+    }
+
+    res.json({
+      success: true,
+      data: {
+        id: albumId,
+        title: title !== undefined ? String(title).trim() : 'Untitled',
+        description: description !== undefined ? (description ? String(description).trim() : null) : null,
+        cover_image_id: null,
+        cover_image_url: null,
+        created_at: new Date().toISOString()
+      }
+    });
+  } catch (error) {
+    console.error('Update album error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error'
+    });
+  }
+};
+
 module.exports = {
   createAlbum,
   getAlbums,
@@ -769,6 +877,7 @@ module.exports = {
   setCoverImage,
   deleteImage,
   deleteAlbum,
+  updateAlbum,
   upload // Export multer middleware
 };
 

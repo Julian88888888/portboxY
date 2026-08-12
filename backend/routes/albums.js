@@ -42,6 +42,9 @@ router.post(
 // GET /albums/:id/images - Get all images of an album
 router.get('/:id/images', albumController.getAlbumImages);
 
+// PUT /albums/:id - Update album title/description
+router.put('/:id', authenticateToken, albumController.updateAlbum);
+
 // PUT /albums/:id/cover - Set cover image for an album
 router.put('/:id/cover', authenticateToken, albumController.setCoverImage);
 

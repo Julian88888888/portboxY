@@ -440,6 +440,64 @@ export const deleteImage = async (imageId) => {
 };
 
 /**
+ * PUT /albums/:id
+ * Update album title and/or description
+ *
+ * @param {string} albumId - Album ID
+ * @param {Object} albumData - Fields to update
+ * @param {string} [albumData.title] - Album title
+ * @param {string|null} [albumData.description] - Album description
+ * @returns {Promise<Object>} Updated album
+ */
+export const updateAlbum = async (albumId, albumData) => {
+  try {
+    if (!albumId) {
+      throw new Error('Album ID is required');
+    }
+
+    const { title, description } = albumData || {};
+
+    if (title !== undefined && (!title || String(title).trim().length === 0)) {
+      throw new Error('Title is required');
+    }
+
+    if (title === undefined && description === undefined) {
+      throw new Error('No fields to update');
+    }
+
+    const headers = await getAuthHeaders();
+    const body = {};
+    if (title !== undefined) body.title = String(title).trim();
+    if (description !== undefined) {
+      body.description = description ? String(description).trim() : null;
+    }
+
+    const response = await fetch(`${getApiBaseUrl()}/albums/${albumId}`, {
+      method: 'PUT',
+      headers,
+      body: JSON.stringify(body)
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || 'Failed to update album');
+    }
+
+    return {
+      success: true,
+      data: data.data
+    };
+  } catch (error) {
+    console.error('Error updating album:', error);
+    return {
+      success: false,
+      error: error.message || 'Failed to update album'
+    };
+  }
+};
+
+/**
  * DELETE /albums/:id
  * Delete an album (and all its images via CASCADE)
  * 

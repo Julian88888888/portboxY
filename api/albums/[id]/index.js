@@ -138,10 +138,17 @@ module.exports = async (req, res) => {
       const updateData = {};
 
       if (body.title !== undefined) {
-        updateData.title = body.title.trim();
+        const trimmedTitle = String(body.title || '').trim();
+        if (!trimmedTitle) {
+          return res.status(400).json({
+            success: false,
+            error: 'Title is required'
+          });
+        }
+        updateData.title = trimmedTitle;
       }
       if (body.description !== undefined) {
-        updateData.description = body.description ? body.description.trim() : null;
+        updateData.description = body.description ? String(body.description).trim() : null;
       }
       if (body.cover_image_id !== undefined) {
         updateData.cover_image_id = body.cover_image_id;
