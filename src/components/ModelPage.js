@@ -97,6 +97,7 @@ export default function JobRequestPopup() {
   // Use public profile if username is in URL, otherwise use current user's profile
   const profile = urlUsername ? publicProfile : currentUserProfile;
   const isPublicProfile = !!urlUsername;
+  const isViewingOwnPublicProfile = !!(user?.id && profile?.id && user.id === profile.id);
   
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
@@ -110,58 +111,55 @@ export default function JobRequestPopup() {
   const [customLinks, setCustomLinks] = useState([]);
   const [customLinksLoading, setCustomLinksLoading] = useState(false);
 
-  // Helper function to get value from profile, user, or user_metadata
+  // Profile owner values only — never leak logged-in viewer metadata onto other @username pages
   const getUserValue = (field, defaultValue = '') => {
-    // First check profile (from database, cached via React Query)
+    const fromPersonal =
+      profile?.personal_stats &&
+      typeof profile.personal_stats === 'object' &&
+      profile.personal_stats[field];
+    if (fromPersonal !== undefined && fromPersonal !== null && fromPersonal !== '') {
+      return fromPersonal;
+    }
     if (profile?.[field] !== undefined && profile[field] !== null && profile[field] !== '') {
       return profile[field];
     }
-    // Fallback to user.user_metadata (from Supabase auth)
-    return user?.[field] || user?.user_metadata?.[field] || defaultValue;
+    if (isViewingOwnPublicProfile || !isPublicProfile) {
+      return user?.[field] || user?.user_metadata?.[field] || defaultValue;
+    }
+    return defaultValue;
   };
 
-  // Check if model stats should be shown
+  // Body measurements (height, bust, etc.) — only this profile owner's toggle
   const shouldShowModelStats = () => {
-    // Check profile first (from database)
-    if (profile?.showModelStats !== undefined) {
-      return profile.showModelStats;
-    }
     if (profile?.show_model_stats !== undefined) {
-      return profile.show_model_stats;
+      return profile.show_model_stats !== false;
     }
-    // Fallback to user metadata
-    if (user?.showModelStats !== undefined) {
-      return user.showModelStats;
+    if (profile?.showModelStats !== undefined) {
+      return profile.showModelStats !== false;
     }
-    if (user?.user_metadata?.showModelStats !== undefined) {
-      return user.user_metadata.showModelStats;
+    if (isViewingOwnPublicProfile && user?.user_metadata?.showModelStats === false) {
+      return false;
     }
-    // Default to true if not set
     return true;
   };
 
-  // Check if Book Me button should be shown
+  // Book Me master — profile owner only (never viewer session)
   const shouldShowBookMeButton = () => {
-    if (profile?.showBookMeButton !== undefined) {
-      return profile.showBookMeButton;
-    }
-    if (profile?.show_book_me_button !== undefined) {
-      return profile.show_book_me_button;
-    }
-    if (user?.showBookMeButton !== undefined) {
-      return user.showBookMeButton;
-    }
-    if (user?.user_metadata?.showBookMeButton !== undefined) {
-      return user.user_metadata.showBookMeButton;
+    if (profile?.show_book_me_button === false) return false;
+    if (profile?.showBookMeButton === false) return false;
+    if (profile?.personal_stats?.showBookMeButton === false) return false;
+    if (isViewingOwnPublicProfile) {
+      if (user?.showBookMeButton === false) return false;
+      if (user?.user_metadata?.showBookMeButton === false) return false;
     }
     return true;
   };
 
-  /** Per-section Book Me (master = shouldShowBookMeButton). DB keys + user_metadata fallback. */
+  /** Per-section Book Me — profile owner DB only; metadata only on own page. */
   const isBookMeSectionEnabled = (dbKey, metaKey) => {
     if (!shouldShowBookMeButton()) return false;
     if (profile?.[dbKey] === false) return false;
-    if (user?.user_metadata?.[metaKey] === false) return false;
+    if (isViewingOwnPublicProfile && user?.user_metadata?.[metaKey] === false) return false;
     return true;
   };
 
@@ -177,14 +175,23 @@ export default function JobRequestPopup() {
   const canShowBookMeToVisitor = urlUsername && profile?.id && user?.id !== profile?.id;
 
   const shouldShowAvailableForTags = () => {
-    if (profile?.show_available_for === false) return false;
-    if (profile?.showAvailableFor === false) return false;
-    if (user?.user_metadata?.showAvailableFor === false) return false;
+    if (profile?.show_available_for !== undefined) {
+      return profile.show_available_for !== false;
+    }
+    if (profile?.showAvailableFor !== undefined) {
+      return profile.showAvailableFor !== false;
+    }
+    if (isViewingOwnPublicProfile && user?.user_metadata?.showAvailableFor === false) {
+      return false;
+    }
     return true;
   };
 
   const getPublicAvailableForTags = () => {
-    let raw = profile?.available_for_tags ?? user?.user_metadata?.availableForTags;
+    let raw = profile?.available_for_tags;
+    if ((raw == null || raw === '') && isViewingOwnPublicProfile) {
+      raw = user?.user_metadata?.availableForTags;
+    }
     if (raw == null || raw === '') return [];
     if (typeof raw === 'string') {
       try {
@@ -203,31 +210,65 @@ export default function JobRequestPopup() {
       .map((id) => ({ id, label: BOOKING_TAG_LABELS[id] }));
   };
 
-  const getBookingsTitleDisplay = () =>
-    profile?.bookings_title ?? user?.user_metadata?.bookingsTitle ?? 'BOOKINGS';
+  const getBookingsTitleDisplay = () => {
+    if (profile?.bookings_title != null && String(profile.bookings_title).trim() !== '') {
+      return profile.bookings_title;
+    }
+    if (isViewingOwnPublicProfile) {
+      return user?.user_metadata?.bookingsTitle ?? 'BOOKINGS';
+    }
+    return profile?.bookings_title ?? 'BOOKINGS';
+  };
 
-  /** Master: show BOOKINGS block (title, hometown, description, tags) — not Book Me. */
+  /** Master: BOOKINGS block — only this profile's show_bookings_title (works logged out). */
   const shouldShowBookingsWidget = () => {
     if (profile?.show_bookings_title === false) return false;
-    if (user?.user_metadata?.enableBookingsTitle === false) return false;
+    if (profile?.personal_stats?.enableBookingsTitle === false) return false;
+    if (isViewingOwnPublicProfile && user?.user_metadata?.enableBookingsTitle === false) {
+      return false;
+    }
     return true;
   };
 
-  const getHometownDisplay = () =>
-    (profile?.hometown ?? user?.user_metadata?.hometown ?? '').trim();
+  const getHometownDisplay = () => {
+    const fromProfile = profile?.hometown;
+    if (fromProfile != null && String(fromProfile).trim() !== '') {
+      return String(fromProfile).trim();
+    }
+    if (isViewingOwnPublicProfile) {
+      return String(user?.user_metadata?.hometown ?? '').trim();
+    }
+    return '';
+  };
 
   const shouldShowHometownPublic = () => {
-    if (profile?.show_hometown === false) return false;
-    if (user?.user_metadata?.showHometown === false) return false;
+    if (profile?.show_hometown !== undefined) {
+      return profile.show_hometown !== false;
+    }
+    if (isViewingOwnPublicProfile && user?.user_metadata?.showHometown === false) {
+      return false;
+    }
     return true;
   };
 
-  const getBookingDescriptionDisplay = () =>
-    (profile?.booking_description ?? user?.user_metadata?.bookingDescription ?? '').trim();
+  const getBookingDescriptionDisplay = () => {
+    const fromProfile = profile?.booking_description;
+    if (fromProfile != null && String(fromProfile).trim() !== '') {
+      return String(fromProfile).trim();
+    }
+    if (isViewingOwnPublicProfile) {
+      return String(user?.user_metadata?.bookingDescription ?? '').trim();
+    }
+    return '';
+  };
 
   const shouldShowBookingDescriptionPublic = () => {
-    if (profile?.show_booking_description === false) return false;
-    if (user?.user_metadata?.showRequestDescription === false) return false;
+    if (profile?.show_booking_description !== undefined) {
+      return profile.show_booking_description !== false;
+    }
+    if (isViewingOwnPublicProfile && user?.user_metadata?.showRequestDescription === false) {
+      return false;
+    }
     return true;
   };
 
@@ -241,19 +282,14 @@ export default function JobRequestPopup() {
   const shouldShowBookMeInLinksArea =
     shouldShowBookMeLinksSection() && canShowBookMeToVisitor;
 
-  // Check if Social Links (icon row) should be shown
+  // Social icon row — profile owner only (works logged out via DB)
   const shouldShowSocialLinks = () => {
-    if (profile?.showSocialLinks !== undefined) {
-      return profile.showSocialLinks;
-    }
-    if (profile?.show_social_links !== undefined) {
-      return profile.show_social_links;
-    }
-    if (user?.showSocialLinks !== undefined) {
-      return user.showSocialLinks;
-    }
-    if (user?.user_metadata?.showSocialLinks !== undefined) {
-      return user.user_metadata.showSocialLinks;
+    if (profile?.show_social_links === false) return false;
+    if (profile?.showSocialLinks === false) return false;
+    if (profile?.personal_stats?.showSocialLinks === false) return false;
+    if (isViewingOwnPublicProfile) {
+      if (user?.showSocialLinks === false) return false;
+      if (user?.user_metadata?.showSocialLinks === false) return false;
     }
     return true;
   };
@@ -299,19 +335,13 @@ export default function JobRequestPopup() {
     return links;
   };
 
-  // Check if Profile Stats (INDUSTRY, STATUS, MARKETS, NICHE) should be shown
+  // Check if Profile Stats (INDUSTRY, STATUS, MARKETS, NICHE) should be shown — profile owner only
   const shouldShowProfileStats = () => {
-    if (profile?.showProfileStats !== undefined) {
-      return profile.showProfileStats;
-    }
     if (profile?.show_profile_stats !== undefined) {
-      return profile.show_profile_stats;
+      return profile.show_profile_stats !== false;
     }
-    if (user?.showProfileStats !== undefined) {
-      return user.showProfileStats;
-    }
-    if (user?.user_metadata?.showProfileStats !== undefined) {
-      return user.user_metadata.showProfileStats;
+    if (profile?.showProfileStats !== undefined) {
+      return profile.showProfileStats !== false;
     }
     return true;
   };
@@ -338,19 +368,15 @@ export default function JobRequestPopup() {
     return true;
   };
 
-  // Check if Custom Links (My Links) section should be shown
+  // My Links section — profile owner setting only (must work logged out via DB)
   const shouldShowCustomLinksTitle = () => {
-    if (profile?.showCustomLinksTitle !== undefined) {
-      return profile.showCustomLinksTitle;
-    }
-    if (profile?.show_custom_links_title !== undefined) {
-      return profile.show_custom_links_title;
-    }
-    if (user?.showCustomLinksTitle !== undefined) {
-      return user.showCustomLinksTitle;
-    }
-    if (user?.user_metadata?.showCustomLinksTitle !== undefined) {
-      return user.user_metadata.showCustomLinksTitle;
+    if (profile?.show_custom_links_title === false) return false;
+    if (profile?.showCustomLinksTitle === false) return false;
+    if (profile?.personal_stats?.showCustomLinksTitle === false) return false;
+    // Own page only: legacy auth metadata (before DB column existed)
+    if (isViewingOwnPublicProfile) {
+      if (user?.showCustomLinksTitle === false) return false;
+      if (user?.user_metadata?.showCustomLinksTitle === false) return false;
     }
     return true;
   };
@@ -762,7 +788,9 @@ export default function JobRequestPopup() {
             ))}
           </div>
           )}
-          {/* Social links now rendered dynamically via getSocialLinksList() above */}
+          {shouldShowSocialLinks() && getSocialLinksList().length > 0 && shouldShowProfileStats() && (
+            <div className="spacing_24" />
+          )}
           {shouldShowProfileStats() && (
           <div className="stats_wrap">
             <div className="stat_item">
@@ -792,10 +820,9 @@ export default function JobRequestPopup() {
           </div>
           )}
           <div className="spacing_24" />
-          {shouldShowModelStats() && (
-            <div className="stat_container">
-              <div className={`stats_wrap_bottom${showFullModelStats ? '' : ' stats_wrap_bottom--compact'}`}>
-                {showFullModelStats && (
+          <div className="stat_container">
+              <div className={`stats_wrap_bottom${showFullModelStats && shouldShowModelStats() ? '' : ' stats_wrap_bottom--compact'}`}>
+                {showFullModelStats && shouldShowModelStats() && (
                   <>
                     <div className="stat_item">
                       <div className="stat_title">HEIGHT</div>
@@ -877,8 +904,7 @@ export default function JobRequestPopup() {
                 </div>
               </div>
             </div>
-          )}
-          {shouldShowModelStats() && <div className="spacing_24" />}
+          <div className="spacing_24" />
           <div className="spacing_24" />
       {shouldShowBookMeProfileSection() && canShowBookMeToVisitor && (
         <>

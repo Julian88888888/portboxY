@@ -24,6 +24,37 @@ import { PAY_CURRENCIES } from '../utils/currencies';
 import { formatIndustryLabel, INDUSTRY_OPTIONS } from '../utils/industry';
 import { formatUnitLabel } from '../utils/unitLabels';
 
+const PERSONAL_STATS_FIELDS = [
+  'heightFeet',
+  'heightInches',
+  'heightUnit',
+  'weight',
+  'weightUnit',
+  'bust',
+  'cupSize',
+  'bustUnit',
+  'waist',
+  'waistUnit',
+  'hips',
+  'hipsUnit',
+  'shoe',
+  'shoeUnit',
+  'hairColor',
+  'hairLength',
+  'eyeColor',
+  'age',
+  'gender',
+  'ethnicity',
+];
+
+const pickPersonalStats = (src = {}) => {
+  const out = {};
+  PERSONAL_STATS_FIELDS.forEach((key) => {
+    if (src[key] !== undefined && src[key] !== null) out[key] = src[key];
+  });
+  return out;
+};
+
 const TAB_ROUTES = { 'Tab 1': '/profile', 'Tab 2': '/portfolio', 'Tab 3': '/bookings', 'Tab 4': '/links', 'Tab 5': '/settings' };
 
 const BOOKING_AVAILABLE_FOR_IDS = ['photoshoots', 'acting', 'runway', 'promo'];
@@ -432,7 +463,18 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
         status: user.status || meta.status || '',
         markets: user.markets || meta.markets || '',
         availableFor: user.availableFor || meta.availableFor || '',
-        showModelStats: user.showModelStats !== undefined ? user.showModelStats : (user.user_metadata?.showModelStats !== undefined ? user.user_metadata.showModelStats : true),
+        showModelStats:
+          profile?.show_model_stats !== undefined
+            ? profile.show_model_stats
+            : user.showModelStats !== undefined
+              ? user.showModelStats
+              : (user.user_metadata?.showModelStats !== undefined ? user.user_metadata.showModelStats : true),
+        showProfileStats:
+          profile?.show_profile_stats !== undefined
+            ? profile.show_profile_stats
+            : user.showProfileStats !== undefined
+              ? user.showProfileStats
+              : (user.user_metadata?.showProfileStats !== undefined ? user.user_metadata.showProfileStats : true),
         showBookMeButton:
           profile?.show_book_me_button !== undefined
             ? profile.show_book_me_button
@@ -465,9 +507,18 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
             : user.user_metadata?.showBookMeCustomLinksSection !== undefined
               ? user.user_metadata.showBookMeCustomLinksSection
               : (prev.showBookMeCustomLinksSection ?? true),
-        showCustomLinksTitle: user.showCustomLinksTitle !== undefined ? user.showCustomLinksTitle : (user.user_metadata?.showCustomLinksTitle !== undefined ? user.user_metadata.showCustomLinksTitle : true),
-        showProfileStats: user.showProfileStats !== undefined ? user.showProfileStats : (user.user_metadata?.showProfileStats !== undefined ? user.user_metadata.showProfileStats : true),
-        showSocialLinks: user.showSocialLinks !== undefined ? user.showSocialLinks : (user.user_metadata?.showSocialLinks !== undefined ? user.user_metadata.showSocialLinks : true),
+        showCustomLinksTitle:
+          profile?.show_custom_links_title !== undefined
+            ? profile.show_custom_links_title
+            : user.showCustomLinksTitle !== undefined
+              ? user.showCustomLinksTitle
+              : (user.user_metadata?.showCustomLinksTitle !== undefined ? user.user_metadata.showCustomLinksTitle : true),
+        showSocialLinks:
+          profile?.show_social_links !== undefined
+            ? profile.show_social_links
+            : user.showSocialLinks !== undefined
+              ? user.showSocialLinks
+              : (user.user_metadata?.showSocialLinks !== undefined ? user.user_metadata.showSocialLinks : true),
         showAlbumBadge: profile?.show_album_badge !== undefined
           ? profile.show_album_badge
           : (profile?.showAlbumBadge !== undefined
@@ -489,26 +540,26 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
             : (user.showAlbumDescription !== undefined
               ? user.showAlbumDescription
               : (user.user_metadata?.showAlbumDescription !== undefined ? user.user_metadata.showAlbumDescription : prev.showAlbumDescription))),
-        heightFeet: user.heightFeet || '',
-        heightInches: user.heightInches || '',
-        heightUnit: user.heightUnit || '',
-        weight: user.weight || '',
-        weightUnit: user.weightUnit || '',
-        bust: user.bust || '',
-        cupSize: user.cupSize || user.bustSize || '',
-        bustUnit: user.bustUnit || '',
-        waist: user.waist || '',
-        waistUnit: user.waistUnit || '',
-        hips: user.hips || '',
-        hipsUnit: user.hipsUnit || '',
-        shoe: user.shoe || '',
-        shoeUnit: user.shoeUnit || '',
-        hairColor: user.hairColor || user.user_metadata?.hairColor || '',
-        hairLength: user.hairLength || user.user_metadata?.hairLength || '',
-        eyeColor: user.eyeColor || user.user_metadata?.eyeColor || '',
-        age: user.age || user.user_metadata?.age || '',
-        gender: user.gender || user.user_metadata?.gender || '',
-        ethnicity: user.ethnicity || user.user_metadata?.ethnicity || '',
+        heightFeet: (profile?.personal_stats?.heightFeet ?? user.heightFeet) || '',
+        heightInches: (profile?.personal_stats?.heightInches ?? user.heightInches) || '',
+        heightUnit: (profile?.personal_stats?.heightUnit ?? user.heightUnit) || '',
+        weight: (profile?.personal_stats?.weight ?? user.weight) || '',
+        weightUnit: (profile?.personal_stats?.weightUnit ?? user.weightUnit) || '',
+        bust: (profile?.personal_stats?.bust ?? user.bust) || '',
+        cupSize: (profile?.personal_stats?.cupSize ?? user.cupSize ?? user.bustSize) || '',
+        bustUnit: (profile?.personal_stats?.bustUnit ?? user.bustUnit) || '',
+        waist: (profile?.personal_stats?.waist ?? user.waist) || '',
+        waistUnit: (profile?.personal_stats?.waistUnit ?? user.waistUnit) || '',
+        hips: (profile?.personal_stats?.hips ?? user.hips) || '',
+        hipsUnit: (profile?.personal_stats?.hipsUnit ?? user.hipsUnit) || '',
+        shoe: (profile?.personal_stats?.shoe ?? user.shoe) || '',
+        shoeUnit: (profile?.personal_stats?.shoeUnit ?? user.shoeUnit) || '',
+        hairColor: (profile?.personal_stats?.hairColor ?? user.hairColor ?? user.user_metadata?.hairColor) || '',
+        hairLength: (profile?.personal_stats?.hairLength ?? user.hairLength ?? user.user_metadata?.hairLength) || '',
+        eyeColor: (profile?.personal_stats?.eyeColor ?? user.eyeColor ?? user.user_metadata?.eyeColor) || '',
+        age: (profile?.personal_stats?.age ?? user.age ?? user.user_metadata?.age) || '',
+        gender: (profile?.personal_stats?.gender ?? user.gender ?? user.user_metadata?.gender) || '',
+        ethnicity: (profile?.personal_stats?.ethnicity ?? user.ethnicity ?? user.user_metadata?.ethnicity) || '',
         email: user.email || '',
         instagram: socialLinks.instagram,
         twitter: socialLinks.twitter,
@@ -607,6 +658,18 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
         dbOk = !!dbResult;
       } catch (err) {
         console.warn('profiles upsert failed for bookings widget:', err?.message || err);
+        try {
+          const merged = {
+            ...(profile?.personal_stats && typeof profile.personal_stats === 'object'
+              ? profile.personal_stats
+              : {}),
+            enableBookingsTitle: nextValue,
+          };
+          const dbResult2 = await upsertProfile({ personal_stats: merged });
+          dbOk = !!dbResult2;
+        } catch (err2) {
+          console.warn('personal_stats bookings fallback failed:', err2?.message || err2);
+        }
       }
       const metaResult = await updateProfile({ enableBookingsTitle: nextValue });
       const metaOk = !!metaResult?.success;
@@ -618,10 +681,99 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
       const u = String(profile?.username || formData.username || '')
         .trim()
         .replace(/^@+/, '');
-      if (u) queryClient.invalidateQueries({ queryKey: ['publicProfile', u] });
+      if (u) {
+        queryClient.setQueryData(['publicProfile', u], (prev) => {
+          if (!prev || typeof prev !== 'object') return prev;
+          const prevStats =
+            prev.personal_stats && typeof prev.personal_stats === 'object'
+              ? prev.personal_stats
+              : {};
+          return {
+            ...prev,
+            show_bookings_title: nextValue,
+            personal_stats: {
+              ...prevStats,
+              enableBookingsTitle: nextValue,
+            },
+          };
+        });
+        queryClient.invalidateQueries({ queryKey: ['publicProfile', u] });
+      }
+      if (!dbOk) {
+        alert(
+          'Saved to your login session, but not to the public profile DB.\n' +
+            'In Supabase SQL Editor run add_bookings_public_display_columns.sql, then toggle again.'
+        );
+      }
     } catch (err) {
       console.warn('Bookings widget toggle failed:', err);
       setFormData((prev) => ({ ...prev, enableBookingsTitle: previousValue }));
+    }
+  };
+
+  /** My Links / social icons: DB for public (logged-out) visitors + metadata for own-page fallback. */
+  const persistLinksVisibilityToggle = async (formKey, dbKey, metaKey) => {
+    const previousValue = formData[formKey] ?? true;
+    const nextValue = !previousValue;
+    setFormData((prev) => ({ ...prev, [formKey]: nextValue }));
+    try {
+      let dbOk = false;
+      try {
+        const dbResult = await upsertProfile({ [dbKey]: nextValue });
+        dbOk = !!dbResult;
+      } catch (err) {
+        console.warn(`profiles upsert failed for ${dbKey}:`, err?.message || err);
+        // Fallback: tuck flag into personal_stats JSONB if dedicated column is missing
+        try {
+          const merged = {
+            ...(profile?.personal_stats && typeof profile.personal_stats === 'object'
+              ? profile.personal_stats
+              : {}),
+            [metaKey]: nextValue,
+          };
+          const dbResult2 = await upsertProfile({ personal_stats: merged });
+          dbOk = !!dbResult2;
+        } catch (err2) {
+          console.warn('personal_stats visibility fallback failed:', err2?.message || err2);
+        }
+      }
+      const metaResult = await updateProfile({ [metaKey]: nextValue });
+      const metaOk = !!metaResult?.success;
+      if (!dbOk && !metaOk) {
+        setFormData((prev) => ({ ...prev, [formKey]: previousValue }));
+        return;
+      }
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
+      const u = String(profile?.username || formData.username || '')
+        .trim()
+        .replace(/^@+/, '');
+      if (u) {
+        queryClient.setQueryData(['publicProfile', u], (prev) => {
+          if (!prev || typeof prev !== 'object') return prev;
+          const prevStats =
+            prev.personal_stats && typeof prev.personal_stats === 'object'
+              ? prev.personal_stats
+              : {};
+          return {
+            ...prev,
+            [dbKey]: nextValue,
+            personal_stats: {
+              ...prevStats,
+              [metaKey]: nextValue,
+            },
+          };
+        });
+        queryClient.invalidateQueries({ queryKey: ['publicProfile', u] });
+      }
+      if (!dbOk) {
+        alert(
+          'Saved to your login session, but not to the public profile DB.\n' +
+            'In Supabase SQL Editor run add_links_visibility_columns.sql (and add_personal_stats_column.sql if needed), then toggle again.'
+        );
+      }
+    } catch (err) {
+      console.warn('Links visibility toggle failed:', err);
+      setFormData((prev) => ({ ...prev, [formKey]: previousValue }));
     }
   };
 
@@ -761,6 +913,39 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
             }
           }
         : formData;
+
+      if (formType === 'model-stats') {
+        const personal_stats = pickPersonalStats(formData);
+        try {
+          await upsertProfile({
+            personal_stats,
+            show_model_stats: formData.showModelStats !== false,
+          });
+          queryClient.invalidateQueries({ queryKey: ['profile'] });
+          const u = String(profile?.username || formData.username || '')
+            .trim()
+            .replace(/^@+/, '');
+          if (u) {
+            queryClient.invalidateQueries({ queryKey: ['publicProfile', u] });
+            queryClient.setQueryData(['publicProfile', u], (prev) => {
+              if (!prev || typeof prev !== 'object') return prev;
+              return {
+                ...prev,
+                personal_stats,
+                show_model_stats: formData.showModelStats !== false,
+              };
+            });
+          }
+        } catch (dbErr) {
+          console.error('profiles.personal_stats update:', dbErr);
+          alert(
+            'Could not save personal stats to public profile. In Supabase SQL Editor run add_personal_stats_column.sql\n\n' +
+              (dbErr.message || String(dbErr))
+          );
+          return;
+        }
+      }
+
       const result = await updateProfile(payload);
       if (result.success) {
         if (formType === 'stats') {
@@ -1041,13 +1226,11 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                             }}
                             onClick={(e) => {
                               e.preventDefault();
-                              const newValue = !formData.showSocialLinks;
-                              setFormData(prev => ({ ...prev, showSocialLinks: newValue }));
-                              updateProfile({ ...formData, showSocialLinks: newValue }).then(result => {
-                                if (result.success) {
-                                  console.log('Show Social Links toggle saved');
-                                }
-                              });
+                              void persistLinksVisibilityToggle(
+                                'showSocialLinks',
+                                'show_social_links',
+                                'showSocialLinks'
+                              );
                             }}
                           >
                             <div
@@ -1133,13 +1316,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                         }}
                         onClick={(e) => {
                           e.preventDefault();
-                          const newValue = !formData.showProfileStats;
-                          setFormData(prev => ({ ...prev, showProfileStats: newValue }));
-                          updateProfile({ ...formData, showProfileStats: newValue }).then(result => {
-                            if (result.success) {
-                              console.log('Show Profile Stats toggle saved');
-                            }
-                          });
+                          handleQuickToggle('showProfileStats', 'show_profile_stats');
                         }}
                       >
                         <div
@@ -1282,13 +1459,11 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                         }}
                         onClick={(e) => {
                           e.preventDefault();
-                          const newValue = !formData.showModelStats;
-                          setFormData(prev => ({ ...prev, showModelStats: newValue }));
-                          updateProfile({ ...formData, showModelStats: newValue }).then(result => {
-                            if (result.success) {
-                              console.log('Show Model Stats toggle saved');
-                            }
-                          });
+                          void persistBookMeVisibilityToggle(
+                            'showModelStats',
+                            'show_model_stats',
+                            'showModelStats'
+                          );
                         }}
                       >
                         <div
@@ -2720,13 +2895,11 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                       }}
                       onClick={(e) => {
                         e.preventDefault();
-                        const newValue = !formData.showCustomLinksTitle;
-                        setFormData(prev => ({ ...prev, showCustomLinksTitle: newValue }));
-                        updateProfile({ ...formData, showCustomLinksTitle: newValue }).then(result => {
-                          if (result.success) {
-                            console.log('Show Custom Links toggle saved');
-                          }
-                        });
+                        void persistLinksVisibilityToggle(
+                          'showCustomLinksTitle',
+                          'show_custom_links_title',
+                          'showCustomLinksTitle'
+                        );
                       }}
                     >
                       <div
