@@ -191,10 +191,10 @@ export const getAlbums = async (userId = null) => {
  * @param {string} albumId - Album ID
  * @param {File} imageFile - Image file to upload
  * @param {number|null} currentImageCount - Optional current count for client-side limit check
- * @param {string} [displaySize='M'] - Display size: S | M | L
+ * @param {string} [displaySize='L'] - Display size: S | M | L
  * @returns {Promise<Object>} Uploaded image data
  */
-export const uploadImageToAlbum = async (albumId, imageFile, currentImageCount = null, displaySize = 'M') => {
+export const uploadImageToAlbum = async (albumId, imageFile, currentImageCount = null, displaySize = 'L') => {
   try {
     if (!imageFile) {
       throw new Error('Image file is required');
@@ -219,7 +219,8 @@ export const uploadImageToAlbum = async (albumId, imageFile, currentImageCount =
     // Remove Content-Type for FormData (browser will set it with boundary)
     delete headers['Content-Type'];
 
-    const normalizedSize = displaySize === 'S' || displaySize === 'L' ? displaySize : 'M';
+    const normalizedSize =
+      displaySize === 'S' || displaySize === 'M' || displaySize === 'L' ? displaySize : 'L';
     const formData = new FormData();
     formData.append('image', imageFile);
     formData.append('display_size', normalizedSize);

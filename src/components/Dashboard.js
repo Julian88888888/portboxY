@@ -17,12 +17,17 @@ import { ALBUM_PLACEHOLDER, getAlbumCoverSrc } from '../utils/albumPlaceholder';
 import ProfileAvailableForMultiSelect from './ProfileAvailableForMultiSelect';
 import { formatNicheDisplay } from '../utils/availableFor';
 import { getDisplayAge, getMaxDobForInput, normalizeDobForInput } from '../utils/dateOfBirth';
-import { DISPLAY_SIZE_OPTIONS, normalizeDisplaySize, getImageThumbGridStyle } from '../utils/displaySize';
+import {
+  DISPLAY_SIZE_OPTIONS,
+  normalizeDisplaySize,
+  shouldShowDisplaySizeBadge,
+  getImageThumbGridStyle,
+} from '../utils/displaySize';
 import { formatEthnicityLabel } from '../utils/ethnicity';
 import { formatPayRateDisplay, PAY_RATE_TYPES } from '../utils/payRate';
 import { PAY_CURRENCIES } from '../utils/currencies';
 import { formatIndustryLabel, INDUSTRY_OPTIONS } from '../utils/industry';
-import { formatUnitLabel } from '../utils/unitLabels';
+import { formatUnitLabel, formatHeightDisplay } from '../utils/unitLabels';
 
 const PERSONAL_STATS_FIELDS = [
   'heightFeet',
@@ -201,7 +206,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
     description: '',
     imageFile: null,
     imagePreview: null,
-    displaySize: 'M'
+    displaySize: 'L'
   });
   const [isEditAlbumModalOpen, setIsEditAlbumModalOpen] = useState(false);
   const [editAlbumFormData, setEditAlbumFormData] = useState({
@@ -214,7 +219,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
   const [selectedAlbumId, setSelectedAlbumId] = useState(null);
   const [uploadImageFile, setUploadImageFile] = useState(null);
   const [uploadImagePreview, setUploadImagePreview] = useState(null);
-  const [uploadImageDisplaySize, setUploadImageDisplaySize] = useState('M');
+  const [uploadImageDisplaySize, setUploadImageDisplaySize] = useState('L');
   const [albumImages, setAlbumImages] = useState({}); // albumId -> images array
   const [isViewImagesModalOpen, setIsViewImagesModalOpen] = useState(false);
   const [viewingAlbum, setViewingAlbum] = useState(null);
@@ -395,7 +400,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
     showModelStats: true,
     heightFeet: '',
     heightInches: '',
-    heightUnit: '',
+    heightUnit: 'FeetInches',
     weight: '',
     weightUnit: '',
     bust: '',
@@ -542,7 +547,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
               : (user.user_metadata?.showAlbumDescription !== undefined ? user.user_metadata.showAlbumDescription : prev.showAlbumDescription))),
         heightFeet: (profile?.personal_stats?.heightFeet ?? user.heightFeet) || '',
         heightInches: (profile?.personal_stats?.heightInches ?? user.heightInches) || '',
-        heightUnit: (profile?.personal_stats?.heightUnit ?? user.heightUnit) || '',
+        heightUnit: (profile?.personal_stats?.heightUnit ?? user.heightUnit) || 'FeetInches',
         weight: (profile?.personal_stats?.weight ?? user.weight) || '',
         weightUnit: (profile?.personal_stats?.weightUnit ?? user.weightUnit) || '',
         bust: (profile?.personal_stats?.bust ?? user.bust) || '',
@@ -1562,13 +1567,11 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                         <div className="stat_item">
                           <div className="stat_label" style={{fontWeight: '700'}}>HEIGHT</div>
                           <div className="stat_value" style={{fontWeight: '400'}}>
-                            {(!formData.heightUnit || formData.heightUnit === 'FeetInches')
-                              ? (formData.heightFeet && formData.heightInches
-                                ? `${formData.heightFeet}'${formData.heightInches}"`
-                                : "5'11\"")
-                              : (formData.heightFeet
-                                ? `${formData.heightFeet} ${formatUnitLabel(formData.heightUnit)}`
-                                : "5'11\"")}
+                            {formatHeightDisplay(
+                              formData.heightFeet,
+                              formData.heightInches,
+                              formData.heightUnit
+                            )}
                           </div>
                         </div>
                         <div className="stat_item">
@@ -1703,36 +1706,58 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                         </select>
                         <div className="line_divider" style={{ margin: '24px 0' }} />
                         <label htmlFor="heightFeet">Height</label>
-                        <input 
-                          className="w-input" 
-                          maxLength="256" 
-                          name="heightFeet" 
-                          placeholder="i.e 5" 
-                          type="text" 
-                          value={formData.heightFeet}
-                          onChange={handleInputChange}
-                        />
-                        <input 
-                          className="w-input" 
-                          maxLength="256" 
-                          name="heightInches" 
-                          placeholder="i.e 11" 
-                          type="text" 
-                          value={formData.heightInches}
-                          onChange={handleInputChange}
-                        />
-                        <select 
-                          id="heightUnit" 
-                          name="heightUnit" 
+                        {(!formData.heightUnit || formData.heightUnit === 'FeetInches') ? (
+                          <>
+                            <input
+                              className="w-input"
+                              maxLength="256"
+                              name="heightFeet"
+                              id="heightFeet"
+                              placeholder="i.e. 5"
+                              type="text"
+                              value={formData.heightFeet}
+                              onChange={handleInputChange}
+                            />
+                            <input
+                              className="w-input"
+                              maxLength="256"
+                              name="heightInches"
+                              id="heightInches"
+                              placeholder={'i.e. 11"'}
+                              type="text"
+                              value={formData.heightInches}
+                              onChange={handleInputChange}
+                            />
+                          </>
+                        ) : (
+                          <input
+                            className="w-input"
+                            maxLength="256"
+                            name="heightFeet"
+                            id="heightFeet"
+                            placeholder={
+                              formData.heightUnit === 'Centimeters'
+                                ? 'i.e. 180'
+                                : formData.heightUnit === 'Meters'
+                                  ? 'i.e. 1.75'
+                                  : 'i.e. 71'
+                            }
+                            type="text"
+                            value={formData.heightFeet}
+                            onChange={handleInputChange}
+                          />
+                        )}
+                        <select
+                          id="heightUnit"
+                          name="heightUnit"
                           className="dropdowntxt w-select"
-                          value={formData.heightUnit}
+                          value={formData.heightUnit || 'FeetInches'}
                           onChange={handleInputChange}
                         >
-                          <option value="">Select one...</option>
-                          <option value="FeetInches">in</option>
-                          <option value="Centimeters">cm</option>
-                          <option value="Inches">in</option>
-                          <option value="Meters">m</option>
+                          <option value="FeetInches">Feet (&apos;) &amp; Inches (&quot;)</option>
+                          <option value="Centimeters">Centimeters (cm)</option>
+                          <option value="Inches">Inches (in)</option>
+                          <option value="Meters">Meters (m)</option>
                         </select>
                         <label htmlFor="weight">Weight</label>
                         <input 
@@ -2050,7 +2075,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                                       setSelectedAlbumId(album.id);
                                       setUploadImageFile(null);
                                       setUploadImagePreview(null);
-                                      setUploadImageDisplaySize('M');
+                                      setUploadImageDisplaySize('L');
                                       setIsUploadImageModalOpen(true);
                                     }}
                                     style={{
@@ -3537,7 +3562,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                     albumId,
                     newAlbumFormData.imageFile,
                     null,
-                    newAlbumFormData.displaySize || 'M'
+                    newAlbumFormData.displaySize || 'L'
                   );
                   if (!imageResult.success) {
                     alert(`Album created but image upload failed: ${imageResult.error}`);
@@ -3582,7 +3607,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                   description: '',
                   imageFile: null,
                   imagePreview: null,
-                  displaySize: 'M'
+                  displaySize: 'L'
                 });
               }}
             >
@@ -3961,7 +3986,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                 setSelectedAlbumId(null);
                 setUploadImageFile(null);
                 setUploadImagePreview(null);
-                setUploadImageDisplaySize('M');
+                setUploadImageDisplaySize('L');
               }}
             >
               <div className="form-group" style={{ marginBottom: '16px' }}>
@@ -4020,7 +4045,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                     setSelectedAlbumId(null);
                     setUploadImageFile(null);
                     setUploadImagePreview(null);
-                    setUploadImageDisplaySize('M');
+                    setUploadImageDisplaySize('L');
                   }}
                   style={{
                     padding: '12px 24px',
@@ -4139,19 +4164,21 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                         console.log('Image loaded successfully:', normalizeImageUrl(image.url));
                       }}
                     />
-                    <div style={{
-                      position: 'absolute',
-                      top: '8px',
-                      right: '8px',
-                      background: 'rgba(0,0,0,0.65)',
-                      color: 'white',
-                      padding: '2px 6px',
-                      borderRadius: '4px',
-                      fontSize: '10px',
-                      fontWeight: 'bold'
-                    }}>
-                      {normalizeDisplaySize(image.display_size)}
-                    </div>
+                    {shouldShowDisplaySizeBadge(image.display_size) && (
+                      <div style={{
+                        position: 'absolute',
+                        top: '8px',
+                        right: '8px',
+                        background: 'rgba(0,0,0,0.65)',
+                        color: 'white',
+                        padding: '2px 6px',
+                        borderRadius: '4px',
+                        fontSize: '10px',
+                        fontWeight: 'bold'
+                      }}>
+                        {normalizeDisplaySize(image.display_size)}
+                      </div>
+                    )}
                     {viewingAlbum.cover_image_id === image.id && (
                       <div style={{
                         position: 'absolute',

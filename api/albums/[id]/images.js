@@ -79,7 +79,7 @@ function parseFormData(req) {
 }
 
 function normalizeDisplaySize(value) {
-  return value === 'S' || value === 'L' || value === 'M' ? value : 'M';
+  return value === 'S' || value === 'M' || value === 'L' ? value : 'L';
 }
 
 /**
@@ -193,7 +193,7 @@ module.exports = async (req, res) => {
 
         return res.status(200).json({
           success: true,
-          data: (fallbackImages || []).map((img) => ({ ...img, display_size: 'M' }))
+          data: (fallbackImages || []).map((img) => ({ ...img, display_size: 'L' }))
         });
       }
 

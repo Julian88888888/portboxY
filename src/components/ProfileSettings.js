@@ -731,7 +731,7 @@ export default function ProfileSettings() {
           </div>
           
           <p className="text_color_grey text_width_medium" style={{marginTop: '24px', marginBottom: '16px'}}>Select Your Profile Job Type ⤵</p>
-          <div className="w-layout-hflex header_roles">
+          <div className="header_roles job-type-picker">
             {JOB_TYPES.map((job) => (
               <a
                 key={job.id}
@@ -761,11 +761,10 @@ export default function ProfileSettings() {
                     }
                   });
                 }}
-                className={`flex_wrapper flex_distribute link_block small_choice w-inline-block ${formData.job_type === job.id ? 'highlight_type' : ''}`}
-                style={{minWidth: '140px'}}
+                className={`job-type-option flex_wrapper flex_distribute link_block small_choice ${formData.job_type === job.id ? 'highlight_type' : ''}`}
               >
-                <div>{job.label || job.id}</div>
-                <div className="icon_24x24 w-embed" style={{width: '24px', height: '24px', flexShrink: 0}}>{job.icon}</div>
+                <div className="job-type-option__label">{job.label || job.id}</div>
+                <div className="icon_24x24 w-embed job-type-option__icon">{job.icon}</div>
               </a>
             ))}
           </div>

@@ -2,10 +2,10 @@
 -- Run in Supabase SQL Editor.
 
 ALTER TABLE images
-  ADD COLUMN IF NOT EXISTS display_size TEXT DEFAULT 'M';
+  ADD COLUMN IF NOT EXISTS display_size TEXT DEFAULT 'L';
 
 ALTER TABLE albums
-  ADD COLUMN IF NOT EXISTS card_size TEXT DEFAULT 'M';
+  ADD COLUMN IF NOT EXISTS card_size TEXT DEFAULT 'L';
 
 DO $$
 BEGIN
@@ -26,5 +26,5 @@ BEGIN
   END IF;
 END $$;
 
-UPDATE images SET display_size = 'M' WHERE display_size IS NULL;
-UPDATE albums SET card_size = 'M' WHERE card_size IS NULL;
+UPDATE images SET display_size = 'L' WHERE display_size IS NULL;
+UPDATE albums SET card_size = 'L' WHERE card_size IS NULL;

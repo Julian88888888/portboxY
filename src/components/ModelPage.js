@@ -9,11 +9,16 @@ import BookingModal from './BookingModal';
 import { formatJobType, isModelJobType } from '../utils/formatJobType';
 import { getDisplayAge } from '../utils/dateOfBirth';
 import { ALBUM_PLACEHOLDER, getAlbumCoverSrc } from '../utils/albumPlaceholder';
-import { getAlbumCardGridStyle, getImageThumbGridStyle, normalizeDisplaySize } from '../utils/displaySize';
+import {
+  getAlbumCardGridStyle,
+  getImageThumbGridStyle,
+  normalizeDisplaySize,
+  shouldShowDisplaySizeBadge,
+} from '../utils/displaySize';
 import { formatEthnicityLabel } from '../utils/ethnicity';
 import { formatIndustryLabel } from '../utils/industry';
 import { formatNicheDisplay } from '../utils/availableFor';
-import { formatUnitLabel } from '../utils/unitLabels';
+import { formatUnitLabel, formatHeightDisplay } from '../utils/unitLabels';
 
 const days = [
   { key: "monday", label: "Mon", hours: "5 hours" },
@@ -827,13 +832,11 @@ export default function JobRequestPopup() {
                     <div className="stat_item">
                       <div className="stat_title">HEIGHT</div>
                       <div className="stat_descript">
-                        {(!getUserValue('heightUnit') || getUserValue('heightUnit') === 'FeetInches')
-                          ? (getUserValue('heightFeet') && getUserValue('heightInches')
-                            ? `${getUserValue('heightFeet')}'${getUserValue('heightInches')}"`
-                            : "5'11\"")
-                          : (getUserValue('heightFeet')
-                            ? `${getUserValue('heightFeet')} ${formatUnitLabel(getUserValue('heightUnit'))}`
-                            : "5'11\"")}
+                        {formatHeightDisplay(
+                          getUserValue('heightFeet'),
+                          getUserValue('heightInches'),
+                          getUserValue('heightUnit')
+                        )}
                       </div>
                     </div>
                     <div className="stat_item">
@@ -1295,21 +1298,23 @@ export default function JobRequestPopup() {
                         e.target.src = ALBUM_PLACEHOLDER;
                       }}
                     />
-                    <span
-                      style={{
-                        position: 'absolute',
-                        top: '6px',
-                        right: '6px',
-                        background: 'rgba(0,0,0,0.55)',
-                        color: '#fff',
-                        fontSize: '10px',
-                        fontWeight: 700,
-                        padding: '2px 6px',
-                        borderRadius: '4px',
-                      }}
-                    >
-                      {normalizeDisplaySize(image.display_size)}
-                    </span>
+                    {shouldShowDisplaySizeBadge(image.display_size) && (
+                      <span
+                        style={{
+                          position: 'absolute',
+                          top: '6px',
+                          right: '6px',
+                          background: 'rgba(0,0,0,0.55)',
+                          color: '#fff',
+                          fontSize: '10px',
+                          fontWeight: 700,
+                          padding: '2px 6px',
+                          borderRadius: '4px',
+                        }}
+                      >
+                        {normalizeDisplaySize(image.display_size)}
+                      </span>
+                    )}
                   </button>
                 );
                 })}

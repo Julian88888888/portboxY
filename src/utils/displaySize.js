@@ -5,7 +5,11 @@ export const DISPLAY_SIZE_OPTIONS = [
 ];
 
 export const normalizeDisplaySize = (value) =>
-  value === 'S' || value === 'L' || value === 'M' ? value : 'M';
+  value === 'S' || value === 'M' || value === 'L' ? value : 'L';
+
+/** S/M badges only — Large is the default and needs no label on cards. */
+export const shouldShowDisplaySizeBadge = (value) =>
+  normalizeDisplaySize(value) !== 'L';
 
 /** Portfolio album card span in a 6-column grid */
 export const getAlbumCardGridStyle = (size) => {

@@ -67,7 +67,7 @@ module.exports = async (req, res) => {
         }
         ({ data: albums, error } = await albumsQuery);
         if (!error && albums) {
-          albums = albums.map((album) => ({ ...album, card_size: 'M' }));
+          albums = albums.map((album) => ({ ...album, card_size: 'L' }));
         }
       }
 
@@ -106,7 +106,7 @@ module.exports = async (req, res) => {
         description: album.description,
         cover_image_id: album.cover_image_id,
         cover_image_url: album.cover_image_id ? coverImagesMap[album.cover_image_id] || null : null,
-        card_size: album.card_size || 'M',
+        card_size: album.card_size || 'L',
         created_at: album.created_at
       }));
 

@@ -93,7 +93,10 @@ module.exports = async (req, res) => {
       });
     }
 
-    const cardSize = image.display_size === 'S' || image.display_size === 'L' ? image.display_size : 'M';
+    const cardSize =
+      image.display_size === 'S' || image.display_size === 'M' || image.display_size === 'L'
+        ? image.display_size
+        : 'L';
 
     let { data: updatedAlbum, error: updateError } = await supabase
       .from('albums')

@@ -417,9 +417,10 @@ const uploadImageToAlbum = async (req, res) => {
       }
 
       // Insert image
-      const displaySize = req.body?.display_size === 'S' || req.body?.display_size === 'L'
-        ? req.body.display_size
-        : 'M';
+      const displaySize =
+        req.body?.display_size === 'S' || req.body?.display_size === 'M' || req.body?.display_size === 'L'
+          ? req.body.display_size
+          : 'L';
 
       let { data: image, error: imageError } = await supabase
         .from('images')
