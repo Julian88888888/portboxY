@@ -438,6 +438,7 @@ const BookingModal = ({ isOpen, onClose, profile, onBookingCreated }) => {
           </div>
           
           <div className="form-group">
+            <label>Budget</label>
             <div className="pay-rate-row">
               <div className="pay-rate-field">
                 <label htmlFor="offerAmount" className="pay-rate-sublabel">Offer Amount</label>

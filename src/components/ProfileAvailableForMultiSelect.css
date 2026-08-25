@@ -1,5 +1,11 @@
 .profile-available-for-multiselect {
   margin-bottom: 12px;
+  position: relative;
+  z-index: 1;
+}
+
+.profile-available-for-multiselect:focus-within {
+  z-index: 40;
 }
 
 .profile-available-for-multiselect .searchWrapper {
@@ -20,7 +26,7 @@
 }
 
 .profile-available-for-multiselect .optionListContainer {
-  z-index: 20;
+  z-index: 1000 !important;
 }
 
 .profile-available-for-multiselect .notFound {
@@ -28,3 +34,4 @@
   color: #6b7280;
   padding: 10px 12px;
 }
+

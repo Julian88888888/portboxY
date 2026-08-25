@@ -15,6 +15,7 @@ import { MAX_IMAGE_SIZE_HINT, validateImageFileSize } from '../utils/imageUpload
 import { formatJobType } from '../utils/formatJobType';
 import { ALBUM_PLACEHOLDER, getAlbumCoverSrc } from '../utils/albumPlaceholder';
 import ProfileAvailableForMultiSelect from './ProfileAvailableForMultiSelect';
+import ProfileChipMultiSelect from './ProfileChipMultiSelect';
 import { formatNicheDisplay } from '../utils/availableFor';
 import { getDisplayAge, getMaxDobForInput, normalizeDobForInput } from '../utils/dateOfBirth';
 import {
@@ -24,6 +25,16 @@ import {
   getImageThumbGridStyle,
 } from '../utils/displaySize';
 import { formatEthnicityLabel } from '../utils/ethnicity';
+import {
+  NATIONALITY_OPTIONS,
+  normalizeNationalityValue,
+  formatNationalityDisplay,
+} from '../utils/nationality';
+import {
+  LANGUAGE_OPTIONS,
+  normalizeLanguageValue,
+  formatLanguageDisplay,
+} from '../utils/languages';
 import { formatPayRateDisplay, PAY_RATE_TYPES } from '../utils/payRate';
 import { PAY_CURRENCIES } from '../utils/currencies';
 import { formatIndustryLabel, INDUSTRY_OPTIONS } from '../utils/industry';
@@ -50,6 +61,8 @@ const PERSONAL_STATS_FIELDS = [
   'age',
   'gender',
   'ethnicity',
+  'nationality',
+  'languages',
 ];
 
 const pickPersonalStats = (src = {}) => {
@@ -418,6 +431,8 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
     age: '',
     gender: '',
     ethnicity: '',
+    nationality: [],
+    languages: [],
     showPortfolioWidget: true,
     showPortfolioTitle: true,
     showAlbumBadge: true,
@@ -565,6 +580,30 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
         age: (profile?.personal_stats?.age ?? user.age ?? user.user_metadata?.age) || '',
         gender: (profile?.personal_stats?.gender ?? user.gender ?? user.user_metadata?.gender) || '',
         ethnicity: (profile?.personal_stats?.ethnicity ?? user.ethnicity ?? user.user_metadata?.ethnicity) || '',
+        nationality: (() => {
+          const stats = profile?.personal_stats;
+          if (stats && typeof stats === 'object' && Object.prototype.hasOwnProperty.call(stats, 'nationality')) {
+            return normalizeNationalityValue(stats.nationality);
+          }
+          const fromUser = normalizeNationalityValue(
+            user.nationality ?? user.user_metadata?.nationality
+          );
+          if (fromUser.length > 0) return fromUser;
+          if (Array.isArray(prev.nationality) && prev.nationality.length > 0) return prev.nationality;
+          return [];
+        })(),
+        languages: (() => {
+          const stats = profile?.personal_stats;
+          if (stats && typeof stats === 'object' && Object.prototype.hasOwnProperty.call(stats, 'languages')) {
+            return normalizeLanguageValue(stats.languages);
+          }
+          const fromUser = normalizeLanguageValue(
+            user.languages ?? user.user_metadata?.languages
+          );
+          if (fromUser.length > 0) return fromUser;
+          if (Array.isArray(prev.languages) && prev.languages.length > 0) return prev.languages;
+          return [];
+        })(),
         email: user.email || '',
         instagram: socialLinks.instagram,
         twitter: socialLinks.twitter,
@@ -896,7 +935,8 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
       await saveBookingsSettings();
       return;
     }
-    if (formType === 'stats' || formType === 'model-stats') {
+    // Markets only apply to Profile Stats, not Personal Stats
+    if (formType === 'stats') {
       const marketsCheck = validateMarkets(formData.markets);
       if (!marketsCheck.valid) {
         alert(marketsCheck.error);
@@ -920,18 +960,37 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
         : formData;
 
       if (formType === 'model-stats') {
-        const personal_stats = pickPersonalStats(formData);
+        const picked = pickPersonalStats(formData);
+        const personal_stats = {
+          ...(profile?.personal_stats && typeof profile.personal_stats === 'object'
+            ? profile.personal_stats
+            : {}),
+          ...picked,
+          nationality: normalizeNationalityValue(formData.nationality),
+          languages: normalizeLanguageValue(formData.languages),
+        };
+
         try {
-          await upsertProfile({
+          const saved = await upsertProfile({
             personal_stats,
             show_model_stats: formData.showModelStats !== false,
           });
+
+          queryClient.setQueryData(['profile'], (prev) => {
+            const base = prev && typeof prev === 'object' ? prev : {};
+            return {
+              ...base,
+              ...(saved && typeof saved === 'object' ? saved : {}),
+              personal_stats,
+              show_model_stats: formData.showModelStats !== false,
+            };
+          });
           queryClient.invalidateQueries({ queryKey: ['profile'] });
+
           const u = String(profile?.username || formData.username || '')
             .trim()
             .replace(/^@+/, '');
           if (u) {
-            queryClient.invalidateQueries({ queryKey: ['publicProfile', u] });
             queryClient.setQueryData(['publicProfile', u], (prev) => {
               if (!prev || typeof prev !== 'object') return prev;
               return {
@@ -940,7 +999,15 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                 show_model_stats: formData.showModelStats !== false,
               };
             });
+            queryClient.invalidateQueries({ queryKey: ['publicProfile', u] });
           }
+
+          setFormData((prev) => ({
+            ...prev,
+            ...picked,
+            nationality: personal_stats.nationality,
+            languages: personal_stats.languages,
+          }));
         } catch (dbErr) {
           console.error('profiles.personal_stats update:', dbErr);
           alert(
@@ -949,6 +1016,22 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
           );
           return;
         }
+
+        const result = await updateProfile({
+          ...picked,
+          nationality: personal_stats.nationality,
+          languages: personal_stats.languages,
+          showModelStats: formData.showModelStats !== false,
+        });
+        if (result.success) {
+          alert('Settings saved successfully!');
+        } else {
+          alert(
+            'Personal stats were saved to your public profile, but syncing login session failed: ' +
+              (result.error || 'Unknown error')
+          );
+        }
+        return;
       }
 
       const result = await updateProfile(payload);
@@ -1638,6 +1721,18 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                           <div className="stat_label" style={{fontWeight: '700'}}>ETHNICITY</div>
                           <div className="stat_value" style={{fontWeight: '400'}}>{formatEthnicityLabel(formData.ethnicity)}</div>
                         </div>
+                        <div className="stat_item">
+                          <div className="stat_label" style={{fontWeight: '700'}}>NATIONALITY</div>
+                          <div className="stat_value" style={{fontWeight: '400'}}>
+                            {formatNationalityDisplay(formData.nationality) || '—'}
+                          </div>
+                        </div>
+                        <div className="stat_item">
+                          <div className="stat_label" style={{fontWeight: '700'}}>LANGUAGES</div>
+                          <div className="stat_value" style={{fontWeight: '400'}}>
+                            {formatLanguageDisplay(formData.languages) || '—'}
+                          </div>
+                        </div>
                       </div>
                     </div>
                     <div className="w-form">
@@ -1704,6 +1799,30 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                           <option value="indigenous-other" label="Other Indigenous Peoples">Indigenous Peoples</option>
                           <option value="multiracial" label="Multiracial / Ethnically Ambiguous">Multiracial</option>
                         </select>
+                        <label htmlFor="nationality" style={{ display: 'block', marginTop: '12px' }}>Nationality</label>
+                        <ProfileChipMultiSelect
+                          id="nationality"
+                          options={NATIONALITY_OPTIONS}
+                          value={formData.nationality}
+                          onChange={(nextValue) =>
+                            setFormData((prev) => ({ ...prev, nationality: nextValue }))
+                          }
+                          placeholder="Select nationality"
+                          emptyRecordMsg="No nationalities found"
+                          selectionLimit={5}
+                        />
+                        <label htmlFor="languages" style={{ display: 'block', marginTop: '12px' }}>Languages</label>
+                        <ProfileChipMultiSelect
+                          id="languages"
+                          options={LANGUAGE_OPTIONS}
+                          value={formData.languages}
+                          onChange={(nextValue) =>
+                            setFormData((prev) => ({ ...prev, languages: nextValue }))
+                          }
+                          placeholder="Select languages"
+                          emptyRecordMsg="No languages found"
+                          selectionLimit={10}
+                        />
                         <div className="line_divider" style={{ margin: '24px 0' }} />
                         <label htmlFor="heightFeet">Height</label>
                         {(!formData.heightUnit || formData.heightUnit === 'FeetInches') ? (
@@ -2846,7 +2965,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                                   type="text" 
                                   id="cityCountry"
                                 />
-                                <label htmlFor="payRate">Pay Rate</label>
+                                <label htmlFor="payRate">Budget</label>
                                 <input 
                                   className="w-input" 
                                   maxLength="256" 
@@ -3371,6 +3490,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                   value={portfolioFormData.title}
                   onChange={(e) => setPortfolioFormData({ ...portfolioFormData, title: e.target.value })}
                   placeholder="Album Title"
+                  maxLength={25}
                   required
                 />
               </div>
@@ -3403,6 +3523,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                   value={portfolioFormData.description}
                   onChange={(e) => setPortfolioFormData({ ...portfolioFormData, description: e.target.value })}
                   placeholder="Album Description"
+                  maxLength={100}
                   rows="3"
                 />
               </div>
@@ -3620,6 +3741,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                   value={newAlbumFormData.title}
                   onChange={(e) => setNewAlbumFormData({ ...newAlbumFormData, title: e.target.value })}
                   placeholder="Album Title"
+                  maxLength={25}
                   required
                 />
               </div>
@@ -3632,6 +3754,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                   value={newAlbumFormData.description}
                   onChange={(e) => setNewAlbumFormData({ ...newAlbumFormData, description: e.target.value })}
                   placeholder="Album Description (optional)"
+                  maxLength={100}
                   rows="3"
                 />
               </div>
@@ -3810,7 +3933,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                   id="editAlbumTitle"
                   className="w-input"
                   type="text"
-                  maxLength={256}
+                  maxLength={25}
                   required
                   disabled={editAlbumSaving}
                   value={editAlbumFormData.title}
@@ -3825,7 +3948,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                 <textarea
                   id="editAlbumDescription"
                   className="w-input"
-                  maxLength={2000}
+                  maxLength={100}
                   rows={4}
                   disabled={editAlbumSaving}
                   value={editAlbumFormData.description}

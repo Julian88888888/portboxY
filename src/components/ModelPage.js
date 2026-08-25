@@ -16,6 +16,8 @@ import {
   shouldShowDisplaySizeBadge,
 } from '../utils/displaySize';
 import { formatEthnicityLabel } from '../utils/ethnicity';
+import { formatNationalityDisplay } from '../utils/nationality';
+import { formatLanguageDisplay } from '../utils/languages';
 import { formatIndustryLabel } from '../utils/industry';
 import { formatNicheDisplay } from '../utils/availableFor';
 import { formatUnitLabel, formatHeightDisplay } from '../utils/unitLabels';
@@ -118,12 +120,13 @@ export default function JobRequestPopup() {
 
   // Profile owner values only — never leak logged-in viewer metadata onto other @username pages
   const getUserValue = (field, defaultValue = '') => {
-    const fromPersonal =
-      profile?.personal_stats &&
-      typeof profile.personal_stats === 'object' &&
-      profile.personal_stats[field];
-    if (fromPersonal !== undefined && fromPersonal !== null && fromPersonal !== '') {
-      return fromPersonal;
+    const stats = profile?.personal_stats;
+    if (stats && typeof stats === 'object' && Object.prototype.hasOwnProperty.call(stats, field)) {
+      const fromPersonal = stats[field];
+      if (Array.isArray(fromPersonal)) return fromPersonal;
+      if (fromPersonal !== undefined && fromPersonal !== null && fromPersonal !== '') {
+        return fromPersonal;
+      }
     }
     if (profile?.[field] !== undefined && profile[field] !== null && profile[field] !== '') {
       return profile[field];
@@ -694,7 +697,7 @@ export default function JobRequestPopup() {
             <input className="w-input" maxLength="256" name="field-3" data-name="Field 3" placeholder="Dates" type="text" id="field-3" required="" />
             <label htmlFor="field-3">City/Country</label>
             <input className="w-input" maxLength="256" name="field-3" data-name="Field 3" placeholder="Name of City/Country" type="text" id="field-3" required="" />
-            <label htmlFor="field-3">Pay Rate</label>
+            <label htmlFor="field-3">Budget</label>
             <input className="w-input" maxLength="256" name="field-3" data-name="Field 3" placeholder="Pay rate for job" type="text" id="field-3" required="" />
             <label htmlFor="field">Job Details</label>
             <textarea placeholder="Description of project" maxLength="5000" id="field" name="field" data-name="Field" className="w-input"></textarea>
@@ -904,6 +907,18 @@ export default function JobRequestPopup() {
                 <div className="stat_item">
                   <div className="stat_title">ETHNICITY</div>
                   <div className="stat_descript">{formatEthnicityLabel(getUserValue('ethnicity', ''))}</div>
+                </div>
+                <div className="stat_item">
+                  <div className="stat_title">NATIONALITY</div>
+                  <div className="stat_descript">
+                    {formatNationalityDisplay(getUserValue('nationality', [])) || '—'}
+                  </div>
+                </div>
+                <div className="stat_item">
+                  <div className="stat_title">LANGUAGES</div>
+                  <div className="stat_descript">
+                    {formatLanguageDisplay(getUserValue('languages', [])) || '—'}
+                  </div>
                 </div>
               </div>
             </div>
