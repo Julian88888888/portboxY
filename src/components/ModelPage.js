@@ -18,6 +18,9 @@ import {
 import { formatEthnicityLabel } from '../utils/ethnicity';
 import { formatNationalityDisplay } from '../utils/nationality';
 import { formatLanguageDisplay } from '../utils/languages';
+import { formatBodyTypeLabel } from '../utils/bodyType';
+import { formatSkinComplexionLabel } from '../utils/skinComplexion';
+import { formatBodyModificationDisplay } from '../utils/bodyModification';
 import { formatIndustryLabel } from '../utils/industry';
 import { formatNicheDisplay } from '../utils/availableFor';
 import { formatUnitLabel, formatHeightDisplay } from '../utils/unitLabels';
@@ -907,6 +910,24 @@ export default function JobRequestPopup() {
                 <div className="stat_item">
                   <div className="stat_title">ETHNICITY</div>
                   <div className="stat_descript">{formatEthnicityLabel(getUserValue('ethnicity', ''))}</div>
+                </div>
+                <div className="stat_item">
+                  <div className="stat_title">BODY TYPE</div>
+                  <div className="stat_descript">
+                    {formatBodyTypeLabel(getUserValue('bodyType', '')) || '—'}
+                  </div>
+                </div>
+                <div className="stat_item">
+                  <div className="stat_title">SKIN COMPLEXION</div>
+                  <div className="stat_descript">
+                    {formatSkinComplexionLabel(getUserValue('skinComplexion', '')) || '—'}
+                  </div>
+                </div>
+                <div className="stat_item">
+                  <div className="stat_title">BODY MODIFICATION</div>
+                  <div className="stat_descript">
+                    {formatBodyModificationDisplay(getUserValue('bodyModification', [])) || '—'}
+                  </div>
                 </div>
                 <div className="stat_item">
                   <div className="stat_title">NATIONALITY</div>

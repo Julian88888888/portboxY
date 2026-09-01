@@ -35,6 +35,13 @@ import {
   normalizeLanguageValue,
   formatLanguageDisplay,
 } from '../utils/languages';
+import { BODY_TYPE_OPTIONS, formatBodyTypeLabel } from '../utils/bodyType';
+import { SKIN_COMPLEXION_OPTIONS, formatSkinComplexionLabel } from '../utils/skinComplexion';
+import {
+  BODY_MODIFICATION_OPTIONS,
+  normalizeBodyModificationValue,
+  formatBodyModificationDisplay,
+} from '../utils/bodyModification';
 import { formatPayRateDisplay, PAY_RATE_TYPES } from '../utils/payRate';
 import { PAY_CURRENCIES } from '../utils/currencies';
 import { formatIndustryLabel, INDUSTRY_OPTIONS } from '../utils/industry';
@@ -58,6 +65,9 @@ const PERSONAL_STATS_FIELDS = [
   'hairColor',
   'hairLength',
   'eyeColor',
+  'bodyType',
+  'skinComplexion',
+  'bodyModification',
   'age',
   'gender',
   'ethnicity',
@@ -428,6 +438,9 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
     hairColor: '',
     hairLength: '',
     eyeColor: '',
+    bodyType: '',
+    skinComplexion: '',
+    bodyModification: [],
     age: '',
     gender: '',
     ethnicity: '',
@@ -577,6 +590,26 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
         hairColor: (profile?.personal_stats?.hairColor ?? user.hairColor ?? user.user_metadata?.hairColor) || '',
         hairLength: (profile?.personal_stats?.hairLength ?? user.hairLength ?? user.user_metadata?.hairLength) || '',
         eyeColor: (profile?.personal_stats?.eyeColor ?? user.eyeColor ?? user.user_metadata?.eyeColor) || '',
+        bodyType: (profile?.personal_stats?.bodyType ?? user.bodyType ?? user.user_metadata?.bodyType) || '',
+        skinComplexion:
+          (profile?.personal_stats?.skinComplexion ??
+            user.skinComplexion ??
+            user.user_metadata?.skinComplexion) ||
+          '',
+        bodyModification: (() => {
+          const stats = profile?.personal_stats;
+          if (stats && typeof stats === 'object' && Object.prototype.hasOwnProperty.call(stats, 'bodyModification')) {
+            return normalizeBodyModificationValue(stats.bodyModification);
+          }
+          const fromUser = normalizeBodyModificationValue(
+            user.bodyModification ?? user.user_metadata?.bodyModification
+          );
+          if (fromUser.length > 0) return fromUser;
+          if (Array.isArray(prev.bodyModification) && prev.bodyModification.length > 0) {
+            return prev.bodyModification;
+          }
+          return [];
+        })(),
         age: (profile?.personal_stats?.age ?? user.age ?? user.user_metadata?.age) || '',
         gender: (profile?.personal_stats?.gender ?? user.gender ?? user.user_metadata?.gender) || '',
         ethnicity: (profile?.personal_stats?.ethnicity ?? user.ethnicity ?? user.user_metadata?.ethnicity) || '',
@@ -968,6 +1001,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
           ...picked,
           nationality: normalizeNationalityValue(formData.nationality),
           languages: normalizeLanguageValue(formData.languages),
+          bodyModification: normalizeBodyModificationValue(formData.bodyModification),
         };
 
         try {
@@ -1007,6 +1041,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
             ...picked,
             nationality: personal_stats.nationality,
             languages: personal_stats.languages,
+            bodyModification: personal_stats.bodyModification,
           }));
         } catch (dbErr) {
           console.error('profiles.personal_stats update:', dbErr);
@@ -1021,6 +1056,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
           ...picked,
           nationality: personal_stats.nationality,
           languages: personal_stats.languages,
+          bodyModification: personal_stats.bodyModification,
           showModelStats: formData.showModelStats !== false,
         });
         if (result.success) {
@@ -1710,6 +1746,24 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                           <div className="stat_value" style={{fontWeight: '400'}}>{formData.eyeColor || 'Brown'}</div>
                         </div>
                         <div className="stat_item">
+                          <div className="stat_label" style={{fontWeight: '700'}}>BODY TYPE</div>
+                          <div className="stat_value" style={{fontWeight: '400'}}>
+                            {formatBodyTypeLabel(formData.bodyType) || '—'}
+                          </div>
+                        </div>
+                        <div className="stat_item">
+                          <div className="stat_label" style={{fontWeight: '700'}}>SKIN COMPLEXION</div>
+                          <div className="stat_value" style={{fontWeight: '400'}}>
+                            {formatSkinComplexionLabel(formData.skinComplexion) || '—'}
+                          </div>
+                        </div>
+                        <div className="stat_item">
+                          <div className="stat_label" style={{fontWeight: '700'}}>BODY MODIFICATION</div>
+                          <div className="stat_value" style={{fontWeight: '400'}}>
+                            {formatBodyModificationDisplay(formData.bodyModification) || '—'}
+                          </div>
+                        </div>
+                        <div className="stat_item">
                           <div className="stat_label" style={{fontWeight: '700'}}>AGE</div>
                           <div className="stat_value" style={{fontWeight: '400'}}>{getDisplayAge(formData.age)}</div>
                         </div>
@@ -2071,6 +2125,50 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                           type="text" 
                           value={formData.eyeColor}
                           onChange={handleInputChange}
+                        />
+                        <label htmlFor="bodyType">Body Type</label>
+                        <select
+                          id="bodyType"
+                          name="bodyType"
+                          className="dropdowntxt w-select"
+                          value={formData.bodyType}
+                          onChange={handleInputChange}
+                        >
+                          <option value="">Select one...</option>
+                          {BODY_TYPE_OPTIONS.map((option) => (
+                            <option key={option.value} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </select>
+                        <label htmlFor="skinComplexion">Skin Complexion</label>
+                        <select
+                          id="skinComplexion"
+                          name="skinComplexion"
+                          className="dropdowntxt w-select"
+                          value={formData.skinComplexion}
+                          onChange={handleInputChange}
+                        >
+                          <option value="">Select one...</option>
+                          {SKIN_COMPLEXION_OPTIONS.map((option) => (
+                            <option key={option.value} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </select>
+                        <label htmlFor="bodyModification" style={{ display: 'block', marginTop: '12px' }}>
+                          Body Modification
+                        </label>
+                        <ProfileChipMultiSelect
+                          id="bodyModification"
+                          options={BODY_MODIFICATION_OPTIONS}
+                          value={formData.bodyModification}
+                          onChange={(nextValue) =>
+                            setFormData((prev) => ({ ...prev, bodyModification: nextValue }))
+                          }
+                          placeholder="Select body modifications"
+                          emptyRecordMsg="No modifications found"
+                          selectionLimit={10}
                         />
                         <input type="submit" className="submit-button w-button" value="Save Personal Stats" />
                       </form>
