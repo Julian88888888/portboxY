@@ -37,6 +37,7 @@ import {
 } from '../utils/languages';
 import { BODY_TYPE_OPTIONS, formatBodyTypeLabel } from '../utils/bodyType';
 import { SKIN_COMPLEXION_OPTIONS, formatSkinComplexionLabel } from '../utils/skinComplexion';
+import { EYE_COLOR_OPTIONS, formatEyeColorLabel } from '../utils/eyeColor';
 import {
   BODY_MODIFICATION_OPTIONS,
   normalizeBodyModificationValue,
@@ -1743,7 +1744,9 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                         </div>
                         <div className="stat_item">
                           <div className="stat_label" style={{fontWeight: '700'}}>EYE COLOR</div>
-                          <div className="stat_value" style={{fontWeight: '400'}}>{formData.eyeColor || 'Brown'}</div>
+                          <div className="stat_value" style={{fontWeight: '400'}}>
+                            {formatEyeColorLabel(formData.eyeColor) || '—'}
+                          </div>
                         </div>
                         <div className="stat_item">
                           <div className="stat_label" style={{fontWeight: '700'}}>BODY TYPE</div>
@@ -2117,15 +2120,20 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                           <option value="Floor Length">Floor Length</option>
                         </select>
                         <label htmlFor="eyeColor">Eye Color</label>
-                        <input 
-                          className="w-input" 
-                          maxLength="256" 
-                          name="eyeColor" 
-                          placeholder="i.e Brown" 
-                          type="text" 
+                        <select
+                          id="eyeColor"
+                          name="eyeColor"
+                          className="dropdowntxt w-select"
                           value={formData.eyeColor}
                           onChange={handleInputChange}
-                        />
+                        >
+                          <option value="">Select one...</option>
+                          {EYE_COLOR_OPTIONS.map((option) => (
+                            <option key={option.value} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </select>
                         <label htmlFor="bodyType">Body Type</label>
                         <select
                           id="bodyType"

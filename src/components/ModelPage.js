@@ -21,6 +21,7 @@ import { formatLanguageDisplay } from '../utils/languages';
 import { formatBodyTypeLabel } from '../utils/bodyType';
 import { formatSkinComplexionLabel } from '../utils/skinComplexion';
 import { formatBodyModificationDisplay } from '../utils/bodyModification';
+import { formatEyeColorLabel } from '../utils/eyeColor';
 import { formatIndustryLabel } from '../utils/industry';
 import { formatNicheDisplay } from '../utils/availableFor';
 import { formatUnitLabel, formatHeightDisplay } from '../utils/unitLabels';
@@ -895,7 +896,9 @@ export default function JobRequestPopup() {
                     </div>
                     <div className="stat_item">
                       <div className="stat_title">EYE COLOR</div>
-                      <div className="stat_descript">{getUserValue('eyeColor', 'Brown')}</div>
+                      <div className="stat_descript">
+                        {formatEyeColorLabel(getUserValue('eyeColor', '')) || '—'}
+                      </div>
                     </div>
                   </>
                 )}
