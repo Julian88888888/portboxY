@@ -2321,16 +2321,38 @@ a {
 }
 
 .content_wrapper {
+  width: 100%;
   max-width: 600px;
   margin-left: auto;
   margin-right: auto;
   position: relative;
+  box-sizing: border-box;
+}
+
+.profile_sec .content_wrapper,
+.portfolio_sec .content_wrapper,
+.links_sec .content_wrapper,
+.footer_sec .content_wrapper {
+  width: 100%;
+  max-width: 600px;
 }
 
 .content_wrapper.content_align_center {
   flex-direction: column;
   align-items: center;
   display: flex;
+}  
+
+.content_wrapper.content_align_center .text_wrapper,
+.content_wrapper.content_align_center .stat_container,
+.content_wrapper.content_align_center .industry_stats,
+.content_wrapper.content_align_center .stats_wrap,
+.content_wrapper.content_align_center .stats_wrap_bottom,
+.content_wrapper.content_align_center .line_divider,
+.content_wrapper.content_align_center .button.bookme_large {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .content_wrapper.content_align_center.text_align_center, .content_wrapper.text_align_center {
@@ -3152,7 +3174,8 @@ a {
 
 .stats_wrap {
   display: grid;
-  max-width: 500px;
+  width: 100%;
+  max-width: 100%;
   margin: 0 auto;
   grid-template-columns: repeat(4, 1fr);
   gap: 12px;
@@ -3209,7 +3232,8 @@ a {
 
 .stats_wrap_bottom {
   display: grid;
-  max-width: 500px;
+  width: 100%;
+  max-width: 100%;
   margin: 0 auto;
   grid-template-columns: repeat(6, 1fr);
   gap: 12px;
@@ -3220,7 +3244,8 @@ a {
   justify-content: center;
   justify-items: center;
   text-align: center;
-  max-width: 360px;
+  width: 100%;
+  max-width: 100%;
 }
 
 .stats_wrap_bottom .stat_title {
@@ -4184,9 +4209,11 @@ a {
 }
 
 .model-page .content_wrapper {
-  max-width: 1200px;
+  width: 100%;
+  max-width: 600px;
   margin: 0 auto;
   padding: 0 20px;
+  box-sizing: border-box;
 }
 
 .model-page .grid-2 {

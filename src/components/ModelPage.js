@@ -1045,7 +1045,7 @@ export default function JobRequestPopup() {
       <div className="section links_sec">
         <div className="content_wrapper largebanner_btn">
           {hasPublicBookingsBlock && (
-            <div style={{ width: '100%', maxWidth: '520px', margin: '0 auto' }}>
+            <div style={{ width: '100%', margin: '0 auto' }}>
               <div className="spacing_48"></div>
               {String(getBookingsTitleDisplay()).trim() !== '' && (
                 <h4
@@ -1079,7 +1079,7 @@ export default function JobRequestPopup() {
                     fontSize: '15px',
                     lineHeight: 1.55,
                     margin: '0 auto 24px',
-                    maxWidth: '480px',
+                    maxWidth: '100%',
                   }}
                 >
                   {getBookingDescriptionDisplay()}
@@ -1132,7 +1132,7 @@ export default function JobRequestPopup() {
             </div>
           )}
           {shouldShowBookMeInLinksArea && (
-            <div style={{ width: '100%', maxWidth: '520px', margin: '0 auto', textAlign: 'center' }}>
+            <div style={{ width: '100%', margin: '0 auto', textAlign: 'center' }}>
               {hasPublicBookingsBlock ? (
                 <div className="spacing_24" />
               ) : (
