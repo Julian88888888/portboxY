@@ -16,5 +16,5 @@ export const formatJobType = (jobType) => {
 
 export const isModelJobType = (jobType) => {
   const normalized = String(jobType || '').trim().toLowerCase();
-  return !normalized || normalized === 'model';
+  return normalized === 'model';
 };

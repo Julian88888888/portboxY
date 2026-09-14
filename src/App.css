@@ -101,6 +101,11 @@
   background-color: #f5f5f5;
 }
 
+.booking-modal-from {
+  margin-top: 16px;
+  margin-bottom: 0;
+}
+
 .booking-modal-from-row {
   display: flex;
   align-items: center;

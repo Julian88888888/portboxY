@@ -12,7 +12,7 @@ import ProfileSettings from './ProfileSettings';
 import BookingChatModal from './BookingChatModal';
 import './Dashboard.css';
 import { MAX_IMAGE_SIZE_HINT, validateImageFileSize } from '../utils/imageUploadLimits';
-import { formatJobType } from '../utils/formatJobType';
+import { formatJobType, isModelJobType } from '../utils/formatJobType';
 import { ALBUM_PLACEHOLDER, getAlbumCoverSrc } from '../utils/albumPlaceholder';
 import ProfileAvailableForMultiSelect from './ProfileAvailableForMultiSelect';
 import ProfileChipMultiSelect from './ProfileChipMultiSelect';
@@ -47,6 +47,12 @@ import { formatPayRateDisplay, PAY_RATE_TYPES } from '../utils/payRate';
 import { PAY_CURRENCIES } from '../utils/currencies';
 import { formatIndustryLabel, INDUSTRY_OPTIONS } from '../utils/industry';
 import { formatUnitLabel, formatHeightDisplay } from '../utils/unitLabels';
+import {
+  SOCIAL_LINK_FIELDS,
+  SocialIcon,
+  socialFormFieldsFromLinks,
+  socialLinksFromForm,
+} from '../utils/socialIcons';
 
 const PERSONAL_STATS_FIELDS = [
   'heightFeet',
@@ -410,11 +416,20 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
     showProfileDescription: true,
     instagram: '',
     twitter: '',
+    facebook: '',
+    youtube: '',
+    tiktok: '',
+    twitch: '',
+    snapchat: '',
     linkedin: '',
     onlyfans: '',
     spotify: '',
     vimeo: '',
     cashapp: '',
+    paypal: '',
+    amazon: '',
+    website: '',
+    emailSocial: '',
     showSocialLinks: true,
     industry: '',
     status: '',
@@ -477,16 +492,8 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
   useEffect(() => {
     if (user) {
       // Social links: Auth stores in user_metadata.socialLinks, also check profile
-      const sl = user.socialLinks || user.user_metadata?.socialLinks || profile?.social_links || profile?.socialLinks || {};
-      const socialLinks = {
-        instagram: sl.instagram || '',
-        twitter: sl.twitter || '',
-        linkedin: sl.linkedin || '',
-        onlyfans: sl.onlyfans || '',
-        spotify: sl.spotify || '',
-        vimeo: sl.vimeo || '',
-        cashapp: sl.cashapp || ''
-      };
+      const sl = user.socialLinks || user.user_metadata?.socialLinks || profile?.social_links || profile?.socialLinks || profile?.personal_stats?.socialLinks || {};
+      const socialForm = socialFormFieldsFromLinks(sl);
       const meta = user.user_metadata || {};
       setFormData(prev => ({
         ...prev,
@@ -639,13 +646,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
           return [];
         })(),
         email: user.email || '',
-        instagram: socialLinks.instagram,
-        twitter: socialLinks.twitter,
-        linkedin: socialLinks.linkedin,
-        onlyfans: socialLinks.onlyfans,
-        spotify: socialLinks.spotify,
-        vimeo: socialLinks.vimeo,
-        cashapp: socialLinks.cashapp,
+        ...socialForm,
         bookingsTitle:
           profile?.bookings_title ??
           user.user_metadata?.bookingsTitle ??
@@ -981,17 +982,38 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
       const payload = formType === 'social'
         ? {
             ...formData,
-            socialLinks: {
-              instagram: formData.instagram || '',
-              twitter: formData.twitter || '',
-              linkedin: formData.linkedin || '',
-              onlyfans: formData.onlyfans || '',
-              spotify: formData.spotify || '',
-              vimeo: formData.vimeo || '',
-              cashapp: formData.cashapp || ''
-            }
+            socialLinks: socialLinksFromForm(formData),
           }
         : formData;
+
+      if (formType === 'social') {
+        const socialLinks = socialLinksFromForm(formData);
+        try {
+          const merged = {
+            ...(profile?.personal_stats && typeof profile.personal_stats === 'object'
+              ? profile.personal_stats
+              : {}),
+            socialLinks,
+          };
+          await upsertProfile({ personal_stats: merged });
+          queryClient.setQueryData(['profile'], (prev) => {
+            const base = prev && typeof prev === 'object' ? prev : {};
+            return { ...base, personal_stats: merged };
+          });
+          const u = String(profile?.username || formData.username || '')
+            .trim()
+            .replace(/^@+/, '');
+          if (u) {
+            queryClient.setQueryData(['publicProfile', u], (prev) => {
+              if (!prev || typeof prev !== 'object') return prev;
+              return { ...prev, personal_stats: merged };
+            });
+            queryClient.invalidateQueries({ queryKey: ['publicProfile', u] });
+          }
+        } catch (err) {
+          console.warn('Could not persist social links to public profile:', err?.message || err);
+        }
+      }
 
       if (formType === 'model-stats') {
         const picked = pickPersonalStats(formData);
@@ -1135,6 +1157,8 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
     const handle = String(raw).trim().replace(/^@+/, '');
     return handle ? `/@${handle}` : '/profile';
   }, [profile?.username, formData.username]);
+
+  const isModelProfile = isModelJobType(profile?.job_type || formData.jobType);
 
   return (
     <div className="section full_sec dashboard-profile-page">
@@ -1344,23 +1368,28 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                           </label>
                         </div>
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '10px 20px', marginBottom: '16px' }}>
-                          {[
-                            { id: 'instagram', name: 'instagram', label: 'Instagram', placeholder: '@username' },
-                            { id: 'twitter', name: 'twitter', label: 'X', placeholder: '@username' },
-                            { id: 'linkedin', name: 'linkedin', label: 'LinkedIn', placeholder: 'linkedin.com/in/...' },
-                            { id: 'onlyfans', name: 'onlyfans', label: 'OnlyFans', placeholder: 'onlyfans.com/...' },
-                            { id: 'spotify', name: 'spotify', label: 'Spotify', placeholder: 'open.spotify.com/...' },
-                            { id: 'vimeo', name: 'vimeo', label: 'Vimeo', placeholder: 'vimeo.com/...' },
-                            { id: 'cashapp', name: 'cashapp', label: 'Cash App', placeholder: '$username' }
-                          ].map(({ id, name, label, placeholder }) => (
+                          {SOCIAL_LINK_FIELDS.map(({ id, name, label, placeholder }) => (
                             <div key={id} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                              <label htmlFor={id} style={{ fontSize: '12px', fontWeight: 500, color: '#555' }}>{label}</label>
+                              <label
+                                htmlFor={id}
+                                style={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '8px',
+                                  fontSize: '12px',
+                                  fontWeight: 500,
+                                  color: '#555',
+                                }}
+                              >
+                                <SocialIcon platform={name === 'emailSocial' ? 'email' : name} size={18} />
+                                {label}
+                              </label>
                               <input
                                 className="w-input"
                                 maxLength={256}
                                 name={name}
                                 placeholder={placeholder}
-                                type="text"
+                                type={name === 'emailSocial' ? 'email' : 'text'}
                                 id={id}
                                 value={formData[name] || ''}
                                 onChange={handleInputChange}
@@ -1528,6 +1557,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                     <div className="spacing_24"></div>
                     <h3>Personal Stats</h3>
                     <div className="spacing_24"></div>
+                    {isModelProfile && (
                     <div className="w-layout-hflex flex-block-9" style={{ alignItems: 'center', gap: '12px' }}>
                       <label 
                         style={{ 
@@ -1576,6 +1606,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                       </label>
                       <p style={{ margin: 0 }}>Show Personal Stats</p>
                     </div>
+                    )}
                     <div
                       className="w-layout-hflex flex-block-9"
                       style={{
@@ -1640,6 +1671,8 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                     </p>
                     <div className="stat_container">
                       <div className="personal_stats">
+                        {isModelProfile && (
+                          <>
                         <div className="stat_item">
                           <div className="stat_label" style={{fontWeight: '700'}}>HEIGHT</div>
                           <div className="stat_value" style={{fontWeight: '400'}}>
@@ -1722,6 +1755,8 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                             {formatBodyModificationDisplay(formData.bodyModification) || '—'}
                           </div>
                         </div>
+                          </>
+                        )}
                         <div className="stat_item">
                           <div className="stat_label" style={{fontWeight: '700'}}>AGE</div>
                           <div className="stat_value" style={{fontWeight: '400'}}>{getDisplayAge(formData.age)}</div>
@@ -1836,6 +1871,8 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                           emptyRecordMsg="No languages found"
                           selectionLimit={10}
                         />
+                        {isModelProfile && (
+                          <>
                         <div className="line_divider" style={{ margin: '24px 0' }} />
                         <label htmlFor="heightFeet">Height</label>
                         {(!formData.heightUnit || formData.heightUnit === 'FeetInches') ? (
@@ -2134,6 +2171,8 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                           emptyRecordMsg="No modifications found"
                           selectionLimit={10}
                         />
+                          </>
+                        )}
                         <input type="submit" className="submit-button w-button" value="Save Personal Stats" />
                       </form>
                       <div className="w-form-done" tabIndex="-1" role="region" aria-label="Email Form success">
@@ -2778,7 +2817,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                                     <div style={{ width: '44px', height: '24px', borderRadius: '12px', backgroundColor: (formData.enableBookingsTitle ?? true) ? '#783FF3' : '#ccc', position: 'relative', cursor: 'pointer', transition: 'background-color 0.2s', flexShrink: 0 }}>
                                       <div style={{ width: '20px', height: '20px', borderRadius: '50%', backgroundColor: 'white', position: 'absolute', top: '2px', left: (formData.enableBookingsTitle ?? true) ? '22px' : '2px', transition: 'left 0.2s', boxShadow: '0 2px 4px rgba(0,0,0,0.2)' }} />
                                     </div>
-                                    <p style={{ margin: 0 }}>Enable Bookings Settings</p>
+                                    <p style={{ margin: 0 }}>Enable Booking Section</p>
                                   </label>
                                 </div>
                                 <p className="text_color_grey" style={{ margin: '8px 0 16px', fontSize: '13px', maxWidth: '560px' }}>

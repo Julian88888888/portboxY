@@ -412,19 +412,39 @@ export { MAX_ALBUMS_PER_USER, MAX_IMAGES_PER_ALBUM, getMaxAlbumsError, getMaxIma
  * @param {string} imageId - Image ID
  * @returns {Promise<Object>} Success status
  */
+const parseJsonResponse = async (response) => {
+  const text = await response.text();
+  try {
+    return { data: text ? JSON.parse(text) : {}, parseError: null };
+  } catch (e) {
+    return { data: null, parseError: e, raw: text };
+  }
+};
+
 export const deleteImage = async (imageId) => {
   try {
+    if (!imageId) {
+      throw new Error('Image ID is required');
+    }
+
     const headers = await getAuthHeaders();
 
-    const response = await fetch(`${getApiBaseUrl()}/images/${imageId}`, {
+    const response = await fetch(`${getApiBaseUrl()}/images/${encodeURIComponent(imageId)}`, {
       method: 'DELETE',
       headers: headers
     });
 
-    const data = await response.json();
+    const { data, parseError } = await parseJsonResponse(response);
+    if (parseError) {
+      throw new Error(
+        response.status === 404
+          ? 'Delete image API is not available. Redeploy so /api/images/:id exists.'
+          : 'Server returned an invalid response while deleting the image'
+      );
+    }
 
     if (!response.ok) {
-      throw new Error(data.error || 'Failed to delete image');
+      throw new Error(data.error || data.message || 'Failed to delete image');
     }
 
     return {

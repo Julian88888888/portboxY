@@ -25,6 +25,7 @@ import { formatEyeColorLabel } from '../utils/eyeColor';
 import { formatIndustryLabel } from '../utils/industry';
 import { formatNicheDisplay } from '../utils/availableFor';
 import { formatUnitLabel, formatHeightDisplay } from '../utils/unitLabels';
+import { SocialIcon, listFilledSocialLinks } from '../utils/socialIcons';
 
 const days = [
   { key: "monday", label: "Mon", hours: "5 hours" },
@@ -306,45 +307,21 @@ export default function JobRequestPopup() {
     return true;
   };
 
-  // Normalize social link value to full URL (handles @username or full URL)
-  const normalizeSocialUrl = (platform, value) => {
-    if (!value || typeof value !== 'string') return '';
-    const v = value.trim();
-    if (!v) return '';
-    if (/^https?:\/\//i.test(v)) return v;
-    const handle = v.replace(/^@+/, '');
-    const urls = {
-      instagram: `https://www.instagram.com/${handle}`,
-      twitter: `https://twitter.com/${handle}`,
-      x: `https://x.com/${handle}`,
-      linkedin: handle.startsWith('in/') ? `https://www.linkedin.com/${handle}` : `https://www.linkedin.com/in/${handle}`,
-      onlyfans: `https://onlyfans.com/${handle}`,
-      spotify: v.startsWith('http') ? v : `https://open.spotify.com/user/${handle}`,
-      vimeo: `https://vimeo.com/${handle}`,
-      cashapp: `https://cash.app/$${handle.replace(/^\$+/, '')}`
-    };
-    return urls[platform] || (v.startsWith('http') ? v : `https://${v}`);
-  };
-
-  // Get social links from profile or user (supports socialLinks object and flat instagram/twitter)
   const getSocialLinksList = () => {
-    const links = [];
-    const raw = profile?.social_links || profile?.socialLinks || user?.socialLinks || user?.user_metadata?.socialLinks || {};
-    const flat = {
-      instagram: raw.instagram ?? profile?.instagram ?? user?.user_metadata?.instagram ?? '',
-      twitter: raw.twitter ?? raw.x ?? profile?.twitter ?? user?.user_metadata?.twitter ?? '',
-      linkedin: raw.linkedin ?? '',
-      onlyfans: raw.onlyfans ?? '',
-      spotify: raw.spotify ?? '',
-      vimeo: raw.vimeo ?? '',
-      cashapp: raw.cashapp ?? ''
-    };
-    const platforms = ['instagram', 'twitter', 'linkedin', 'onlyfans', 'spotify', 'vimeo', 'cashapp'];
-    platforms.forEach(platform => {
-      const url = normalizeSocialUrl(platform, flat[platform]);
-      if (url) links.push({ platform, url });
-    });
-    return links;
+    const fromProfile =
+      profile?.social_links ||
+      profile?.socialLinks ||
+      profile?.personal_stats?.socialLinks ||
+      {};
+    const fromOwnerSession =
+      isViewingOwnPublicProfile || !isPublicProfile
+        ? user?.socialLinks || user?.user_metadata?.socialLinks || {}
+        : {};
+    const raw =
+      fromProfile && typeof fromProfile === 'object' && Object.values(fromProfile).some(Boolean)
+        ? fromProfile
+        : fromOwnerSession;
+    return listFilledSocialLinks(raw);
   };
 
   // Check if Profile Stats (INDUSTRY, STATUS, MARKETS, NICHE) should be shown — profile owner only
@@ -465,7 +442,16 @@ export default function JobRequestPopup() {
       </span>
     );
 
-  const profileJobType = getUserValue('job_type', 'Model');
+  const profileJobType =
+    profile?.job_type ||
+    profile?.jobType ||
+    (isViewingOwnPublicProfile || !isPublicProfile
+      ? user?.job_type ||
+        user?.jobType ||
+        user?.user_metadata?.job_type ||
+        user?.user_metadata?.jobType
+      : '') ||
+    '';
   const showFullModelStats = isModelJobType(profileJobType);
 
   // Get profile data for BookingModal (include model id for guest booking)
@@ -786,15 +772,16 @@ export default function JobRequestPopup() {
           {shouldShowSocialLinks() && getSocialLinksList().length > 0 && (
           <div className="flex_wrapper flex_center">
             {getSocialLinksList().map(({ platform, url }) => (
-              <a key={platform} href={url} target="_blank" rel="noopener noreferrer" className="icon_wrapper w-inline-block" aria-label={platform}>
+              <a
+                key={platform}
+                href={url}
+                target={platform === 'email' ? undefined : '_blank'}
+                rel={platform === 'email' ? undefined : 'noopener noreferrer'}
+                className="icon_wrapper w-inline-block"
+                aria-label={platform}
+              >
                 <div className="icon_24x24 w-embed">
-                  {platform === 'twitter' && <svg className="w-[24px] h-[24px]" width="24" height="24" fill="currentColor" viewBox="0 0 24 24"><path d="M13.795 10.533 20.68 2h-3.073l-5.255 6.517L7.69 2H1l7.806 10.91L1.47 22h3.074l5.705-7.07L15.31 22H22l-8.205-11.467Zm-2.38 2.95L9.97 11.464 4.36 3.627h2.31l4.528 6.317 1.443 2.02 6.018 8.409h-2.31l-4.934-6.89Z"/></svg>}
-                  {platform === 'instagram' && <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path fillRule="evenodd" d="M3 8a5 5 0 0 1 5-5h8a5 5 0 0 1 5 5v8a5 5 0 0 1-5 5H8a5 5 0 0 1-5-5V8Zm5-3a3 3 0 0 0-3 3v8a3 3 0 0 0 3 3h8a3 3 0 0 0 3-3V8a3 3 0 0 0-3-3H8Zm7.597 2.214a1 1 0 0 1 1-1h.01a1 1 0 1 1 0 2h-.01a1 1 0 0 1-1-1ZM12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6Zm-5 3a5 5 0 1 1 10 0 5 5 0 0 1-10 0Z" clipRule="evenodd"/></svg>}
-                  {platform === 'linkedin' && <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>}
-                  {platform === 'onlyfans' && <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm0 4a2 2 0 1 1 0 4 2 2 0 0 1 0-4zm0 12c-2.21 0-4-1.79-4-4 0-1.66 1.34-3 3-3s3 1.34 3 3c0 2.21-1.79 4-4 4z"/></svg>}
-                  {platform === 'spotify' && <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.405.12-.81-.18-.93-.579-.12-.405.18-.81.579-.93 4.56-1.021 8.52-.6 11.64 1.32.42.18.48.66.24 1.021zm.66-3.24c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.26zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>}
-                  {platform === 'vimeo' && <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M23.977 6.416c-.105 2.338-1.739 5.543-4.894 9.609-3.268 4.247-6.026 6.37-8.29 6.37-1.409 0-2.578-1.294-3.553-3.881L5.322 11.4C4.603 8.816 3.834 7.522 3.01 7.52c-.156 0-.701.328-1.634.979l-.978-1.261s1.697-1.489 3.646-3.181c2.223-1.932 3.893-2.764 4.993-2.497 2.634.523 3.116 3.598 1.437 9.23-.574 1.935-1.019 3.282-1.339 4.04-.607 1.446-1.262 2.171-1.965 2.171-.578 0-1.294-.618-2.152-1.855-.858-1.236-1.475-2.176-1.854-2.816-.774-1.255-1.597-1.882-2.469-1.882-.189 0-.378.021-.567.063 1.18-3.872 3.434-5.756 6.762-5.656 2.578.063 3.846 1.682 3.806 4.858z"/></svg>}
-                  {platform === 'cashapp' && <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M23.59 12.41a1 1 0 0 0-1.41-1.41L13 19.17V5a1 1 0 0 0-2 0v14.17l-9.18-9.18a1 1 0 1 0-1.41 1.41l10.59 10.59a1 1 0 0 0 1.41 0l10.59-10.59z"/></svg>}
+                  <SocialIcon platform={platform} size={24} />
                 </div>
               </a>
             ))}
@@ -900,6 +887,24 @@ export default function JobRequestPopup() {
                         {formatEyeColorLabel(getUserValue('eyeColor', '')) || '—'}
                       </div>
                     </div>
+                    <div className="stat_item">
+                      <div className="stat_title">BODY TYPE</div>
+                      <div className="stat_descript">
+                        {formatBodyTypeLabel(getUserValue('bodyType', '')) || '—'}
+                      </div>
+                    </div>
+                    <div className="stat_item">
+                      <div className="stat_title">SKIN COMPLEXION</div>
+                      <div className="stat_descript">
+                        {formatSkinComplexionLabel(getUserValue('skinComplexion', '')) || '—'}
+                      </div>
+                    </div>
+                    <div className="stat_item">
+                      <div className="stat_title">BODY MODIFICATION</div>
+                      <div className="stat_descript">
+                        {formatBodyModificationDisplay(getUserValue('bodyModification', [])) || '—'}
+                      </div>
+                    </div>
                   </>
                 )}
                 <div className="stat_item">
@@ -913,24 +918,6 @@ export default function JobRequestPopup() {
                 <div className="stat_item">
                   <div className="stat_title">ETHNICITY</div>
                   <div className="stat_descript">{formatEthnicityLabel(getUserValue('ethnicity', ''))}</div>
-                </div>
-                <div className="stat_item">
-                  <div className="stat_title">BODY TYPE</div>
-                  <div className="stat_descript">
-                    {formatBodyTypeLabel(getUserValue('bodyType', '')) || '—'}
-                  </div>
-                </div>
-                <div className="stat_item">
-                  <div className="stat_title">SKIN COMPLEXION</div>
-                  <div className="stat_descript">
-                    {formatSkinComplexionLabel(getUserValue('skinComplexion', '')) || '—'}
-                  </div>
-                </div>
-                <div className="stat_item">
-                  <div className="stat_title">BODY MODIFICATION</div>
-                  <div className="stat_descript">
-                    {formatBodyModificationDisplay(getUserValue('bodyModification', [])) || '—'}
-                  </div>
                 </div>
                 <div className="stat_item">
                   <div className="stat_title">NATIONALITY</div>

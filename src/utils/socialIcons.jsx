@@ -184,9 +184,119 @@ export const SOCIAL_LINK_FIELDS = [
   { id: 'paypal', name: 'paypal', label: 'PayPal', placeholder: 'paypal.me/...' },
   { id: 'amazon', name: 'amazon', label: 'Amazon', placeholder: 'amazon.com/...' },
   { id: 'website', name: 'website', label: 'Website', placeholder: 'https://...' },
-  { id: 'email', name: 'emailSocial', label: 'Email', placeholder: 'name@email.com' },
+  { id: 'emailSocial', name: 'emailSocial', label: 'Email', placeholder: 'name@email.com' },
 ];
 
 export const SOCIAL_PLATFORM_ORDER = SOCIAL_LINK_FIELDS.map((f) =>
   f.name === 'emailSocial' ? 'email' : f.name
 );
+
+export const emptySocialLinks = () =>
+  SOCIAL_PLATFORM_ORDER.reduce((acc, key) => {
+    acc[key] = '';
+    return acc;
+  }, {});
+
+export const pickSocialLinks = (raw = {}) => {
+  const out = emptySocialLinks();
+  if (!raw || typeof raw !== 'object') return out;
+  SOCIAL_PLATFORM_ORDER.forEach((key) => {
+    if (key === 'twitter') {
+      out.twitter = raw.twitter || raw.x || '';
+      return;
+    }
+    if (key === 'email') {
+      out.email = raw.email || raw.emailSocial || '';
+      return;
+    }
+    out[key] = raw[key] || '';
+  });
+  return out;
+};
+
+export const socialLinksFromForm = (formData = {}) => {
+  const out = emptySocialLinks();
+  SOCIAL_PLATFORM_ORDER.forEach((key) => {
+    if (key === 'email') {
+      out.email = formData.emailSocial || '';
+      return;
+    }
+    out[key] = formData[key] || '';
+  });
+  return out;
+};
+
+export const socialFormFieldsFromLinks = (links = {}) => {
+  const picked = pickSocialLinks(links);
+  return {
+    instagram: picked.instagram,
+    twitter: picked.twitter,
+    facebook: picked.facebook,
+    youtube: picked.youtube,
+    tiktok: picked.tiktok,
+    twitch: picked.twitch,
+    snapchat: picked.snapchat,
+    linkedin: picked.linkedin,
+    onlyfans: picked.onlyfans,
+    spotify: picked.spotify,
+    vimeo: picked.vimeo,
+    cashapp: picked.cashapp,
+    paypal: picked.paypal,
+    amazon: picked.amazon,
+    website: picked.website,
+    emailSocial: picked.email,
+  };
+};
+
+/** Turn stored handle / URL / email into a clickable href. */
+export const normalizeSocialUrl = (platform, value) => {
+  if (!value || typeof value !== 'string') return '';
+  const v = value.trim();
+  if (!v) return '';
+
+  if (platform === 'email') {
+    const address = v.replace(/^mailto:/i, '').trim();
+    return address ? `mailto:${address}` : '';
+  }
+
+  if (/^https?:\/\//i.test(v)) return v;
+  if (platform === 'website') {
+    return `https://${v.replace(/^\/\//, '')}`;
+  }
+
+  const handle = v.replace(/^@+/, '').replace(/^\/+/, '');
+  const urls = {
+    instagram: `https://www.instagram.com/${handle}`,
+    twitter: `https://x.com/${handle}`,
+    x: `https://x.com/${handle}`,
+    facebook: `https://www.facebook.com/${handle}`,
+    youtube: handle.includes('watch') || handle.includes('channel') || handle.includes('/')
+      ? `https://www.youtube.com/${handle.replace(/^youtube\.com\//i, '')}`
+      : `https://www.youtube.com/@${handle.replace(/^@/, '')}`,
+    tiktok: `https://www.tiktok.com/@${handle.replace(/^@/, '')}`,
+    twitch: `https://www.twitch.tv/${handle.replace(/^twitch\.tv\//i, '')}`,
+    snapchat: `https://www.snapchat.com/add/${handle}`,
+    linkedin: handle.startsWith('in/') ? `https://www.linkedin.com/${handle}` : `https://www.linkedin.com/in/${handle}`,
+    onlyfans: `https://onlyfans.com/${handle}`,
+    spotify: `https://open.spotify.com/user/${handle}`,
+    vimeo: `https://vimeo.com/${handle.replace(/^vimeo\.com\//i, '')}`,
+    cashapp: `https://cash.app/$${handle.replace(/^\$+/, '')}`,
+    paypal: handle.includes('paypal.me') || handle.includes('/')
+      ? `https://${handle.replace(/^https?:\/\//i, '')}`
+      : `https://paypal.me/${handle}`,
+    amazon: handle.includes('.')
+      ? `https://${handle.replace(/^https?:\/\//i, '')}`
+      : `https://www.amazon.com/s?k=${encodeURIComponent(handle)}`,
+  };
+  return urls[platform] || `https://${v}`;
+};
+
+export const listFilledSocialLinks = (raw) => {
+  const picked = pickSocialLinks(raw);
+  return SOCIAL_PLATFORM_ORDER
+    .map((platform) => {
+      const url = normalizeSocialUrl(platform, picked[platform]);
+      return url ? { platform, url } : null;
+    })
+    .filter(Boolean);
+};
