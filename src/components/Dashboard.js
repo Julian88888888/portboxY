@@ -4468,7 +4468,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                           return;
                         }
                         const albumId = viewingAlbum.id;
-                        const result = await deleteImage(image.id);
+                        const result = await deleteImage(image.id, albumId);
                         if (!result.success) {
                           alert(result.error || 'Failed to delete image');
                           return;

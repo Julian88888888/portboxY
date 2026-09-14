@@ -121,7 +121,7 @@ module.exports = async (req, res) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
     res.setHeader('Access-Control-Max-Age', '86400');
     return res.status(200).end();
@@ -129,7 +129,7 @@ module.exports = async (req, res) => {
 
   // Set CORS headers for all responses
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
   if (!supabase) {
@@ -203,7 +203,6 @@ module.exports = async (req, res) => {
       });
     }
 
-    // POST /api/albums/:id/images - Upload image to album
     if (req.method === 'POST') {
       // Verify authentication
       const { error: authError, user } = await verifyToken(req);
@@ -374,6 +373,96 @@ module.exports = async (req, res) => {
           is_cover: isCover,
           created_at: image.created_at
         }
+      });
+    }
+
+    // DELETE /api/albums/:id/images?imageId=
+    if (req.method === 'DELETE') {
+      const { error: authError, user } = await verifyToken(req);
+      if (authError || !user) {
+        return res.status(401).json({
+          success: false,
+          error: authError || 'Unauthorized'
+        });
+      }
+
+      let albumId = req.query.id || req.query.albumId;
+      if (!albumId) {
+        const urlMatch = req.url.match(/\/albums\/([^\/]+)\/images/);
+        if (urlMatch) albumId = urlMatch[1];
+      }
+
+      const imageId = req.query.imageId || req.query.image_id;
+      if (!albumId || !imageId) {
+        return res.status(400).json({
+          success: false,
+          error: 'Album ID and image ID are required'
+        });
+      }
+
+      const { error: ownershipError, album, status: ownershipStatus } = await getAlbumForUser(albumId, user.id);
+      if (ownershipError) {
+        return res.status(ownershipStatus).json({
+          success: false,
+          error: ownershipError
+        });
+      }
+
+      const { data: image, error: imageError } = await supabase
+        .from('images')
+        .select('id, album_id, url')
+        .eq('id', imageId)
+        .eq('album_id', albumId)
+        .single();
+
+      if (imageError || !image) {
+        return res.status(404).json({
+          success: false,
+          error: 'Image not found'
+        });
+      }
+
+      const { error: deleteError } = await supabase.from('images').delete().eq('id', imageId);
+      if (deleteError) {
+        console.error('Delete image error:', deleteError);
+        return res.status(500).json({
+          success: false,
+          error: deleteError.message || 'Failed to delete image'
+        });
+      }
+
+      if (album?.cover_image_id === imageId) {
+        const { data: nextImages } = await supabase
+          .from('images')
+          .select('id')
+          .eq('album_id', albumId)
+          .order('created_at', { ascending: false })
+          .limit(1);
+        const nextImage = Array.isArray(nextImages) ? nextImages[0] : nextImages;
+        await supabase
+          .from('albums')
+          .update({ cover_image_id: nextImage?.id || null })
+          .eq('id', albumId);
+      }
+
+      const marker = '/profile-photos/';
+      const url = String(image.url || '');
+      const markerIndex = url.indexOf(marker);
+      if (markerIndex !== -1) {
+        const storagePath = decodeURIComponent(url.slice(markerIndex + marker.length).split('?')[0]);
+        if (storagePath) {
+          const { error: storageError } = await supabase.storage
+            .from('profile-photos')
+            .remove([storagePath]);
+          if (storageError) {
+            console.warn('Could not remove image from storage:', storageError.message);
+          }
+        }
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: 'Image deleted successfully'
       });
     }
 

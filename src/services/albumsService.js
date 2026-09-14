@@ -421,26 +421,28 @@ const parseJsonResponse = async (response) => {
   }
 };
 
-export const deleteImage = async (imageId) => {
+export const deleteImage = async (imageId, albumId) => {
   try {
     if (!imageId) {
       throw new Error('Image ID is required');
     }
+    if (!albumId) {
+      throw new Error('Album ID is required');
+    }
 
     const headers = await getAuthHeaders();
 
-    const response = await fetch(`${getApiBaseUrl()}/images/${encodeURIComponent(imageId)}`, {
-      method: 'DELETE',
-      headers: headers
-    });
+    const response = await fetch(
+      `${getApiBaseUrl()}/albums/${encodeURIComponent(albumId)}/images?imageId=${encodeURIComponent(imageId)}`,
+      {
+        method: 'DELETE',
+        headers: headers
+      }
+    );
 
     const { data, parseError } = await parseJsonResponse(response);
     if (parseError) {
-      throw new Error(
-        response.status === 404
-          ? 'Delete image API is not available. Redeploy so /api/images/:id exists.'
-          : 'Server returned an invalid response while deleting the image'
-      );
+      throw new Error('Server returned an invalid response while deleting the image');
     }
 
     if (!response.ok) {

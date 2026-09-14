@@ -42,6 +42,19 @@ router.post(
 // GET /albums/:id/images - Get all images of an album
 router.get('/:id/images', albumController.getAlbumImages);
 
+// DELETE /albums/:id/images?imageId= - Delete one image from album
+router.delete('/:id/images', authenticateToken, (req, res) => {
+  const imageId = req.query.imageId || req.query.image_id;
+  if (!imageId) {
+    return res.status(400).json({
+      success: false,
+      error: 'imageId is required',
+    });
+  }
+  req.params.id = imageId;
+  return albumController.deleteImage(req, res);
+});
+
 // PUT /albums/:id - Update album title/description
 router.put('/:id', authenticateToken, albumController.updateAlbum);
 
