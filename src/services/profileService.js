@@ -43,8 +43,8 @@ export const getProfileByUsername = async (username) => {
       throw new Error('Username is required');
     }
 
-    // Clean username (remove @ if present)
-    const cleanedUsername = username.trim().replace(/^@+/, '');
+    // Clean username (remove @ if present, always lowercase)
+    const cleanedUsername = username.trim().replace(/^@+/, '').toLowerCase();
 
     // Use direct REST API call with proper headers for public access
     const supabaseUrl = process.env.REACT_APP_SUPABASE_URL;
@@ -55,7 +55,7 @@ export const getProfileByUsername = async (username) => {
     }
 
     const response = await fetch(
-      `${supabaseUrl}/rest/v1/profiles?username=eq.${encodeURIComponent(cleanedUsername)}&select=*`,
+      `${supabaseUrl}/rest/v1/profiles?username=ilike.${encodeURIComponent(cleanedUsername)}&select=*`,
       {
         method: 'GET',
         headers: {
@@ -208,7 +208,7 @@ export const checkUsernameAvailability = async (username, currentUserId) => {
     }
 
     // Clean username
-    const cleanedUsername = username.trim().replace(/^@+/, '');
+    const cleanedUsername = username.trim().replace(/^@+/, '').toLowerCase();
     if (!cleanedUsername) {
       return { available: false, message: 'Username cannot be empty' };
     }

@@ -249,18 +249,13 @@ const BookingModal = ({ isOpen, onClose, profile, onBookingCreated }) => {
               <div className="spacing-8"></div>
               
               {profile.username && <p className="username-txt">@{profile.username}</p>}
-              {profile.description && (
-                <p className="text-color-grey text-width-medium">
-                  {profile.description}
-                </p>
-              )}
             </div>
           </>
         )}
         
         <div className="spacing-24"></div>
         
-        <h3>Send Job Request</h3>
+        <h3>Send Booking Request</h3>
         {isIdentityLocked && (
           <div className="form-group booking-modal-from">
             <div className="booking-modal-from-row" aria-label="Booking request sender">

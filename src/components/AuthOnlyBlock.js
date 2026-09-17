@@ -22,7 +22,7 @@ function AuthOnlyBlock() {
 
   const displayUsername = useMemo(() => {
     const raw = profile?.username ?? user?.user_metadata?.username ?? '';
-    const handle = String(raw).trim().replace(/^@+/, '');
+    const handle = String(raw).trim().replace(/^@+/, '').toLowerCase();
     return handle || null;
   }, [profile?.username, user?.user_metadata?.username]);
 

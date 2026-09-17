@@ -81,7 +81,7 @@ export default function ProfileSettings() {
 
   const validateUsername = async (username) => {
     // Trim and remove leading @
-    const cleanedUsername = username ? username.trim().replace(/^@+/, '') : '';
+    const cleanedUsername = username ? username.trim().replace(/^@+/, '').toLowerCase() : '';
     
     if (!cleanedUsername) {
       return { valid: false, error: 'Username is required' };

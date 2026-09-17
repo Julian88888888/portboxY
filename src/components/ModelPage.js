@@ -26,6 +26,7 @@ import { formatIndustryLabel } from '../utils/industry';
 import { formatNicheDisplay } from '../utils/availableFor';
 import { formatUnitLabel, formatHeightDisplay } from '../utils/unitLabels';
 import { SocialIcon, listFilledSocialLinks } from '../utils/socialIcons';
+import { DEFAULT_DOCUMENT_TITLE, formatProfileDocumentTitle } from '../utils/documentTitle';
 
 const days = [
   { key: "monday", label: "Mon", hours: "5 hours" },
@@ -141,6 +142,18 @@ export default function JobRequestPopup() {
     }
     return defaultValue;
   };
+
+  useEffect(() => {
+    const accountName = String(
+      getUserValue('display_name', '') || getUserValue('username', '') || ''
+    )
+      .trim()
+      .replace(/^@+/, '');
+    document.title = formatProfileDocumentTitle(accountName);
+    return () => {
+      document.title = DEFAULT_DOCUMENT_TITLE;
+    };
+  }, [profile, user, isPublicProfile, isViewingOwnPublicProfile]);
 
   // Body measurements (height, bust, etc.) — only this profile owner's toggle
   const shouldShowModelStats = () => {

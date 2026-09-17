@@ -1154,7 +1154,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
 
   const myPublicPagePath = useMemo(() => {
     const raw = profile?.username || formData.username || '';
-    const handle = String(raw).trim().replace(/^@+/, '');
+    const handle = String(raw).trim().replace(/^@+/, '').toLowerCase();
     return handle ? `/@${handle}` : '/profile';
   }, [profile?.username, formData.username]);
 

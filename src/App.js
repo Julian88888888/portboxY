@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, useParams } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useParams, useLocation } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
 import './components/index.css';
 import './App.css';
@@ -15,9 +15,30 @@ import BookingChatPage from './pages/BookingChatPage';
 import CustomLinksPage from './pages/CustomLinksPage';
 import SettingsPage from './pages/SettingsPage';
 
+function canonicalProfilePath(rawUsername, search = '', hash = '') {
+  const handle = String(rawUsername || '')
+    .trim()
+    .replace(/^@+/, '')
+    .toLowerCase();
+  if (!handle) return '/';
+  return `/@${handle}${search || ''}${hash || ''}`;
+}
+
 function LegacyUserProfileRedirect() {
   const { username } = useParams();
-  return <Navigate to={`/@${username}`} replace />;
+  const location = useLocation();
+  return <Navigate to={canonicalProfilePath(username, location.search, location.hash)} replace />;
+}
+
+function PublicProfileRoute() {
+  const { username } = useParams();
+  const location = useLocation();
+  const canonical = canonicalProfilePath(username, location.search, location.hash);
+  const current = `${location.pathname}${location.search || ''}${location.hash || ''}`;
+  if (canonical !== current) {
+    return <Navigate to={canonical} replace />;
+  }
+  return <ModelPage />;
 }
 
 function AppContent() {
@@ -89,7 +110,7 @@ function AppContent() {
             } 
           />
           {/* /@handle — one URL segment (e.g. /@dev); React Router does not match /@:param */}
-          <Route path="/:username" element={<ModelPage />} />
+          <Route path="/:username" element={<PublicProfileRoute />} />
         </Routes>
       </div>
     </div>

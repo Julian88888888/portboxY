@@ -53,7 +53,7 @@ const LoginModal = ({ isOpen, onClose, onSwitchToSignUp }) => {
         try {
           const profile = await getProfile();
           const handle = profile?.username
-            ? String(profile.username).trim().replace(/^@+/, '')
+            ? String(profile.username).trim().replace(/^@+/, '').toLowerCase()
             : '';
           if (handle) nextPath = `/@${handle}`;
         } catch (profileErr) {
