@@ -46,6 +46,7 @@ import {
 import { formatPayRateDisplay, PAY_RATE_TYPES } from '../utils/payRate';
 import { PAY_CURRENCIES } from '../utils/currencies';
 import { formatIndustryLabel, INDUSTRY_OPTIONS } from '../utils/industry';
+import { formatSkillLevelLabel, SKILL_LEVEL_OPTIONS } from '../utils/skillLevel';
 import { formatUnitLabel, formatHeightDisplay } from '../utils/unitLabels';
 import {
   SOCIAL_LINK_FIELDS,
@@ -53,6 +54,11 @@ import {
   socialFormFieldsFromLinks,
   socialLinksFromForm,
 } from '../utils/socialIcons';
+import {
+  BOOKING_AVAILABLE_FOR_OPTIONS,
+  BookingAvailableForIcon,
+  normalizeBookingAvailableForTags,
+} from '../utils/bookingAvailableFor';
 
 const PERSONAL_STATS_FIELDS = [
   'heightFeet',
@@ -92,8 +98,6 @@ const pickPersonalStats = (src = {}) => {
 
 const TAB_ROUTES = { 'Tab 1': '/profile', 'Tab 2': '/portfolio', 'Tab 3': '/bookings', 'Tab 4': '/links', 'Tab 5': '/settings' };
 
-const BOOKING_AVAILABLE_FOR_IDS = ['photoshoots', 'acting', 'runway', 'promo'];
-
 const DisplaySizePicker = ({ value, onChange, label = 'Display size' }) => (
   <div className="form-group" style={{ marginBottom: '16px' }}>
     <label style={{ display: 'block', marginBottom: '8px' }}>{label}</label>
@@ -131,37 +135,6 @@ const DisplaySizePicker = ({ value, onChange, label = 'Display size' }) => (
 
 /** Set true to show mailto Email on Incoming Bookings cards. */
 const SHOW_INCOMING_BOOKING_EMAIL_BUTTON = false;
-
-const BookingAvailableForIcon = ({ type, color }) => {
-  const stroke = color || 'currentColor';
-  if (type === 'photoshoots') {
-    return (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
-        <path stroke={stroke} strokeLinejoin="round" strokeWidth="2" d="M4 18V8a1 1 0 0 1 1-1h1.5l1.707-1.707A1 1 0 0 1 8.914 5h6.172a1 1 0 0 1 .707.293L17.5 7H19a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1Z" />
-        <path stroke={stroke} strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-      </svg>
-    );
-  }
-  if (type === 'acting') {
-    return (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
-        <path stroke={stroke} strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 6H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1Zm7 11-6-2V9l6-2v10Z" />
-      </svg>
-    );
-  }
-  if (type === 'runway') {
-    return (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
-        <path stroke={stroke} strokeLinejoin="round" strokeWidth="2" d="M9 5h-.16667c-.86548 0-1.70761.28071-2.4.8L3.5 8l2 3.5L8 10v9h8v-9l2.5 1.5 2-3.5-2.9333-2.2c-.6924-.51929-1.5346-.8-2.4-.8H15M9 5c0 1.5 1.5 3 3 3s3-1.5 3-3M9 5h6" />
-      </svg>
-    );
-  }
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
-      <path stroke={stroke} strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 9H5a1 1 0 0 0-1 1v4a1 1 0 0 0 1 1h6m0-6v6m0-6 5.419-3.87A1 1 0 0 1 18 5.942v12.114a1 1 0 0 1-1.581.814L11 15m7 0a3 3 0 0 0 0-6M6 15h3v5H6v-5Z" />
-    </svg>
-  );
-};
 
 const BOOKINGS_PAGE_SIZE = 5;
 
@@ -681,7 +654,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
           const fromMeta = user.user_metadata?.availableForTags;
           const raw = Array.isArray(fromProfile) && fromProfile.length > 0 ? fromProfile : fromMeta;
           if (!Array.isArray(raw)) return [];
-          return raw.filter((id) => BOOKING_AVAILABLE_FOR_IDS.includes(id));
+          return normalizeBookingAvailableForTags(raw);
         })(),
         showAvailableFor:
           profile?.show_available_for !== undefined
@@ -1471,7 +1444,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                           </div>
                           <div className="stat_item">
                             <div className="stat_label">STATUS</div>
-                            <div className="stat_value">{formData.status || 'Professional'}</div>
+                            <div className="stat_value">{formatSkillLevelLabel(formData.status) || '—'}</div>
                           </div>
                           <div className="stat_item">
                             <div className="stat_label">MARKETS</div>
@@ -1508,9 +1481,9 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                             </option>
                           ))}
                         </select>
-                        <label htmlFor="status" style={{fontSize: '12px', fontWeight: '500', marginBottom: '4px', display: 'block'}}>Status</label>
+                        <label htmlFor="skillLevel" style={{fontSize: '12px', fontWeight: '500', marginBottom: '4px', display: 'block'}}>Status</label>
                         <select 
-                          id="status" 
+                          id="skillLevel" 
                           name="status" 
                           className="dropdowntxt w-select"
                           value={formData.status}
@@ -1518,9 +1491,11 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                           style={{fontSize: '13px', padding: '8px', marginBottom: '12px'}}
                         >
                           <option value="">Select one...</option>
-                          <option value="Amateur">Amateur</option>
-                          <option value="Semi-Professional">Semi-Professional</option>
-                          <option value="Professional">Professional</option>
+                          {SKILL_LEVEL_OPTIONS.map((option) => (
+                            <option key={option.value} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))}
                         </select>
                         <label htmlFor="markets" style={{fontSize: '12px', fontWeight: '500', marginBottom: '4px', display: 'block'}}>Markets</label>
                         <input 
@@ -2875,12 +2850,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                                     marginBottom: '16px',
                                   }}
                                 >
-                                  {[
-                                    { id: 'photoshoots', label: 'Photoshoots' },
-                                    { id: 'acting', label: 'Acting' },
-                                    { id: 'runway', label: 'Runway' },
-                                    { id: 'promo', label: 'Promo' },
-                                  ].map(({ id, label }) => {
+                                  {BOOKING_AVAILABLE_FOR_OPTIONS.map(({ id, label }) => {
                                     const selected = (formData.availableForTags || []).includes(id);
                                     const iconColor = selected ? '#ffffff' : '#4b5563';
                                     return (

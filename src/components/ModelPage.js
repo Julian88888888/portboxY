@@ -23,10 +23,17 @@ import { formatSkinComplexionLabel } from '../utils/skinComplexion';
 import { formatBodyModificationDisplay } from '../utils/bodyModification';
 import { formatEyeColorLabel } from '../utils/eyeColor';
 import { formatIndustryLabel } from '../utils/industry';
+import { formatSkillLevelLabel } from '../utils/skillLevel';
 import { formatNicheDisplay } from '../utils/availableFor';
 import { formatUnitLabel, formatHeightDisplay } from '../utils/unitLabels';
 import { SocialIcon, listFilledSocialLinks } from '../utils/socialIcons';
 import { DEFAULT_DOCUMENT_TITLE, formatProfileDocumentTitle } from '../utils/documentTitle';
+import {
+  BOOKING_AVAILABLE_FOR_IDS,
+  BookingAvailableForIcon,
+  formatBookingAvailableForLabel,
+  normalizeBookingAvailableForTags,
+} from '../utils/bookingAvailableFor';
 
 const days = [
   { key: "monday", label: "Mon", hours: "5 hours" },
@@ -56,44 +63,6 @@ const travels = [
     imgset: "images/197570-p-500.png 500w, images/197570.png 512w",
   },
 ];
-
-const PublicAvailableForTagIcon = ({ type, color }) => {
-  const stroke = color || 'currentColor';
-  if (type === 'photoshoots') {
-    return (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
-        <path stroke={stroke} strokeLinejoin="round" strokeWidth="2" d="M4 18V8a1 1 0 0 1 1-1h1.5l1.707-1.707A1 1 0 0 1 8.914 5h6.172a1 1 0 0 1 .707.293L17.5 7H19a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1Z" />
-        <path stroke={stroke} strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-      </svg>
-    );
-  }
-  if (type === 'acting') {
-    return (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
-        <path stroke={stroke} strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 6H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1Zm7 11-6-2V9l6-2v10Z" />
-      </svg>
-    );
-  }
-  if (type === 'runway') {
-    return (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
-        <path stroke={stroke} strokeLinejoin="round" strokeWidth="2" d="M9 5h-.16667c-.86548 0-1.70761.28071-2.4.8L3.5 8l2 3.5L8 10v9h8v-9l2.5 1.5 2-3.5-2.9333-2.2c-.6924-.51929-1.5346-.8-2.4-.8H15M9 5c0 1.5 1.5 3 3 3s3-1.5 3-3M9 5h6" />
-      </svg>
-    );
-  }
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
-      <path stroke={stroke} strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 9H5a1 1 0 0 0-1 1v4a1 1 0 0 0 1 1h6m0-6v6m0-6 5.419-3.87A1 1 0 0 1 18 5.942v12.114a1 1 0 0 1-1.581.814L11 15m7 0a3 3 0 0 0 0-6M6 15h3v5H6v-5Z" />
-    </svg>
-  );
-};
-
-const BOOKING_TAG_LABELS = {
-  photoshoots: 'Photoshoots',
-  acting: 'Acting',
-  runway: 'Runway',
-  promo: 'Promo',
-};
 
 export default function JobRequestPopup() {
   const { username: usernameSegment } = useParams();
@@ -227,13 +196,10 @@ export default function JobRequestPopup() {
       }
     }
     if (!Array.isArray(raw)) return [];
-    const selected = new Set(
-      raw.filter((id) => typeof id === 'string' && BOOKING_TAG_LABELS[id])
-    );
-    const order = ['photoshoots', 'acting', 'runway', 'promo'];
-    return order
+    const selected = new Set(normalizeBookingAvailableForTags(raw));
+    return BOOKING_AVAILABLE_FOR_IDS
       .filter((id) => selected.has(id))
-      .map((id) => ({ id, label: BOOKING_TAG_LABELS[id] }));
+      .map((id) => ({ id, label: formatBookingAvailableForLabel(id) }));
   };
 
   const getBookingsTitleDisplay = () => {
@@ -811,7 +777,7 @@ export default function JobRequestPopup() {
             </div>
             <div className="stat_item">
               <div className="stat_title">STATUS</div>
-              <div className="stat_descript">{getUserValue('status', 'Professional')}</div>
+              <div className="stat_descript">{formatSkillLevelLabel(getUserValue('status', '')) || '—'}</div>
             </div>
             <div className="stat_item">
               <div className="stat_title">MARKETS</div>
@@ -947,20 +913,14 @@ export default function JobRequestPopup() {
               </div>
             </div>
           <div className="spacing_24" />
-          <div className="spacing_24" />
       {shouldShowBookMeProfileSection() && canShowBookMeToVisitor && (
-        <>
-          {renderBookMeCta()}
-          <div className="spacing_24" />
-        </>
+        renderBookMeCta()
       )}
-      <div className="spacing_48" />
         </div>
       </div>
       {/* Portfolio Albums Section */}
       <div className="section portfolio_sec">
         <div className="content_wrapper">
-          <div className="spacing_48"></div>
           <h4 className="section_title">Portfolio</h4>
           <div className="spacing_24"></div>
           
@@ -1123,7 +1083,7 @@ export default function JobRequestPopup() {
                         }}
                       >
                         <span>{label}</span>
-                        <PublicAvailableForTagIcon type={id} color="#ffffff" />
+                        <BookingAvailableForIcon type={id} color="#ffffff" />
                       </div>
                     ))}
                   </div>

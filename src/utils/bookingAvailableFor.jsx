@@ -5,27 +5,53 @@ export const BOOKING_AVAILABLE_FOR_OPTIONS = [
   { id: 'photoshoots', label: 'Photo Shoot' },
   { id: 'video-shoot', label: 'Video Shoot' },
   { id: 'multimedia-shoot', label: 'Multimedia Shoot' },
-  { id: 'promo', label: 'Promo' },
+  { id: 'ugc-shoot', label: 'UGC Shoot' },
+  { id: 'promo', label: 'Promotion' },
   { id: 'runway', label: 'Runway' },
   { id: 'event', label: 'Event' },
   { id: 'fitting', label: 'Fitting' },
   { id: 'live-art', label: 'Live Art' },
+  { id: 'podcast', label: 'Podcast' },
 ];
 
 export const BOOKING_AVAILABLE_FOR_IDS = BOOKING_AVAILABLE_FOR_OPTIONS.map((o) => o.id);
 
-export const BOOKING_AVAILABLE_FOR_LABELS = BOOKING_AVAILABLE_FOR_OPTIONS.reduce((acc, o) => {
-  acc[o.id] = o.label;
-  return acc;
-}, {
-  // Legacy stored ids
-  acting: 'Acting',
-  Photoshoots: 'Photo Shoot',
-  Promos: 'Promo',
-});
+const LEGACY_TAG_MAP = {
+  acting: 'video-shoot',
+  Photoshoots: 'photoshoots',
+  Promos: 'promo',
+  promotion: 'promo',
+};
+
+export const BOOKING_AVAILABLE_FOR_LABELS = BOOKING_AVAILABLE_FOR_OPTIONS.reduce(
+  (acc, o) => {
+    acc[o.id] = o.label;
+    return acc;
+  },
+  {
+    acting: 'Video Shoot',
+    Photoshoots: 'Photo Shoot',
+    Promos: 'Promotion',
+    promotion: 'Promotion',
+  }
+);
 
 export const formatBookingAvailableForLabel = (id) =>
   BOOKING_AVAILABLE_FOR_LABELS[id] || String(id || '');
+
+export const normalizeBookingAvailableForTags = (raw) => {
+  if (!Array.isArray(raw)) return [];
+  const seen = new Set();
+  const out = [];
+  raw.forEach((id) => {
+    if (typeof id !== 'string') return;
+    const mapped = LEGACY_TAG_MAP[id] || id;
+    if (!BOOKING_AVAILABLE_FOR_IDS.includes(mapped) || seen.has(mapped)) return;
+    seen.add(mapped);
+    out.push(mapped);
+  });
+  return out;
+};
 
 export function BookingAvailableForIcon({ type, color, size = 22 }) {
   const fill = color || 'currentColor';
@@ -70,7 +96,18 @@ export function BookingAvailableForIcon({ type, color, size = 22 }) {
     );
   }
 
-  if (type === 'promo') {
+  if (type === 'ugc-shoot') {
+    return (
+      <svg {...common} viewBox="0 0 24 24">
+        <path
+          fill={fill}
+          d="M16 2H8a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2m-3 19h-2v-1h2zm3-2H8V5h8z"
+        />
+      </svg>
+    );
+  }
+
+  if (type === 'promo' || type === 'promotion') {
     return (
       <svg {...common} viewBox="0 0 24 24">
         <path
@@ -127,7 +164,29 @@ export function BookingAvailableForIcon({ type, color, size = 22 }) {
     );
   }
 
-  // Fallback: Photo Shoot icon
+  if (type === 'podcast') {
+    return (
+      <svg {...common} viewBox="0 0 24 24">
+        <path
+          fill={fill}
+          d="M12 3a4 4 0 0 0-4 4h2a.5.5 0 0 1 0 1H8v1h2a.5.5 0 0 1 0 1H8v1h2a.5.5 0 0 1 0 1H8a4 4 0 0 0 8 0h-2a.5.5 0 0 1 0-1h2v-1h-2a.5.5 0 0 1 0-1h2V8h-2a.5.5 0 0 1 0-1h2a4 4 0 0 0-4-4"
+        />
+        <path
+          fill={fill}
+          fillRule="evenodd"
+          d="M11.5 20v-2.5h1V20zm-3.5.5a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5"
+          clipRule="evenodd"
+        />
+        <path
+          fill={fill}
+          fillRule="evenodd"
+          d="M6.227 13.709a.5.5 0 0 1 .647.284a5.5 5.5 0 0 0 10.16.222a.5.5 0 0 1 .916.403a6.5 6.5 0 0 1-12.008-.262a.5.5 0 0 1 .285-.647"
+          clipRule="evenodd"
+        />
+      </svg>
+    );
+  }
+
   return (
     <svg {...common} viewBox="0 0 24 24">
       <path
