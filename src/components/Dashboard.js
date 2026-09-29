@@ -59,6 +59,14 @@ import {
   BookingAvailableForIcon,
   normalizeBookingAvailableForTags,
 } from '../utils/bookingAvailableFor';
+import {
+  TRAVEL_LIMIT_OPTIONS,
+  TFP_ACCEPTED_OPTIONS,
+  REPRESENTATION_STATUS_OPTIONS,
+  formatTravelLimitLabel,
+  formatTfpAcceptedLabel,
+  formatRepresentationLabel,
+} from '../utils/bookingStats';
 
 const PERSONAL_STATS_FIELDS = [
   'heightFeet',
@@ -450,6 +458,9 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
     bookingsTitle: 'BOOKINGS',
     hometown: '',
     showHometown: true,
+    travelLimit: '',
+    tfpAccepted: '',
+    representationStatus: '',
     bookingDescription: '',
     showRequestDescription: true,
     availableForBooking: '',
@@ -629,6 +640,18 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
           user.user_metadata?.hometown ??
           user.currentCity ??
           '',
+        travelLimit:
+          profile?.personal_stats?.travelLimit ??
+          user.user_metadata?.travelLimit ??
+          '',
+        tfpAccepted:
+          profile?.personal_stats?.tfpAccepted ??
+          user.user_metadata?.tfpAccepted ??
+          '',
+        representationStatus:
+          profile?.personal_stats?.representationStatus ??
+          user.user_metadata?.representationStatus ??
+          '',
         bookingDescription:
           profile?.booking_description ?? user.user_metadata?.bookingDescription ?? '',
         enableBookingsTitle:
@@ -640,9 +663,11 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
         showHometown:
           profile?.show_hometown !== undefined
             ? profile.show_hometown
-            : (user.user_metadata?.showHometown !== undefined
-              ? user.user_metadata.showHometown
-              : prev.showHometown),
+            : (profile?.personal_stats?.showBookingStats !== undefined
+              ? profile.personal_stats.showBookingStats
+              : (user.user_metadata?.showHometown !== undefined
+                ? user.user_metadata.showHometown
+                : prev.showHometown)),
         showRequestDescription:
           profile?.show_booking_description !== undefined
             ? profile.show_booking_description
@@ -875,8 +900,6 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
     const showTags = formData.showAvailableFor !== false;
     const bookingsMeta = {
       bookingsTitle: formData.bookingsTitle ?? 'BOOKINGS',
-      hometown: formData.hometown ?? '',
-      showHometown: formData.showHometown ?? true,
       bookingDescription: formData.bookingDescription ?? '',
       showRequestDescription: formData.showRequestDescription ?? true,
       enableBookingsTitle: formData.enableBookingsTitle ?? true,
@@ -888,10 +911,8 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
         available_for_tags: tags,
         show_available_for: showTags,
         bookings_title: bookingsMeta.bookingsTitle,
-        hometown: bookingsMeta.hometown,
         booking_description: bookingsMeta.bookingDescription,
         show_bookings_title: bookingsMeta.enableBookingsTitle !== false,
-        show_hometown: bookingsMeta.showHometown !== false,
         show_booking_description: bookingsMeta.showRequestDescription !== false,
       });
     } catch (dbErr) {
@@ -917,10 +938,8 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
           available_for_tags: tags,
           show_available_for: showTags,
           bookings_title: bookingsMeta.bookingsTitle,
-          hometown: bookingsMeta.hometown,
           booking_description: bookingsMeta.bookingDescription,
           show_bookings_title: bookingsMeta.enableBookingsTitle !== false,
-          show_hometown: bookingsMeta.showHometown !== false,
           show_booking_description: bookingsMeta.showRequestDescription !== false,
         };
       });
@@ -933,6 +952,71 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
         'Public profile was updated, but syncing to your login session failed: ' +
           (result.error || 'Unknown error') +
           '\nRefresh the page and try Save again if settings look wrong.'
+      );
+    }
+  };
+
+  const saveBookingStats = async () => {
+    const hometown = formData.hometown ?? '';
+    const showHometown = formData.showHometown ?? true;
+    const travelLimit = formData.travelLimit ?? '';
+    const tfpAccepted = formData.tfpAccepted ?? '';
+    const representationStatus = formData.representationStatus ?? '';
+    const personal_stats = {
+      ...(profile?.personal_stats && typeof profile.personal_stats === 'object'
+        ? profile.personal_stats
+        : {}),
+      travelLimit,
+      tfpAccepted,
+      representationStatus,
+      showBookingStats: showHometown !== false,
+    };
+
+    try {
+      await upsertProfile({
+        hometown,
+        show_hometown: showHometown !== false,
+        personal_stats,
+      });
+    } catch (dbErr) {
+      console.error('Booking stats save:', dbErr);
+      alert(
+        'Could not save booking stats to public profile.\n\n' +
+          (dbErr.message || String(dbErr))
+      );
+      return;
+    }
+
+    queryClient.invalidateQueries({ queryKey: ['profile'] });
+    queryClient.invalidateQueries({ queryKey: ['publicProfile'] });
+    const publicUsername = String(profile?.username || formData.username || '')
+      .trim()
+      .replace(/^@+/, '');
+    if (publicUsername) {
+      queryClient.setQueryData(['publicProfile', publicUsername], (prev) => {
+        if (!prev || typeof prev !== 'object') return prev;
+        return {
+          ...prev,
+          hometown,
+          show_hometown: showHometown !== false,
+          personal_stats,
+        };
+      });
+    }
+
+    const result = await updateProfile({
+      hometown,
+      showHometown: showHometown !== false,
+      travelLimit,
+      tfpAccepted,
+      representationStatus,
+    });
+    if (result.success) {
+      alert('Booking stats saved successfully!');
+    } else {
+      alert(
+        'Booking stats were saved to your public profile, but syncing login session failed: ' +
+          (result.error || 'Unknown error')
       );
     }
   };
@@ -2796,27 +2880,188 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                                   </label>
                                 </div>
                                 <p className="text_color_grey" style={{ margin: '8px 0 16px', fontSize: '13px', maxWidth: '560px' }}>
-                                  Shows or hides the BOOKINGS block on your public page (title, hometown, description, tags). Book Me is controlled separately.
+                                  Shows or hides the BOOKINGS block on your public page (title, booking stats, description, tags). Book Me is controlled separately.
                                 </p>
-                                <div className="spacing_24"></div>
+                                <div
+                                  className="w-layout-hflex flex-block-9"
+                                  style={{
+                                    alignItems: 'center',
+                                    gap: '12px',
+                                    marginTop: '8px',
+                                    marginBottom: '8px',
+                                    opacity: (formData.showBookMeButton ?? true) ? 1 : 0.45,
+                                    pointerEvents: (formData.showBookMeButton ?? true) ? 'auto' : 'none',
+                                  }}
+                                >
+                                  <label
+                                    style={{
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      cursor: (formData.showBookMeButton ?? true) ? 'pointer' : 'default',
+                                      gap: '10px',
+                                      userSelect: 'none',
+                                      flex: '0 0 auto',
+                                    }}
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      if (!(formData.showBookMeButton ?? true)) return;
+                                      persistBookMeVisibilityToggle(
+                                        'showBookMeLinksSection',
+                                        'show_book_me_links_section',
+                                        'showBookMeLinksSection'
+                                      );
+                                    }}
+                                  >
+                                    <div
+                                      style={{
+                                        width: '44px',
+                                        height: '24px',
+                                        borderRadius: '12px',
+                                        backgroundColor: (formData.showBookMeLinksSection ?? true) ? '#783FF3' : '#ccc',
+                                        position: 'relative',
+                                        cursor: (formData.showBookMeButton ?? true) ? 'pointer' : 'default',
+                                        transition: 'background-color 0.2s',
+                                        flexShrink: 0,
+                                      }}
+                                    >
+                                      <div
+                                        style={{
+                                          width: '20px',
+                                          height: '20px',
+                                          borderRadius: '50%',
+                                          backgroundColor: 'white',
+                                          position: 'absolute',
+                                          top: '2px',
+                                          left: (formData.showBookMeLinksSection ?? true) ? '22px' : '2px',
+                                          transition: 'left 0.2s',
+                                          boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                                        }}
+                                      />
+                                    </div>
+                                  </label>
+                                  <p style={{ margin: 0 }}>Show Book Me in bookings section</p>
+                                </div>
+                                <p className="text_color_grey" style={{ margin: '0 0 16px', fontSize: '13px', maxWidth: '560px' }}>
+                                  Applies on your public page below the bookings block (title, booking stats, description, tags). Turn off the master Book Me switch in Profile settings to hide every Book Me button.
+                                </p>
+                              </form>
+                              <div className="spacing_24"></div>
+                              <h3>Booking Stats</h3>
+                              <form
+                                noValidate
+                                onSubmit={(e) => {
+                                  e.preventDefault();
+                                  void saveBookingStats();
+                                }}
+                              >
+                                <div
+                                  className="stats_wrap"
+                                  style={{
+                                    margin: '8px 0 20px',
+                                    width: '100%',
+                                    maxWidth: '100%',
+                                  }}
+                                >
+                                  <div className="stat_item">
+                                    <div className="stat_title">HOMETOWN CITY</div>
+                                    <div className="stat_descript">{formData.hometown?.trim() || '—'}</div>
+                                  </div>
+                                  <div className="stat_item">
+                                    <div className="stat_title">TRAVEL LIMIT</div>
+                                    <div className="stat_descript">
+                                      {formatTravelLimitLabel(formData.travelLimit) || '—'}
+                                    </div>
+                                  </div>
+                                  <div className="stat_item">
+                                    <div className="stat_title">TFP ACCEPTED</div>
+                                    <div className="stat_descript">
+                                      {formatTfpAcceptedLabel(formData.tfpAccepted) || '—'}
+                                    </div>
+                                  </div>
+                                  <div className="stat_item">
+                                    <div className="stat_title">REPRESENTATION</div>
+                                    <div className="stat_descript">
+                                      {formatRepresentationLabel(formData.representationStatus) || '—'}
+                                    </div>
+                                  </div>
+                                </div>
                                 <label htmlFor="hometown">Hometown</label>
-                                <input 
-                                  className="w-input" 
-                                  maxLength="256" 
-                                  name="hometown" 
-                                  placeholder="I.e. Miami" 
-                                  type="text" 
+                                <input
+                                  className="w-input"
+                                  maxLength="256"
+                                  name="hometown"
+                                  id="hometown"
+                                  placeholder="I.e. Miami"
+                                  type="text"
                                   value={formData.hometown}
                                   onChange={handleInputChange}
                                 />
+                                <label htmlFor="travelLimit">Travel Limit</label>
+                                <select
+                                  id="travelLimit"
+                                  name="travelLimit"
+                                  className="dropdowntxt w-select"
+                                  value={formData.travelLimit}
+                                  onChange={handleInputChange}
+                                >
+                                  <option value="">Select one...</option>
+                                  {TRAVEL_LIMIT_OPTIONS.map((option) => (
+                                    <option key={option.value} value={option.value}>
+                                      {option.label}
+                                    </option>
+                                  ))}
+                                </select>
+                                <label htmlFor="tfpAccepted">TFP Accepted</label>
+                                <select
+                                  id="tfpAccepted"
+                                  name="tfpAccepted"
+                                  className="dropdowntxt w-select"
+                                  value={formData.tfpAccepted}
+                                  onChange={handleInputChange}
+                                >
+                                  <option value="">Select one...</option>
+                                  {TFP_ACCEPTED_OPTIONS.map((option) => (
+                                    <option key={option.value} value={option.value}>
+                                      {option.label}
+                                    </option>
+                                  ))}
+                                </select>
+                                <label htmlFor="representationStatus">Representation</label>
+                                <select
+                                  id="representationStatus"
+                                  name="representationStatus"
+                                  className="dropdowntxt w-select"
+                                  value={formData.representationStatus}
+                                  onChange={handleInputChange}
+                                >
+                                  <option value="">Select one...</option>
+                                  {REPRESENTATION_STATUS_OPTIONS.map((option) => (
+                                    <option key={option.value} value={option.value}>
+                                      {option.label}
+                                    </option>
+                                  ))}
+                                </select>
                                 <div className="w-layout-hflex flex-block-9" style={{ alignItems: 'center', gap: '12px' }}>
                                   <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', gap: '10px', userSelect: 'none', flex: '0 0 auto' }} onClick={(e) => { e.preventDefault(); setFormData(prev => ({ ...prev, showHometown: !(prev.showHometown ?? true) })); }}>
                                     <div style={{ width: '44px', height: '24px', borderRadius: '12px', backgroundColor: (formData.showHometown ?? true) ? '#783FF3' : '#ccc', position: 'relative', cursor: 'pointer', transition: 'background-color 0.2s', flexShrink: 0 }}>
                                       <div style={{ width: '20px', height: '20px', borderRadius: '50%', backgroundColor: 'white', position: 'absolute', top: '2px', left: (formData.showHometown ?? true) ? '22px' : '2px', transition: 'left 0.2s', boxShadow: '0 2px 4px rgba(0,0,0,0.2)' }} />
                                     </div>
-                                    <p style={{ margin: 0 }}>Show Hometown</p>
+                                    <p style={{ margin: 0 }}>Show Booking Stats</p>
                                   </label>
                                 </div>
+                                <button type="submit" className="submit-button w-button">
+                                  Save Booking Stats
+                                </button>
+                              </form>
+                              <div className="spacing_24"></div>
+                              <h3>Booking Information</h3>
+                              <form
+                                noValidate
+                                onSubmit={(e) => {
+                                  e.preventDefault();
+                                  void saveBookingsSettings();
+                                }}
+                              >
                                 <label htmlFor="bookingDescription">Booking Request Description</label>
                                 <textarea 
                                   id="bookingDescription" 
@@ -2892,68 +3137,6 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                                     <p style={{ margin: 0 }}>Show Available For on public profile</p>
                                   </label>
                                 </div>
-                                <div
-                                  className="w-layout-hflex flex-block-9"
-                                  style={{
-                                    alignItems: 'center',
-                                    gap: '12px',
-                                    marginTop: '8px',
-                                    marginBottom: '8px',
-                                    opacity: (formData.showBookMeButton ?? true) ? 1 : 0.45,
-                                    pointerEvents: (formData.showBookMeButton ?? true) ? 'auto' : 'none',
-                                  }}
-                                >
-                                  <label
-                                    style={{
-                                      display: 'flex',
-                                      alignItems: 'center',
-                                      cursor: (formData.showBookMeButton ?? true) ? 'pointer' : 'default',
-                                      gap: '10px',
-                                      userSelect: 'none',
-                                      flex: '0 0 auto',
-                                    }}
-                                    onClick={(e) => {
-                                      e.preventDefault();
-                                      if (!(formData.showBookMeButton ?? true)) return;
-                                      persistBookMeVisibilityToggle(
-                                        'showBookMeLinksSection',
-                                        'show_book_me_links_section',
-                                        'showBookMeLinksSection'
-                                      );
-                                    }}
-                                  >
-                                    <div
-                                      style={{
-                                        width: '44px',
-                                        height: '24px',
-                                        borderRadius: '12px',
-                                        backgroundColor: (formData.showBookMeLinksSection ?? true) ? '#783FF3' : '#ccc',
-                                        position: 'relative',
-                                        cursor: (formData.showBookMeButton ?? true) ? 'pointer' : 'default',
-                                        transition: 'background-color 0.2s',
-                                        flexShrink: 0,
-                                      }}
-                                    >
-                                      <div
-                                        style={{
-                                          width: '20px',
-                                          height: '20px',
-                                          borderRadius: '50%',
-                                          backgroundColor: 'white',
-                                          position: 'absolute',
-                                          top: '2px',
-                                          left: (formData.showBookMeLinksSection ?? true) ? '22px' : '2px',
-                                          transition: 'left 0.2s',
-                                          boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
-                                        }}
-                                      />
-                                    </div>
-                                  </label>
-                                  <p style={{ margin: 0 }}>Show Book Me in bookings section</p>
-                                </div>
-                                <p className="text_color_grey" style={{ margin: '0 0 16px', fontSize: '13px', maxWidth: '560px' }}>
-                                  Applies on your public page below the bookings block (title, hometown, description, tags). Turn off the master Book Me switch in Profile settings to hide every Book Me button.
-                                </p>
                                 <button type="submit" className="submit-button w-button">
                                   Save
                                 </button>

@@ -34,6 +34,11 @@ import {
   formatBookingAvailableForLabel,
   normalizeBookingAvailableForTags,
 } from '../utils/bookingAvailableFor';
+import {
+  formatTravelLimitLabel,
+  formatTfpAcceptedLabel,
+  formatRepresentationLabel,
+} from '../utils/bookingStats';
 
 const days = [
   { key: "monday", label: "Mon", hours: "5 hours" },
@@ -233,9 +238,46 @@ export default function JobRequestPopup() {
     return '';
   };
 
-  const shouldShowHometownPublic = () => {
+  const getTravelLimitDisplay = () => {
+    const fromStats = profile?.personal_stats?.travelLimit;
+    if (fromStats != null && String(fromStats).trim() !== '') {
+      return formatTravelLimitLabel(fromStats) || String(fromStats).trim();
+    }
+    if (isViewingOwnPublicProfile) {
+      return formatTravelLimitLabel(user?.user_metadata?.travelLimit) || '';
+    }
+    return '';
+  };
+
+  const getTfpAcceptedDisplay = () => {
+    const fromStats = profile?.personal_stats?.tfpAccepted;
+    if (fromStats != null && String(fromStats).trim() !== '') {
+      return formatTfpAcceptedLabel(fromStats) || String(fromStats).trim();
+    }
+    if (isViewingOwnPublicProfile) {
+      return formatTfpAcceptedLabel(user?.user_metadata?.tfpAccepted) || '';
+    }
+    return '';
+  };
+
+  const getRepresentationDisplay = () => {
+    const fromStats = profile?.personal_stats?.representationStatus;
+    if (fromStats != null && String(fromStats).trim() !== '') {
+      return formatRepresentationLabel(fromStats) || String(fromStats).trim();
+    }
+    if (isViewingOwnPublicProfile) {
+      return formatRepresentationLabel(user?.user_metadata?.representationStatus) || '';
+    }
+    return '';
+  };
+
+  const shouldShowBookingStatsPublic = () => {
+    if (profile?.personal_stats?.showBookingStats === false) return false;
     if (profile?.show_hometown !== undefined) {
       return profile.show_hometown !== false;
+    }
+    if (profile?.showHometown !== undefined) {
+      return profile.showHometown !== false;
     }
     if (isViewingOwnPublicProfile && user?.user_metadata?.showHometown === false) {
       return false;
@@ -267,7 +309,7 @@ export default function JobRequestPopup() {
   const hasPublicBookingsBlock =
     shouldShowBookingsWidget() &&
     ((String(getBookingsTitleDisplay()).trim() !== '') ||
-      (shouldShowHometownPublic() && getHometownDisplay() !== '') ||
+      (shouldShowBookingStatsPublic()) ||
       (shouldShowBookingDescriptionPublic() && getBookingDescriptionDisplay() !== '') ||
       (shouldShowAvailableForTags() && getPublicAvailableForTags().length > 0));
 
@@ -1021,13 +1063,23 @@ export default function JobRequestPopup() {
                   {getBookingsTitleDisplay()}
                 </h4>
               )}
-              {shouldShowHometownPublic() && getHometownDisplay() !== '' && (
-                <div style={{ textAlign: 'center', marginBottom: '18px' }}>
-                  <div style={{ fontWeight: 700, fontSize: '16px', color: '#111', marginBottom: '6px' }}>
-                    Hometown City
+              {shouldShowBookingStatsPublic() && (
+                <div className="stats_wrap" style={{ marginBottom: '18px', width: '100%' }}>
+                  <div className="stat_item">
+                    <div className="stat_title">HOMETOWN CITY</div>
+                    <div className="stat_descript">{getHometownDisplay() || '—'}</div>
                   </div>
-                  <div className="text_color_grey" style={{ fontSize: '15px' }}>
-                    {getHometownDisplay()}
+                  <div className="stat_item">
+                    <div className="stat_title">TRAVEL LIMIT</div>
+                    <div className="stat_descript">{getTravelLimitDisplay() || '—'}</div>
+                  </div>
+                  <div className="stat_item">
+                    <div className="stat_title">TFP ACCEPTED</div>
+                    <div className="stat_descript">{getTfpAcceptedDisplay() || '—'}</div>
+                  </div>
+                  <div className="stat_item">
+                    <div className="stat_title">REPRESENTATION</div>
+                    <div className="stat_descript">{getRepresentationDisplay() || '—'}</div>
                   </div>
                 </div>
               )}
