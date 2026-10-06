@@ -443,6 +443,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
     ethnicity: '',
     nationality: [],
     languages: [],
+    showPortfolioSection: true,
     showPortfolioWidget: true,
     showPortfolioTitle: true,
     showAlbumBadge: true,
@@ -544,6 +545,16 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
             : user.showSocialLinks !== undefined
               ? user.showSocialLinks
               : (user.user_metadata?.showSocialLinks !== undefined ? user.user_metadata.showSocialLinks : true),
+        showPortfolioSection:
+          profile?.show_portfolio_section !== undefined
+            ? profile.show_portfolio_section
+            : (profile?.personal_stats?.showPortfolioSection !== undefined
+              ? profile.personal_stats.showPortfolioSection
+              : (user.showPortfolioSection !== undefined
+                ? user.showPortfolioSection
+                : (user.user_metadata?.showPortfolioSection !== undefined
+                  ? user.user_metadata.showPortfolioSection
+                  : (prev.showPortfolioSection ?? true)))),
         showAlbumBadge: profile?.show_album_badge !== undefined
           ? profile.show_album_badge
           : (profile?.showAlbumBadge !== undefined
@@ -843,9 +854,13 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
         queryClient.invalidateQueries({ queryKey: ['publicProfile', u] });
       }
       if (!dbOk) {
+        const sqlHint =
+          dbKey === 'show_portfolio_section'
+            ? 'add_portfolio_section_column.sql'
+            : 'add_links_visibility_columns.sql (and add_personal_stats_column.sql if needed)';
         alert(
           'Saved to your login session, but not to the public profile DB.\n' +
-            'In Supabase SQL Editor run add_links_visibility_columns.sql (and add_personal_stats_column.sql if needed), then toggle again.'
+            `In Supabase SQL Editor run ${sqlHint}, then toggle again.`
         );
       }
     } catch (err) {
@@ -898,6 +913,12 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
   const saveBookingsSettings = async () => {
     const tags = Array.isArray(formData.availableForTags) ? [...formData.availableForTags] : [];
     const showTags = formData.showAvailableFor !== false;
+    const personal_stats = {
+      ...(profile?.personal_stats && typeof profile.personal_stats === 'object'
+        ? profile.personal_stats
+        : {}),
+      availableForTags: tags,
+    };
     const bookingsMeta = {
       bookingsTitle: formData.bookingsTitle ?? 'BOOKINGS',
       bookingDescription: formData.bookingDescription ?? '',
@@ -914,6 +935,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
         booking_description: bookingsMeta.bookingDescription,
         show_bookings_title: bookingsMeta.enableBookingsTitle !== false,
         show_booking_description: bookingsMeta.showRequestDescription !== false,
+        personal_stats,
       });
     } catch (dbErr) {
       console.error('profiles.available_for_tags update:', dbErr);
@@ -941,6 +963,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
           booking_description: bookingsMeta.bookingDescription,
           show_bookings_title: bookingsMeta.enableBookingsTitle !== false,
           show_booking_description: bookingsMeta.showRequestDescription !== false,
+          personal_stats,
         };
       });
     }
@@ -2250,7 +2273,28 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
             {activeTab === 'Tab 2' && (
               <div className="w-tab-pane w--tab-active">
                 <div className="w-layout-vflex flex-block-8">
-                  <h3 style={{ color: '#000' }}>Portfolio Setting</h3>
+                  <h3 style={{ color: '#000' }}>Portfolio Settings</h3>
+                  <div className="w-layout-hflex flex-block-9" style={{ alignItems: 'center', gap: '12px' }}>
+                    <label
+                      style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', gap: '10px', userSelect: 'none', flex: '0 0 auto' }}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        void persistLinksVisibilityToggle(
+                          'showPortfolioSection',
+                          'show_portfolio_section',
+                          'showPortfolioSection'
+                        );
+                      }}
+                    >
+                      <div style={{ width: '44px', height: '24px', borderRadius: '12px', backgroundColor: (formData.showPortfolioSection ?? true) ? '#783FF3' : '#ccc', position: 'relative', cursor: 'pointer', flexShrink: 0 }}>
+                        <div style={{ width: '20px', height: '20px', borderRadius: '50%', backgroundColor: 'white', position: 'absolute', top: '2px', left: (formData.showPortfolioSection ?? true) ? '22px' : '2px', transition: 'left 0.2s', boxShadow: '0 2px 4px rgba(0,0,0,0.2)' }} />
+                      </div>
+                      <p style={{ margin: 0 }}>Show Portfolio Section</p>
+                    </label>
+                  </div>
+                  <p className="text_color_grey" style={{ margin: '8px 0 16px', fontSize: '13px', maxWidth: '560px' }}>
+                    Shows or hides the Portfolio albums block on your public page.
+                  </p>
                   <div className="spacing_24"></div>
                   <div className="w-layout-hflex flex-block-9" style={{ alignItems: 'center', gap: '12px' }}>
                     <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', gap: '10px', userSelect: 'none', flex: '0 0 auto' }} onClick={(e) => { e.preventDefault(); handleQuickToggle('showAlbumBadge', 'show_album_badge'); }}>
@@ -2548,26 +2592,36 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
             {activeTab === 'Tab 3' && (
               <div className="w-tab-pane w--tab-active">
                 <div className="w-tabs">
-                  <div className="w-tab-menu">
+                  <div className="w-tab-menu booking-subtabs" role="tablist" aria-label="Bookings sections">
                     <a 
                       href="#"
+                      role="tab"
+                      aria-selected={activeBookingTab === 'Tab 1'}
                       onClick={(e) => {
                         e.preventDefault();
                         setActiveBookingTab('Tab 1');
                       }}
                       className={`bookingtabs w-inline-block w-tab-link ${activeBookingTab === 'Tab 1' ? 'w--current' : ''}`}
                     >
-                      <div>Bookings</div>
+                      <svg className="booking-subtab-icon" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="currentColor">
+                        <path d="M7 2.75a.75.75 0 0 1 .75.75V5h8.5V3.5a.75.75 0 0 1 1.5 0V5H19a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h1.25V3.5A.75.75 0 0 1 7 2.75M5 9.5v9.5h14V9.5zm3 3h3.5v3.5H8zm5 0H16.5v3.5H13z" />
+                      </svg>
+                      <span>Bookings</span>
                     </a>
                     <a 
                       href="#"
+                      role="tab"
+                      aria-selected={activeBookingTab === 'Tab 2'}
                       onClick={(e) => {
                         e.preventDefault();
                         setActiveBookingTab('Tab 2');
                       }}
                       className={`bookingtabs w-inline-block w-tab-link ${activeBookingTab === 'Tab 2' ? 'w--current' : ''}`}
                     >
-                      <div>Booking Settings</div>
+                      <svg className="booking-subtab-icon" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="currentColor">
+                        <path d="M19.14 12.94c.04-.31.06-.63.06-.94s-.02-.63-.06-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.61-.22l-2.39.96a7.03 7.03 0 0 0-1.62-.94l-.36-2.54a.5.5 0 0 0-.5-.42h-3.84a.5.5 0 0 0-.5.42l-.36 2.54c-.59.24-1.13.55-1.62.94l-2.39-.96a.5.5 0 0 0-.61.22L2.71 8.84a.5.5 0 0 0 .12.64l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94L2.83 14.52a.5.5 0 0 0-.12.64l1.92 3.32c.14.24.43.34.69.22l2.39-.96c.5.39 1.04.71 1.62.94l.36 2.54c.05.24.26.42.5.42h3.84c.24 0 .45-.18.5-.42l.36-2.54c.59-.24 1.13-.55 1.62-.94l2.39.96c.26.1.55 0 .69-.22l1.92-3.32a.5.5 0 0 0-.12-.64zM12 15.5A3.5 3.5 0 1 1 15.5 12 3.5 3.5 0 0 1 12 15.5" />
+                      </svg>
+                      <span>Booking Settings</span>
                     </a>
                   </div>
                   <div className="w-tab-content">
@@ -3083,7 +3137,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                                 <div className="spacing_24"></div>
                                 <div style={{ fontWeight: 700, fontSize: '16px', marginBottom: '12px', color: '#111' }}>Available For</div>
                                 <p style={{ margin: '0 0 14px 0', fontSize: '13px', color: '#666' }}>
-                                  Choose what appears as tags on your public page above the Book Me button. Click Save to apply.
+                                  These tags appear on your public page and as Job Type options in the Book Me popup. Click Save to apply.
                                 </p>
                                 <div
                                   role="group"

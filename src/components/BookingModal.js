@@ -1,13 +1,17 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { FaTimes, FaCamera, FaVideo, FaWalking, FaMicrophone } from 'react-icons/fa';
+import { FaTimes } from 'react-icons/fa';
 import { useAuth } from '../contexts/AuthContext';
 import { useProfile } from '../hooks/useProfile';
 import { createBooking, createGuestBooking } from '../services/bookingsService';
 import { getAvatarUrl } from '../services/profileService';
 import { PAY_CURRENCIES } from '../utils/currencies';
 import { PAY_RATE_TYPES, formatPayRate } from '../utils/payRate';
+import {
+  BookingAvailableForIcon,
+  getBookingJobTypeOptions,
+} from '../utils/bookingAvailableFor';
 
-const BookingModal = ({ isOpen, onClose, profile, onBookingCreated }) => {
+const BookingModal = ({ isOpen, onClose, profile, availableForTags, onBookingCreated }) => {
   const { user } = useAuth();
   const { data: clientProfile } = useProfile();
   const [dateFrom, setDateFrom] = useState('');
@@ -69,12 +73,33 @@ const BookingModal = ({ isOpen, onClose, profile, onBookingCreated }) => {
     }
   }, [isOpen, user?.id, user?.email, user?.user_metadata?.full_name, user?.user_metadata?.name, clientProfile?.display_name, clientProfile?.name, clientProfile?.username]);
 
-  const jobTypes = [
-    { name: 'Photoshoots', icon: FaCamera },
-    { name: 'Acting', icon: FaVideo },
-    { name: 'Runway', icon: FaWalking },
-    { name: 'Promos', icon: FaMicrophone }
-  ];
+  const jobTypes = useMemo(
+    () =>
+      getBookingJobTypeOptions(
+        availableForTags ??
+          profile?.availableForTags ??
+          profile?.available_for_tags ??
+          profile?.personal_stats?.availableForTags
+      ),
+    [
+      availableForTags,
+      profile?.availableForTags,
+      profile?.available_for_tags,
+      profile?.personal_stats?.availableForTags,
+    ]
+  );
+
+  useEffect(() => {
+    if (!isOpen) return;
+    setSelectedJobType((current) => {
+      if (current && jobTypes.some((job) => job.id === current)) return current;
+      return null;
+    });
+    setFormData((prev) => {
+      const stillValid = jobTypes.some((job) => job.id === prev.jobType);
+      return stillValid ? prev : { ...prev, jobType: '' };
+    });
+  }, [isOpen, jobTypes]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -140,10 +165,11 @@ const BookingModal = ({ isOpen, onClose, profile, onBookingCreated }) => {
       return;
     }
 
+    const selectedOption = jobTypes.find((job) => job.id === selectedJobType);
     const bookingPayload = {
       name: formData.name,
       email: formData.email,
-      job_type: selectedJobType || formData.jobType,
+      job_type: selectedOption?.label || selectedJobType || formData.jobType,
       dates: formData.dates,
       location: formData.location,
       pay_rate: formatPayRate(formData.offerAmount, formData.payCurrency, formData.payRate),
@@ -283,23 +309,34 @@ const BookingModal = ({ isOpen, onClose, profile, onBookingCreated }) => {
         
         <p className="text-color-grey text-width-medium">Select a job type ⤵</p>
         
-        <div className="job-types">
-          {jobTypes.map((job, index) => (
-            <div 
-              key={index} 
-              className={`job-type-btn ${selectedJobType === job.name ? 'selected' : ''}`}
-              onClick={() => handleJobTypeSelect(job.name)}
-              style={{ 
-                cursor: 'pointer',
-                backgroundColor: selectedJobType === job.name ? '#783FF3' : 'transparent',
-                color: selectedJobType === job.name ? 'white' : 'inherit'
-              }}
-            >
-              <span>{job.name}</span>
-              <job.icon size={20} />
-            </div>
-          ))}
-        </div>
+        {jobTypes.length === 0 ? (
+          <p className="text-color-grey text-width-medium" style={{ margin: '12px 0 0' }}>
+            This profile has not listed any Available For job types yet.
+          </p>
+        ) : (
+          <div className="job-types" role="listbox" aria-label="Job types">
+            {jobTypes.map((job) => {
+              const isSelected = selectedJobType === job.id;
+              return (
+                <div
+                  key={job.id}
+                  role="option"
+                  aria-selected={isSelected}
+                  className={`job-type-btn ${isSelected ? 'selected' : ''}`}
+                  onClick={() => handleJobTypeSelect(job.id)}
+                  style={{
+                    cursor: 'pointer',
+                    backgroundColor: isSelected ? '#783FF3' : 'transparent',
+                    color: isSelected ? 'white' : 'inherit',
+                  }}
+                >
+                  <span>{job.label}</span>
+                  <BookingAvailableForIcon type={job.id} color={isSelected ? '#ffffff' : '#4b5563'} size={20} />
+                </div>
+              );
+            })}
+          </div>
+        )}
         
         <form onSubmit={handleSubmit}>
           <div className="spacing-24"></div>

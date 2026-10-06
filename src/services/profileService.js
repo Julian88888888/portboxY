@@ -132,6 +132,7 @@ export const upsertProfile = async (payload) => {
       'show_album_badge',
       'show_album_title',
       'show_album_description',
+      'show_portfolio_section',
       'show_model_stats',
       'show_profile_stats',
       'show_custom_links_title',

@@ -189,7 +189,10 @@ export default function JobRequestPopup() {
 
   const getPublicAvailableForTags = () => {
     let raw = profile?.available_for_tags;
-    if ((raw == null || raw === '') && isViewingOwnPublicProfile) {
+    if (raw == null || raw === '' || (Array.isArray(raw) && raw.length === 0)) {
+      raw = profile?.personal_stats?.availableForTags;
+    }
+    if ((raw == null || raw === '' || (Array.isArray(raw) && raw.length === 0)) && isViewingOwnPublicProfile) {
       raw = user?.user_metadata?.availableForTags;
     }
     if (raw == null || raw === '') return [];
@@ -378,6 +381,16 @@ export default function JobRequestPopup() {
     return true;
   };
 
+  const shouldShowPortfolioSection = () => {
+    if (profile?.show_portfolio_section === false) return false;
+    if (profile?.showPortfolioSection === false) return false;
+    if (profile?.personal_stats?.showPortfolioSection === false) return false;
+    if (isViewingOwnPublicProfile && user?.user_metadata?.showPortfolioSection === false) {
+      return false;
+    }
+    return true;
+  };
+
   // My Links section — profile owner setting only (must work logged out via DB)
   const shouldShowCustomLinksTitle = () => {
     if (profile?.show_custom_links_title === false) return false;
@@ -484,7 +497,8 @@ export default function JobRequestPopup() {
       username: getUserValue('username'),
       jobType: getUserValue('job_type', 'Model'),
       description: getUserValue('description'),
-      profileImage: resolveProfileImageUrl()
+      profileImage: resolveProfileImageUrl(),
+      availableForTags: getPublicAvailableForTags().map((tag) => tag.id),
     };
   };
 
@@ -961,6 +975,7 @@ export default function JobRequestPopup() {
         </div>
       </div>
       {/* Portfolio Albums Section */}
+      {shouldShowPortfolioSection() && (
       <div className="section portfolio_sec">
         <div className="content_wrapper">
           <h4 className="section_title">Portfolio</h4>
@@ -1042,6 +1057,7 @@ export default function JobRequestPopup() {
           {shouldShowBookMePortfolioSection() && canShowBookMeToVisitor && renderBookMeCta()}
         </div>
       </div>
+      )}
 
       {showLinksSection && (
       <div className="section links_sec">
@@ -1493,6 +1509,7 @@ export default function JobRequestPopup() {
         isOpen={isBookingModalOpen} 
         onClose={handleCloseBookingModal}
         profile={getProfileDataForModal()}
+        availableForTags={getPublicAvailableForTags().map((tag) => tag.id)}
       />
 
     </>

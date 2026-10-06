@@ -53,6 +53,21 @@ export const normalizeBookingAvailableForTags = (raw) => {
   return out;
 };
 
+/** Job type buttons for Book Me: only the owner's Available For selections, in canonical order. */
+export const getBookingJobTypeOptions = (rawTags) => {
+  let raw = rawTags;
+  if (typeof raw === 'string') {
+    try {
+      raw = JSON.parse(raw);
+    } catch {
+      raw = [];
+    }
+  }
+  const selected = new Set(normalizeBookingAvailableForTags(raw));
+  if (selected.size === 0) return [];
+  return BOOKING_AVAILABLE_FOR_OPTIONS.filter((option) => selected.has(option.id));
+};
+
 export function BookingAvailableForIcon({ type, color, size = 22 }) {
   const fill = color || 'currentColor';
   const common = {
