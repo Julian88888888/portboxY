@@ -117,6 +117,17 @@ export default function JobRequestPopup() {
     return defaultValue;
   };
 
+  const profileNameAlt = String(
+    getUserValue('display_name', '') || getUserValue('username', '') || ''
+  )
+    .trim()
+    .replace(/^@+/, '') || 'Profile';
+
+  const portfolioImageAlt = (albumTitle) => {
+    const album = String(albumTitle || '').trim() || 'Album';
+    return `${profileNameAlt} - ${album}`;
+  };
+
   useEffect(() => {
     const accountName = String(
       getUserValue('display_name', '') || getUserValue('username', '') || ''
@@ -649,7 +660,7 @@ export default function JobRequestPopup() {
               loading="lazy" 
               style={{opacity: 1, transform: "translate3d(0px, 0px, 0px) scale3d(1, 1, 1) rotateX(0deg) rotateY(0deg) rotateZ(0deg) skew(0deg, 0deg)", transformStyle: "preserve-3d"}} 
               data-w-id="30764f4a-1ca9-b0b6-0704-64b5f3b87ec8" 
-              alt={user?.name || "Profile"} 
+              alt={profileNameAlt} 
               className="prodile_image" 
               onError={(e) => {
                 e.target.src = '/images/default-avatar.svg';
@@ -748,17 +759,16 @@ export default function JobRequestPopup() {
       <section 
         className="section home_sec"
         style={headerBackgroundUrl ? {
-          backgroundImage: `linear-gradient(#ffffff05 82%, #f3f5f8bd 94%, #eef2f5), url('${headerBackgroundUrl}')`,
-          backgroundPosition: '0 0, 50% 0',
-          backgroundRepeat: 'repeat, no-repeat',
-          backgroundSize: 'auto, cover',
-          backgroundClip: 'border-box',
+          backgroundImage: 'none',
+          backgroundColor: '#eef2f5',
           justifyContent: 'center',
           alignItems: 'flex-end',
           height: '600px',
           marginBottom: '-184px',
           paddingBottom: '20px',
-          display: 'flex'
+          display: 'flex',
+          position: 'relative',
+          overflow: 'hidden',
         } : {
           backgroundImage: 'none',
           backgroundColor: '#eef2f5',
@@ -767,7 +777,37 @@ export default function JobRequestPopup() {
           paddingBottom: '0',
           display: 'block'
         }}
-      ></section>
+      >
+        {headerBackgroundUrl && (
+          <>
+            <img
+              src={headerBackgroundUrl}
+              alt={profileNameAlt}
+              className="profile-header-image"
+              style={{
+                position: 'absolute',
+                inset: 0,
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+                objectPosition: '50% 0',
+                zIndex: 0,
+                pointerEvents: 'none',
+              }}
+            />
+            <div
+              aria-hidden="true"
+              style={{
+                position: 'absolute',
+                inset: 0,
+                backgroundImage: 'linear-gradient(#ffffff05 82%, #f3f5f8bd 94%, #eef2f5)',
+                pointerEvents: 'none',
+                zIndex: 1,
+              }}
+            />
+          </>
+        )}
+      </section>
       <div className="section profile_sec">
         <div className="content_wrapper content_align_center">
           <div className={profileImageUrl ? 'spacing_48' : 'spacing_24'} />
@@ -777,7 +817,7 @@ export default function JobRequestPopup() {
               src={profileImageUrl}
               loading="lazy"
               data-w-id="a631810c-b7df-495c-c9a7-03835c973869"
-              alt={user?.name || "Profile"}
+              alt={profileNameAlt}
               className="prodile_image"
               onError={(e) => {
                 e.target.src = '/images/default-avatar.svg';
@@ -1034,7 +1074,7 @@ export default function JobRequestPopup() {
                     >
                       <img 
                         src={getAlbumCoverSrc(album.cover_image_url, normalizeImageUrl)} 
-                        alt={album.title} 
+                        alt={portfolioImageAlt(album.title)} 
                         className="product_image fashionphoto"
                         style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
                         onError={(e) => {
@@ -1354,7 +1394,7 @@ export default function JobRequestPopup() {
                   >
                     <img
                       src={normalizeImageUrl(image.url) || ALBUM_PLACEHOLDER}
-                      alt={`${selectedAlbum.title} - Image ${index + 1}`}
+                      alt={portfolioImageAlt(selectedAlbum.title)}
                       style={{
                         width: '100%',
                         height: '100%',
@@ -1486,7 +1526,7 @@ export default function JobRequestPopup() {
           )}
           <img
             src={normalizeImageUrl(albumImages[lightboxIndex].url) || ALBUM_PLACEHOLDER}
-            alt={`${selectedAlbum?.title || 'Album'} - Image ${lightboxIndex + 1}`}
+            alt={portfolioImageAlt(selectedAlbum?.title)}
             onClick={(e) => e.stopPropagation()}
             onError={(e) => {
               e.target.src = ALBUM_PLACEHOLDER;

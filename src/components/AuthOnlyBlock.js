@@ -80,7 +80,7 @@ function AuthOnlyBlock() {
       >
         <img
           src={avatarSrc}
-          alt=""
+          alt={profile?.display_name || user?.user_metadata?.full_name || user?.user_metadata?.name || 'Profile'}
           loading="lazy"
           className="prodile_image small_img"
           onError={(e) => {
@@ -97,6 +97,8 @@ function AuthOnlyBlock() {
         />
         {displayUsername ? (
           <span
+            className="avatar-tooltip"
+            title={displayUsername}
             style={{
               fontSize: '12px',
               lineHeight: 1,

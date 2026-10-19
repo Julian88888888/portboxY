@@ -1248,7 +1248,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
             <img 
               src={getProfileImage()} 
               loading="lazy" 
-              alt="" 
+              alt={profile?.display_name || formData.name || 'Profile'} 
               className="prodile_image small_img"
               onError={(e) => {
                 e.target.src = '/images/default-avatar.svg';
@@ -2343,7 +2343,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                                   <div className="product_image_wrapper">
                                     <img 
                                       src={getAlbumCoverSrc(album.cover_image_url, normalizeImageUrl)} 
-                                      alt={album.title} 
+                                      alt={`${profile?.display_name || formData.name || 'Profile'} - ${album.title || 'Album'}`} 
                                       className="product_image fashionphoto"
                                       onError={(e) => {
                                         e.target.src = ALBUM_PLACEHOLDER;
@@ -4579,7 +4579,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                   >
                     <img
                       src={normalizeImageUrl(image.url) || ALBUM_PLACEHOLDER}
-                      alt="Album image"
+                      alt={`${profile?.display_name || formData.name || 'Profile'} - ${viewingAlbum.title || 'Album'}`}
                       style={{
                         width: '100%',
                         height: '100%',

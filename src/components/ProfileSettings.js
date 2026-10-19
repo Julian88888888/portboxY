@@ -443,7 +443,7 @@ export default function ProfileSettings() {
                   <img 
                     loading="lazy" 
                     src={getProfileImageUrl()} 
-                    alt="Profile Photo" 
+                    alt={formData.display_name || profile?.display_name || 'Profile'} 
                     style={{
                       width: '100px', 
                       height: '100px', 
@@ -566,7 +566,7 @@ export default function ProfileSettings() {
                   <img 
                     loading="lazy" 
                     src={getHeaderImageUrl()} 
-                    alt="Header Photo" 
+                    alt={formData.display_name || profile?.display_name || 'Profile'} 
                     style={{
                       width: '100px', 
                       height: '100px', 
