@@ -755,6 +755,60 @@
   }
 }
 
+/* Edit page albums: always small thumbnails with a capped width.
+   The public S/M/L size picker must not change this grid. */
+.dashboard-albums-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 200px));
+  gap: 16px;
+  margin: 24px 0;
+  justify-content: start;
+}
+
+.dashboard-albums-grid .dashboard-album-card {
+  width: 100%;
+  max-width: 200px;
+}
+
+.dashboard-albums-grid .product_image_wrapper {
+  aspect-ratio: 1 / 1;
+  border-radius: 16px;
+  background-color: #f3f4f6;
+}
+
+.dashboard-albums-grid .product_image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.dashboard-albums-grid .font_weight_bold {
+  margin-top: 8px;
+  font-size: 13px;
+}
+
+.dashboard-albums-grid .text_color_grey {
+  font-size: 12px;
+  margin-bottom: 0;
+}
+
+.dashboard-albums-grid .discount_tag {
+  top: 8px;
+  left: 8px;
+  padding: 4px 8px;
+  font-size: 10px;
+}
+
+@media screen and (max-width: 767px) {
+  .dashboard-albums-grid {
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  }
+
+  .dashboard-albums-grid .dashboard-album-card {
+    max-width: none;
+  }
+}
+
 
 
 

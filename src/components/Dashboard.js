@@ -21,8 +21,6 @@ import { getDisplayAge, getMaxDobForInput, normalizeDobForInput } from '../utils
 import {
   DISPLAY_SIZE_OPTIONS,
   normalizeDisplaySize,
-  shouldShowDisplaySizeBadge,
-  getImageThumbGridStyle,
 } from '../utils/displaySize';
 import { formatEthnicityLabel } from '../utils/ethnicity';
 import {
@@ -2336,9 +2334,9 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                         {albums.length === 0 ? (
                           <p className="text_color_grey" style={{ marginBottom: '24px' }}>No albums yet. Create your first album!</p>
                         ) : (
-                          <div className="w-layout-grid blog_grid" style={{ marginBottom: '24px' }}>
+                          <div className="dashboard-albums-grid">
                             {albums.map((album, index) => (
-                              <div key={album.id || index} className="product_item w-inline-block" style={{ position: 'relative' }}>
+                              <div key={album.id || index} className="dashboard-album-card" style={{ position: 'relative' }}>
                                 <a href="#" className="product_item w-inline-block">
                                   <div className="product_image_wrapper">
                                     <img 
@@ -4113,7 +4111,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
               <DisplaySizePicker
                 value={newAlbumFormData.displaySize}
                 onChange={(displaySize) => setNewAlbumFormData({ ...newAlbumFormData, displaySize })}
-                label="Card size on public Portfolio"
+                label="Cover image size in album gallery"
               />
 
               <div style={{ display: 'flex', gap: '12px', marginTop: '24px' }}>
@@ -4558,12 +4556,11 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
             {albumImages[viewingAlbum.id] && albumImages[viewingAlbum.id].length > 0 ? (
               <div style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
+                gridTemplateColumns: 'repeat(auto-fill, 160px)',
+                justifyContent: 'center',
                 gap: '16px'
               }}>
-                {albumImages[viewingAlbum.id].map((image) => {
-                  const thumbStyle = getImageThumbGridStyle(image.display_size);
-                  return (
+                {albumImages[viewingAlbum.id].map((image) => (
                   <div
                     key={image.id}
                     style={{
@@ -4572,9 +4569,8 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                       overflow: 'hidden',
                       border: viewingAlbum.cover_image_id === image.id ? '3px solid #007bff' : '1px solid #ddd',
                       boxShadow: viewingAlbum.cover_image_id === image.id ? '0 0 10px rgba(0,123,255,0.5)' : 'none',
-                      gridColumn: thumbStyle.gridColumn,
-                      aspectRatio: thumbStyle.aspectRatio,
-                      width: '100%'
+                      aspectRatio: '1 / 1',
+                      width: '160px'
                     }}
                   >
                     <img
@@ -4584,8 +4580,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                         width: '100%',
                         height: '100%',
                         objectFit: 'cover',
-                        display: 'block',
-                        minHeight: '120px'
+                        display: 'block'
                       }}
                       onError={(e) => {
                         console.error('Failed to load image:', image.url, 'Normalized:', normalizeImageUrl(image.url));
@@ -4595,21 +4590,6 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                         console.log('Image loaded successfully:', normalizeImageUrl(image.url));
                       }}
                     />
-                    {shouldShowDisplaySizeBadge(image.display_size) && (
-                      <div style={{
-                        position: 'absolute',
-                        top: '8px',
-                        right: '8px',
-                        background: 'rgba(0,0,0,0.65)',
-                        color: 'white',
-                        padding: '2px 6px',
-                        borderRadius: '4px',
-                        fontSize: '10px',
-                        fontWeight: 'bold'
-                      }}>
-                        {normalizeDisplaySize(image.display_size)}
-                      </div>
-                    )}
                     {viewingAlbum.cover_image_id === image.id && (
                       <div style={{
                         position: 'absolute',
@@ -4711,8 +4691,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                     </button>
                     </div>
                   </div>
-                  );
-                })}
+                ))}
               </div>
             ) : (
               <p className="text_color_grey" style={{ textAlign: 'center', padding: '40px' }}>

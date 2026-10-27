@@ -10,7 +10,7 @@ import { formatJobType, isModelJobType } from '../utils/formatJobType';
 import { getDisplayAge } from '../utils/dateOfBirth';
 import { ALBUM_PLACEHOLDER, getAlbumCoverSrc } from '../utils/albumPlaceholder';
 import {
-  getAlbumCardGridStyle,
+  DISPLAY_SIZE_OPTIONS,
   getImageThumbGridStyle,
   normalizeDisplaySize,
   shouldShowDisplaySizeBadge,
@@ -97,6 +97,7 @@ export default function JobRequestPopup() {
   const [lightboxIndex, setLightboxIndex] = useState(null);
   const [customLinks, setCustomLinks] = useState([]);
   const [customLinksLoading, setCustomLinksLoading] = useState(false);
+  const [portfolioDisplaySize, setPortfolioDisplaySize] = useState('M');
 
   // Profile owner values only — never leak logged-in viewer metadata onto other @username pages
   const getUserValue = (field, defaultValue = '') => {
@@ -414,11 +415,6 @@ export default function JobRequestPopup() {
     }
     return true;
   };
-
-  const showLinksSection =
-    hasPublicBookingsBlock ||
-    shouldShowBookMeInLinksArea ||
-    shouldShowCustomLinksTitle();
 
   // Get profile photo for public page (respects show_profile_photo toggle)
   const showProfilePhoto = profile?.show_profile_photo !== false;
@@ -808,7 +804,7 @@ export default function JobRequestPopup() {
           </>
         )}
       </section>
-      <div className="section profile_sec">
+      <div className="section profile_sec public_profile_sec">
         <div className="content_wrapper content_align_center">
           <div className={profileImageUrl ? 'spacing_48' : 'spacing_24'} />
           {profileImageUrl && (
@@ -1018,7 +1014,24 @@ export default function JobRequestPopup() {
       {shouldShowPortfolioSection() && (
       <div className="section portfolio_sec">
         <div className="content_wrapper">
-          <h4 className="section_title">Portfolio</h4>
+          <div className="portfolio_header">
+            <h4 className="section_title">Portfolio</h4>
+            <div className="portfolio_size_control">
+              <label htmlFor="portfolioDisplaySize">Size</label>
+              <select
+                id="portfolioDisplaySize"
+                className="portfolio_size_select"
+                value={normalizeDisplaySize(portfolioDisplaySize)}
+                onChange={(e) => setPortfolioDisplaySize(normalizeDisplaySize(e.target.value))}
+              >
+                {DISPLAY_SIZE_OPTIONS.map((option) => (
+                  <option key={option.id} value={option.id}>
+                    {option.hint}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
           <div className="spacing_24"></div>
           
           {albumsLoading ? (
@@ -1030,33 +1043,24 @@ export default function JobRequestPopup() {
               <p className="text_color_grey">No albums yet.</p>
             </div>
           ) : (
-            <div
-              className="w-layout-grid blog_grid portfolio-albums-grid"
-              style={{
-                marginBottom: '24px',
-                display: 'grid',
-                gridTemplateColumns: 'repeat(6, minmax(0, 1fr))',
-                gap: '20px',
-              }}
-            >
+            <div className="portfolio-albums-flex" style={{ marginBottom: '24px' }}>
               {albums.map((album, index) => {
-                const cardSizeStyle = getAlbumCardGridStyle(album.card_size);
+                const cardSize = normalizeDisplaySize(portfolioDisplaySize);
+                const cardSizeClass = `portfolio-album-card--${cardSize.toLowerCase()}`;
+                const albumTitle = album.title || 'Album';
+                const coverAlt = portfolioImageAlt(album.title);
                 return (
                 <div 
                   key={album.id || index} 
-                  className="product_item w-inline-block" 
-                  style={{ 
-                    position: 'relative',
-                    cursor: 'pointer',
-                    gridColumn: cardSizeStyle.gridColumn,
-                    width: '100%',
-                  }}
-                  onClick={() => handleAlbumClick(album)}
+                  className={`product_item w-inline-block portfolio-album-card ${cardSizeClass}`}
+                  style={{ position: 'relative', cursor: 'pointer' }}
                 >
                   <a 
                     href="#" 
                     className="product_item w-inline-block"
                     style={{ display: 'block', width: '100%' }}
+                    title={albumTitle}
+                    aria-label={coverAlt}
                     onClick={(e) => {
                       e.preventDefault();
                       handleAlbumClick(album);
@@ -1066,7 +1070,7 @@ export default function JobRequestPopup() {
                       className="product_image_wrapper"
                       style={{
                         width: '100%',
-                        aspectRatio: cardSizeStyle.aspectRatio,
+                        aspectRatio: cardSize === 'S' ? '1 / 1' : '4 / 5',
                         borderRadius: '20px',
                         overflow: 'hidden',
                         background: '#f3f4f6',
@@ -1074,7 +1078,8 @@ export default function JobRequestPopup() {
                     >
                       <img 
                         src={getAlbumCoverSrc(album.cover_image_url, normalizeImageUrl)} 
-                        alt={portfolioImageAlt(album.title)} 
+                        alt={coverAlt}
+                        title={albumTitle}
                         className="product_image fashionphoto"
                         style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
                         onError={(e) => {
@@ -1099,12 +1104,12 @@ export default function JobRequestPopup() {
       </div>
       )}
 
-      {showLinksSection && (
+      {hasPublicBookingsBlock && (
       <div className="section links_sec">
-        <div className="content_wrapper largebanner_btn">
-          {hasPublicBookingsBlock && (
+        <div className="content_wrapper">
+          <div className="spacing_48"></div>
+          <div className="public-block public-block--bookings">
             <div style={{ width: '100%', margin: '0 auto' }}>
-              <div className="spacing_48"></div>
               {String(getBookingsTitleDisplay()).trim() !== '' && (
                 <h4
                   style={{
@@ -1198,71 +1203,89 @@ export default function JobRequestPopup() {
                 </>
               )}
             </div>
-          )}
-          {shouldShowBookMeInLinksArea && (
-            <div style={{ width: '100%', margin: '0 auto', textAlign: 'center' }}>
-              {hasPublicBookingsBlock ? (
+            {shouldShowBookMeInLinksArea && (
+              <div style={{ width: '100%', margin: '0 auto', textAlign: 'center' }}>
                 <div className="spacing_24" />
-              ) : (
-                <div className="spacing_48" />
-              )}
-              {renderBookMeCta()}
-            </div>
-          )}
-          {shouldShowCustomLinksTitle() && (
-            <>
+                {renderBookMeCta()}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+      )}
+
+      {shouldShowCustomLinksTitle() && (
+      <div className="section links_sec">
+        <div className="content_wrapper">
           <div className="spacing_48"></div>
-          <h4 className="section_title links_headinng">My Links</h4>
-          <div className="spacing_24"></div>
-          {customLinksLoading ? (
-            <div style={{ textAlign: 'center', padding: '40px', color: '#6c757d' }}>
-              <p>Loading links...</p>
-            </div>
-          ) : (
-            <div className="w-layout-grid link_cloud_grid">
-              {customLinks.length > 0 ? (
-                customLinks.map((link, index) => (
-                  <a
-                    key={link.id || index}
-                    href={link.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex_wrapper flex_distribute link_block w-inline-block"
-                  >
-                    {link.icon_url && (
-                      <img 
-                        src={link.icon_url} 
-                        loading="lazy" 
-                        alt="" 
-                        className="icon_32x32"
-                        onError={(e) => {
-                          e.target.style.display = 'none';
-                        }}
-                      />
-                    )}
-                    <div>{link.title}</div>
-                    <div className="icon_24x24 w-embed">
-                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                        <path d="M10 5H7.8C6.11984 5 5.27976 5 4.63803 5.32698C4.07354 5.6146 3.6146 6.07354 3.32698 6.63803C3 7.27976 3 8.11984 3 9.8V16.2C3 17.8802 3 18.7202 3.32698 19.362C3.6146 19.9265 4.07354 20.3854 4.63803 20.673C5.27976 21 6.11984 21 7.8 21H14.2C15.8802 21 16.7202 21 17.362 20.673C17.9265 20.3854 18.3854 19.9265 18.673 19.362C19 18.7202 19 17.8802 19 16.2V14M21 9V3V9ZM21 3H15H21ZM21 3L13 11L21 3Z" stroke="#783FF3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                    </div>
-                  </a>
-                ))
-              ) : (
-                <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '40px', color: '#6c757d' }}>
-                  <p>No links added yet.</p>
-                </div>
-              )}
-            </div>
-          )}
-              {shouldShowBookMeCustomLinksSection() && canShowBookMeToVisitor && (
-                <>
-                  <div className="spacing_32"></div>
-                  <div style={{ textAlign: 'center', width: '100%' }}>{renderBookMeCta()}</div>
-                </>
-              )}
-            </>
-          )}
+          <div className="public-block public-block--links">
+            {!hasPublicBookingsBlock && shouldShowBookMeInLinksArea && (
+              <div style={{ width: '100%', margin: '0 auto', textAlign: 'center' }}>
+                {renderBookMeCta()}
+                <div className="spacing_24" />
+              </div>
+            )}
+            <h4 className="section_title links_headinng">My Links</h4>
+            <div className="spacing_24"></div>
+            {customLinksLoading ? (
+              <div style={{ textAlign: 'center', padding: '40px', color: '#6c757d' }}>
+                <p>Loading links...</p>
+              </div>
+            ) : (
+              <div className="w-layout-grid link_cloud_grid">
+                {customLinks.length > 0 ? (
+                  customLinks.map((link, index) => (
+                    <a
+                      key={link.id || index}
+                      href={link.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex_wrapper flex_distribute link_block w-inline-block"
+                    >
+                      {link.icon_url && (
+                        <img 
+                          src={link.icon_url} 
+                          loading="lazy" 
+                          alt="" 
+                          className="icon_32x32"
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                          }}
+                        />
+                      )}
+                      <div>{link.title}</div>
+                      <div className="icon_24x24 w-embed">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                          <path d="M10 5H7.8C6.11984 5 5.27976 5 4.63803 5.32698C4.07354 5.6146 3.6146 6.07354 3.32698 6.63803C3 7.27976 3 8.11984 3 9.8V16.2C3 17.8802 3 18.7202 3.32698 19.362C3.6146 19.9265 4.07354 20.3854 4.63803 20.673C5.27976 21 6.11984 21 7.8 21H14.2C15.8802 21 16.7202 21 17.362 20.673C17.9265 20.3854 18.3854 19.9265 18.673 19.362C19 18.7202 19 17.8802 19 16.2V14M21 9V3V9ZM21 3H15H21ZM21 3L13 11L21 3Z" stroke="#783FF3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      </div>
+                    </a>
+                  ))
+                ) : (
+                  <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '40px', color: '#6c757d' }}>
+                    <p>No links added yet.</p>
+                  </div>
+                )}
+              </div>
+            )}
+            {shouldShowBookMeCustomLinksSection() && canShowBookMeToVisitor && (
+              <>
+                <div className="spacing_32"></div>
+                <div style={{ textAlign: 'center', width: '100%' }}>{renderBookMeCta()}</div>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+      )}
+
+      {!hasPublicBookingsBlock && !shouldShowCustomLinksTitle() && shouldShowBookMeInLinksArea && (
+      <div className="section links_sec">
+        <div className="content_wrapper">
+          <div className="spacing_48"></div>
+          <div className="public-block public-block--book-me" style={{ textAlign: 'center' }}>
+            {renderBookMeCta()}
+          </div>
         </div>
       </div>
       )}
@@ -1377,6 +1400,8 @@ export default function JobRequestPopup() {
                     key={image.id || index}
                     type="button"
                     onClick={() => setLightboxIndex(index)}
+                    title={selectedAlbum.title || 'Album'}
+                    aria-label={portfolioImageAlt(selectedAlbum.title)}
                     style={{
                       position: 'relative',
                       borderRadius: '8px',
@@ -1395,6 +1420,7 @@ export default function JobRequestPopup() {
                     <img
                       src={normalizeImageUrl(image.url) || ALBUM_PLACEHOLDER}
                       alt={portfolioImageAlt(selectedAlbum.title)}
+                      title={selectedAlbum.title || 'Album'}
                       style={{
                         width: '100%',
                         height: '100%',
@@ -1527,6 +1553,7 @@ export default function JobRequestPopup() {
           <img
             src={normalizeImageUrl(albumImages[lightboxIndex].url) || ALBUM_PLACEHOLDER}
             alt={portfolioImageAlt(selectedAlbum?.title)}
+            title={selectedAlbum?.title || 'Album'}
             onClick={(e) => e.stopPropagation()}
             onError={(e) => {
               e.target.src = ALBUM_PLACEHOLDER;

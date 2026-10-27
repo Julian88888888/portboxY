@@ -11,18 +11,6 @@ export const normalizeDisplaySize = (value) =>
 export const shouldShowDisplaySizeBadge = (value) =>
   normalizeDisplaySize(value) !== 'L';
 
-/** Portfolio album card span in a 6-column grid */
-export const getAlbumCardGridStyle = (size) => {
-  const normalized = normalizeDisplaySize(size);
-  if (normalized === 'S') {
-    return { gridColumn: 'span 2', aspectRatio: '1 / 1' };
-  }
-  if (normalized === 'L') {
-    return { gridColumn: 'span 4', aspectRatio: '4 / 5' };
-  }
-  return { gridColumn: 'span 3', aspectRatio: '4 / 5' };
-};
-
 /** Thumbnail cell in album image grids (12-col feel via auto spans) */
 export const getImageThumbGridStyle = (size) => {
   const normalized = normalizeDisplaySize(size);

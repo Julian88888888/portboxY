@@ -4436,4 +4436,131 @@ a {
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
+/* Public profile: keep avatar above the header background */
+.public_profile_sec {
+  position: relative;
+  z-index: 2;
+}
+
+.public_profile_sec .profile_wrapper {
+  position: relative;
+  z-index: 2;
+}
+
+/* Public profile: portfolio size control */
+.portfolio_header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+}
+
+.portfolio_header .section_title {
+  margin: 0;
+}
+
+.portfolio_size_control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.portfolio_size_control label {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.portfolio_size_select {
+  width: auto;
+  min-width: 132px;
+  margin: 0;
+  padding: 8px 32px 8px 12px;
+  border: 2px solid #e5e7eb;
+  border-radius: 10px;
+  background-color: #fff;
+  font-size: 14px;
+  color: #111827;
+  cursor: pointer;
+}
+
+/* Public profile: album cards stay centered on every row (including laptop) */
+.portfolio-albums-flex {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 20px;
+}
+
+.portfolio-album-card {
+  flex: 0 1 calc(50% - 10px);
+  min-width: 0;
+  max-width: 100%;
+}
+
+.portfolio-album-card.portfolio-album-card--s {
+  flex-basis: calc(33.333% - 14px);
+}
+
+.portfolio-album-card.portfolio-album-card--m {
+  flex-basis: calc(50% - 10px);
+}
+
+.portfolio-album-card.portfolio-album-card--l {
+  flex-basis: 100%;
+}
+
+/* Public profile: separate containers for bookings and My Links */
+.public-block {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 24px;
+  border: 1px solid #eceff3;
+  border-radius: 20px;
+  background-color: #fff;
+}
+
+.public-block .section_title {
+  margin-top: 0;
+}
+
+@media screen and (max-width: 767px) {
+  .portfolio_header {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .portfolio_size_control {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .portfolio_size_select {
+    flex: 1;
+    max-width: 220px;
+  }
+
+  .portfolio-albums-flex {
+    gap: 12px;
+  }
+
+  .portfolio-albums-flex > .portfolio-album-card {
+    flex: 0 0 100%;
+  }
+
+  .portfolio-albums-flex > .portfolio-album-card.portfolio-album-card--s {
+    flex: 0 0 calc(50% - 6px);
+  }
+
+  .public-block {
+    padding: 20px 16px;
+    border-radius: 16px;
+  }
+}
+
 
