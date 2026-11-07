@@ -656,7 +656,8 @@ export default function JobRequestPopup() {
               loading="lazy" 
               style={{opacity: 1, transform: "translate3d(0px, 0px, 0px) scale3d(1, 1, 1) rotateX(0deg) rotateY(0deg) rotateZ(0deg) skew(0deg, 0deg)", transformStyle: "preserve-3d"}} 
               data-w-id="30764f4a-1ca9-b0b6-0704-64b5f3b87ec8" 
-              alt={profileNameAlt} 
+              alt={profileNameAlt}
+              title={profileNameAlt}
               className="prodile_image" 
               onError={(e) => {
                 e.target.src = '/images/default-avatar.svg';
@@ -752,8 +753,9 @@ export default function JobRequestPopup() {
       </div>
     </div>
     )}
-      <section 
+      <section
         className="section home_sec"
+        title={profileNameAlt}
         style={headerBackgroundUrl ? {
           backgroundImage: 'none',
           backgroundColor: '#eef2f5',
@@ -779,6 +781,7 @@ export default function JobRequestPopup() {
             <img
               src={headerBackgroundUrl}
               alt={profileNameAlt}
+              title={profileNameAlt}
               className="profile-header-image"
               style={{
                 position: 'absolute',
@@ -814,6 +817,7 @@ export default function JobRequestPopup() {
               loading="lazy"
               data-w-id="a631810c-b7df-495c-c9a7-03835c973869"
               alt={profileNameAlt}
+              title={profileNameAlt}
               className="prodile_image"
               onError={(e) => {
                 e.target.src = '/images/default-avatar.svg';
