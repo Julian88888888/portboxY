@@ -4449,18 +4449,22 @@ a {
 
 /* Public profile: portfolio size control */
 .portfolio_header {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  justify-content: space-between;
   gap: 16px;
   width: 100%;
 }
 
 .portfolio_header .section_title {
+  grid-column: 2;
   margin: 0;
+  text-align: center;
 }
 
 .portfolio_size_control {
+  grid-column: 3;
+  justify-self: end;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -4514,14 +4518,14 @@ a {
   flex-basis: 100%;
 }
 
-/* Public profile: separate containers for bookings and My Links */
+/* Public profile: separate containers for bookings and Links (no card background) */
 .public-block {
   width: 100%;
   box-sizing: border-box;
-  padding: 24px;
-  border: 1px solid #eceff3;
-  border-radius: 20px;
-  background-color: #fff;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background-color: transparent;
 }
 
 .public-block .section_title {
@@ -4530,12 +4534,18 @@ a {
 
 @media screen and (max-width: 767px) {
   .portfolio_header {
-    flex-direction: column;
-    align-items: center;
+    grid-template-columns: 1fr;
+    justify-items: center;
     text-align: center;
   }
 
+  .portfolio_header .section_title {
+    grid-column: 1;
+  }
+
   .portfolio_size_control {
+    grid-column: 1;
+    justify-self: center;
     width: 100%;
     justify-content: center;
   }
@@ -4558,9 +4568,60 @@ a {
   }
 
   .public-block {
-    padding: 20px 16px;
-    border-radius: 16px;
+    padding: 0;
+    border-radius: 0;
   }
+}
+
+/* Public profile: center the description under the name */
+.profile_description {
+  margin-left: auto;
+  margin-right: auto;
+  text-align: center;
+}
+
+/* Public profile: section titles stay uppercase on mobile/tablet as well */
+.portfolio_sec .section_title,
+.links_sec .section_title,
+.public-block--bookings h4 {
+  text-transform: uppercase;
+}
+
+.links_sec .section_title {
+  text-align: center;
+}
+
+/* Public profile: no extra vertical spacing above/below the section blocks */
+.section.links_sec {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+/* Public bookings stats: if a row doesn't fit, items drop to the next line
+   instead of squeezing the labels into multiple lines. */
+.public-block--bookings .stats_wrap {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 20px 24px;
+}
+
+.public-block--bookings .stats_wrap .stat_item {
+  flex: 1 1 120px;
+  max-width: 220px;
+  align-items: center;
+  text-align: center;
+}
+
+.public-block--bookings .stats_wrap .stat_title {
+  height: auto;
+  margin-top: 0;
+  white-space: nowrap;
+}
+
+.public-block--bookings .stats_wrap .stat_descript {
+  height: auto;
 }
 
 

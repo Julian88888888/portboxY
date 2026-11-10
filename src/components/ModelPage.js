@@ -838,7 +838,7 @@ export default function JobRequestPopup() {
               <p className="username_txt">@{getUserValue('username')}</p>
             )}
             {profile?.show_description !== false && getUserValue('description') && (
-              <p className="text_color_grey text_width_medium">
+              <p className="text_color_grey text_width_medium profile_description">
                 {getUserValue('description')}
               </p>
             )}
@@ -1111,13 +1111,12 @@ export default function JobRequestPopup() {
       {hasPublicBookingsBlock && (
       <div className="section links_sec">
         <div className="content_wrapper">
-          <div className="spacing_48"></div>
           <div className="public-block public-block--bookings">
             <div style={{ width: '100%', margin: '0 auto' }}>
               {String(getBookingsTitleDisplay()).trim() !== '' && (
                 <h4
                   style={{
-                    textAlign: 'left',
+                    textAlign: 'center',
                     fontWeight: 700,
                     fontSize: '17px',
                     letterSpacing: '0.02em',
@@ -1221,7 +1220,6 @@ export default function JobRequestPopup() {
       {shouldShowCustomLinksTitle() && (
       <div className="section links_sec">
         <div className="content_wrapper">
-          <div className="spacing_48"></div>
           <div className="public-block public-block--links">
             {!hasPublicBookingsBlock && shouldShowBookMeInLinksArea && (
               <div style={{ width: '100%', margin: '0 auto', textAlign: 'center' }}>
@@ -1229,7 +1227,7 @@ export default function JobRequestPopup() {
                 <div className="spacing_24" />
               </div>
             )}
-            <h4 className="section_title links_headinng">My Links</h4>
+            <h4 className="section_title links_headinng">LINKS</h4>
             <div className="spacing_24"></div>
             {customLinksLoading ? (
               <div style={{ textAlign: 'center', padding: '40px', color: '#6c757d' }}>
