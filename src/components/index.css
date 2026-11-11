@@ -3230,6 +3230,26 @@ a {
   line-height: 24px;
 }
 
+/* Profile page: INDUSTRY / STATUS / MARKETS / NICHE */
+.profile_sec .stats_wrap .stat_title {
+  font-size: 11px;
+  font-weight: 700;
+  height: auto;
+  letter-spacing: 0.4px;
+  line-height: 1.25;
+  margin-top: 4px;
+  margin-bottom: 2px;
+  text-transform: uppercase;
+}
+
+.profile_sec .stats_wrap .stat_descript {
+  font-size: 12px;
+  font-weight: 400;
+  height: auto;
+  letter-spacing: -0.1px;
+  line-height: 1.35;
+}
+
 .stats_wrap_bottom {
   display: grid;
   width: 100%;
@@ -3268,6 +3288,26 @@ a {
   font-weight: 400;
   letter-spacing: -0.3px;
   line-height: 24px;
+}
+
+/* Profile page: AGE / GENDER / ETHNICITY / NATIONALITY / LANGUAGES (+ model body stats) */
+.profile_sec .stats_wrap_bottom .stat_title {
+  font-size: 11px;
+  font-weight: 700;
+  height: auto;
+  letter-spacing: 0.4px;
+  line-height: 1.25;
+  margin-top: 4px;
+  margin-bottom: 2px;
+  text-transform: uppercase;
+}
+
+.profile_sec .stats_wrap_bottom .stat_descript {
+  font-size: 12px;
+  font-weight: 400;
+  height: auto;
+  letter-spacing: -0.1px;
+  line-height: 1.35;
 }
 
 .image {
@@ -4614,14 +4654,31 @@ a {
   text-align: center;
 }
 
+.public-block--bookings h4 {
+  text-align: center !important;
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
 .public-block--bookings .stats_wrap .stat_title {
+  font-size: 11px;
+  font-weight: 700;
   height: auto;
+  letter-spacing: 0.4px;
+  line-height: 1.25;
   margin-top: 0;
+  margin-bottom: 2px;
+  text-transform: uppercase;
   white-space: nowrap;
 }
 
 .public-block--bookings .stats_wrap .stat_descript {
+  font-size: 12px;
+  font-weight: 400;
   height: auto;
+  letter-spacing: -0.1px;
+  line-height: 1.35;
 }
 
 
