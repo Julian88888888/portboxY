@@ -3,9 +3,14 @@ const { supabase } = require('../middleware/supabaseAuth');
 /**
  * Get all bookings for current user (as model - received)
  * GET /api/bookings
+ * GET /api/bookings?unread_summary=1 → unread counts
  */
 const getBookings = async (req, res) => {
   try {
+    if (req.query.unread_summary === '1' || req.query.unread_summary === 'true') {
+      return getUnreadSummary(req, res);
+    }
+
     const userId = req.user.id;
 
     const { data, error } = await supabase
@@ -419,14 +424,22 @@ const getBookingMessages = async (req, res) => {
 };
 
 /**
- * Send a message in a booking chat
+ * Send a message in a booking chat, or mark as read
  * POST /api/bookings/:id/messages
+ * POST { mark_read: true } → mark read
+ * POST { body: "..." } → send message
  */
 const createBookingMessage = async (req, res) => {
   try {
     const userId = req.user.id;
     const bookingId = req.params.id;
-    const { body } = req.body || {};
+    const payload = req.body || {};
+
+    if (payload.mark_read === true || payload.mark_read === 'true' || payload.action === 'mark_read') {
+      return markBookingRead(req, res);
+    }
+
+    const { body } = payload;
 
     if (!body || !String(body).trim()) {
       return res.status(400).json({
@@ -521,13 +534,19 @@ const getGuestBookingMessages = async (req, res) => {
 };
 
 /**
- * Guest: send a message (no auth, validate by email)
- * POST /api/bookings/:id/guest-messages  body: { email, body }
+ * Guest: send a message or mark as read (no auth, validate by email)
+ * POST /api/bookings/:id/guest-messages  body: { email, body } | { email, mark_read: true }
  */
 const createGuestBookingMessage = async (req, res) => {
   try {
     const bookingId = req.params.id;
-    const { email: rawEmail, body: messageBody } = req.body || {};
+    const payload = req.body || {};
+
+    if (payload.mark_read === true || payload.mark_read === 'true' || payload.action === 'mark_read') {
+      return markGuestBookingRead(req, res);
+    }
+
+    const { email: rawEmail, body: messageBody } = payload;
     const email = (rawEmail || '').trim().toLowerCase();
     if (!email) {
       return res.status(400).json({ success: false, message: 'Email is required' });

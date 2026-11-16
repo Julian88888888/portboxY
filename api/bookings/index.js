@@ -85,6 +85,98 @@ module.exports = async (req, res) => {
     const userId = user.id;
     console.log('User authenticated:', userId);
 
+    // GET /api/bookings?unread_summary=1 - Unread chat counts (merged to stay under Hobby function limit)
+    if (req.method === 'GET' && (req.query.unread_summary === '1' || req.query.unread_summary === 'true')) {
+      const userEmail = (user.email || '').trim().toLowerCase();
+
+      const { data: incoming, error: incomingError } = await supabase
+        .from('bookings')
+        .select('id')
+        .eq('user_id', userId);
+      if (incomingError) throw incomingError;
+
+      let outgoing = [];
+      if (userEmail) {
+        const { data: allBookings, error: allError } = await supabase
+          .from('bookings')
+          .select('id, email');
+        if (allError) throw allError;
+        outgoing = (allBookings || []).filter(
+          (b) => (b.email || '').trim().toLowerCase() === userEmail
+        );
+      }
+
+      const incomingIds = (incoming || []).map((b) => b.id);
+      const outgoingIds = outgoing.map((b) => b.id);
+      const allIds = [...new Set([...incomingIds, ...outgoingIds])];
+
+      if (allIds.length === 0) {
+        return res.status(200).json({
+          success: true,
+          data: { total: 0, incoming_total: 0, outgoing_total: 0, by_booking: {} }
+        });
+      }
+
+      const { data: messages, error: msgError } = await supabase
+        .from('booking_messages')
+        .select('booking_id, sender_type, created_at')
+        .in('booking_id', allIds);
+      if (msgError) throw msgError;
+
+      const readerKeys = [userId];
+      if (userEmail) readerKeys.push(userEmail);
+
+      const { data: reads, error: readsError } = await supabase
+        .from('booking_message_reads')
+        .select('booking_id, reader_type, reader_key, last_read_at')
+        .in('booking_id', allIds)
+        .in('reader_key', readerKeys);
+      if (readsError) throw readsError;
+
+      const readMap = {};
+      for (const r of reads || []) {
+        if (r.reader_type === 'model' && r.reader_key === userId) {
+          readMap[`${r.booking_id}:model`] = r.last_read_at;
+        }
+        if (r.reader_type === 'client' && userEmail && r.reader_key === userEmail) {
+          readMap[`${r.booking_id}:client`] = r.last_read_at;
+        }
+      }
+
+      const incomingSet = new Set(incomingIds);
+      const outgoingSet = new Set(outgoingIds);
+      const by_booking = {};
+      let incoming_total = 0;
+      let outgoing_total = 0;
+
+      for (const msg of messages || []) {
+        if (incomingSet.has(msg.booking_id) && msg.sender_type === 'client') {
+          const lastRead = readMap[`${msg.booking_id}:model`];
+          if (!lastRead || new Date(msg.created_at) > new Date(lastRead)) {
+            by_booking[msg.booking_id] = (by_booking[msg.booking_id] || 0) + 1;
+            incoming_total += 1;
+          }
+        }
+        if (outgoingSet.has(msg.booking_id) && msg.sender_type === 'model') {
+          const lastRead = readMap[`${msg.booking_id}:client`];
+          if (!lastRead || new Date(msg.created_at) > new Date(lastRead)) {
+            by_booking[msg.booking_id] = (by_booking[msg.booking_id] || 0) + 1;
+            outgoing_total += 1;
+          }
+        }
+      }
+
+      return res.status(200).json({
+        success: true,
+        data: {
+          total: incoming_total + outgoing_total,
+          incoming_total,
+          outgoing_total,
+          by_booking
+        }
+      });
+    }
+
     // GET /api/bookings - Get all bookings for current user
     if (req.method === 'GET') {
       const { data, error } = await supabase

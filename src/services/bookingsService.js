@@ -120,7 +120,8 @@ export const sendGuestBookingMessage = async (bookingId, email, body) => {
 export const getUnreadSummary = async () => {
   try {
     const headers = await getAuthHeaders();
-    const response = await fetch(`${getApiBaseUrl()}/bookings/unread-summary`, {
+    // Merged into GET /bookings?unread_summary=1 (Hobby serverless function limit)
+    const response = await fetch(`${getApiBaseUrl()}/bookings?unread_summary=1`, {
       method: 'GET',
       headers
     });
@@ -148,13 +149,15 @@ export const getUnreadSummary = async () => {
 
 /**
  * Mark booking chat as read (logged-in model or client)
+ * Merged into POST /bookings/:id/messages { mark_read: true }
  */
 export const markBookingRead = async (bookingId) => {
   try {
     const headers = await getAuthHeaders();
-    const response = await fetch(`${getApiBaseUrl()}/bookings/${bookingId}/read`, {
+    const response = await fetch(`${getApiBaseUrl()}/bookings/${bookingId}/messages`, {
       method: 'POST',
-      headers
+      headers,
+      body: JSON.stringify({ mark_read: true })
     });
     const data = await response.json();
     if (!response.ok) {
@@ -169,13 +172,14 @@ export const markBookingRead = async (bookingId) => {
 
 /**
  * Guest: mark booking chat as read
+ * Merged into POST /bookings/:id/guest-messages { email, mark_read: true }
  */
 export const markGuestBookingRead = async (bookingId, email) => {
   try {
-    const response = await fetch(`${getApiBaseUrl()}/bookings/${bookingId}/guest-read`, {
+    const response = await fetch(`${getApiBaseUrl()}/bookings/${bookingId}/guest-messages`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: (email || '').trim() })
+      body: JSON.stringify({ email: (email || '').trim(), mark_read: true })
     });
     const data = await response.json();
     if (!response.ok) {

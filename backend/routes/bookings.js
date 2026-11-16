@@ -11,29 +11,25 @@ const {
   getBookingMessages,
   createBookingMessage,
   getGuestBookingMessages,
-  createGuestBookingMessage,
-  getUnreadSummary,
-  markBookingRead,
-  markGuestBookingRead
+  createGuestBookingMessage
 } = require('../controllers/bookingsController');
 
 // Guest create booking (no auth) - for public model page "Book me"
 router.post('/guest', createGuestBooking);
 
 // Guest chat (no auth) - validate by email
+// POST also supports { mark_read: true } (merged; Vercel Hobby function limit)
 router.get('/:id/guest-messages', getGuestBookingMessages);
 router.post('/:id/guest-messages', createGuestBookingMessage);
-router.post('/:id/guest-read', markGuestBookingRead);
 
 // All routes below require authentication
 router.use(verifySupabaseToken);
 
 // GET /api/bookings - Get all bookings for current user (as model)
+// GET /api/bookings?unread_summary=1 - Unread chat counts (merged)
 router.get('/', getBookings);
 // GET /api/bookings/as-client - Bookings where current user is the client
 router.get('/as-client', getBookingsAsClient);
-// GET /api/bookings/unread-summary - Unread chat counts
-router.get('/unread-summary', getUnreadSummary);
 
 // POST /api/bookings - Create a new booking (logged-in user)
 router.post('/', createBooking);
@@ -41,11 +37,8 @@ router.post('/', createBooking);
 // GET /api/bookings/:id/messages - Get messages for a booking
 router.get('/:id/messages', getBookingMessages);
 
-// POST /api/bookings/:id/messages - Send a message in a booking chat
+// POST /api/bookings/:id/messages - Send message, or { mark_read: true }
 router.post('/:id/messages', createBookingMessage);
-
-// POST /api/bookings/:id/read - Mark booking chat as read
-router.post('/:id/read', markBookingRead);
 
 // PUT /api/bookings/:id - Update a booking
 router.put('/:id', updateBooking);

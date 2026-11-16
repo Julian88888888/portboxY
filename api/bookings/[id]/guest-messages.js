@@ -1,6 +1,7 @@
 /**
  * Vercel: GET/POST /api/bookings/:id/guest-messages
  * Client chat - no auth, validate by email
+ * POST { email, mark_read: true } → mark as read (merged; Hobby plan function limit)
  */
 
 const { createClient } = require('@supabase/supabase-js');
@@ -20,6 +21,18 @@ function normalizeEmail(s) {
   return (s || '').trim().toLowerCase();
 }
 
+function parseBody(req) {
+  if (!req.body) return {};
+  if (typeof req.body === 'string') {
+    try {
+      return JSON.parse(req.body);
+    } catch {
+      return {};
+    }
+  }
+  return req.body;
+}
+
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -37,7 +50,10 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const email = normalizeEmail(req.method === 'GET' ? req.query.email : (req.body && (typeof req.body === 'string' ? JSON.parse(req.body) : req.body)?.email));
+    const body = req.method === 'POST' ? parseBody(req) : {};
+    const email = normalizeEmail(
+      req.method === 'GET' ? req.query.email : body.email
+    );
     if (!email) {
       return res.status(400).json({ success: false, message: 'Email is required' });
     }
@@ -67,7 +83,26 @@ module.exports = async (req, res) => {
     }
 
     if (req.method === 'POST') {
-      const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body || {};
+      if (body.mark_read === true || body.mark_read === 'true' || body.action === 'mark_read') {
+        const now = new Date().toISOString();
+        const { data, error } = await supabase
+          .from('booking_message_reads')
+          .upsert(
+            {
+              booking_id: bookingId,
+              reader_type: 'client',
+              reader_key: email,
+              last_read_at: now
+            },
+            { onConflict: 'booking_id,reader_type,reader_key' }
+          )
+          .select()
+          .single();
+
+        if (error) throw error;
+        return res.status(200).json({ success: true, data });
+      }
+
       const messageBody = body.body;
       if (!messageBody || !String(messageBody).trim()) {
         return res.status(400).json({ success: false, message: 'Message body is required' });

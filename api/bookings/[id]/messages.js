@@ -1,6 +1,9 @@
 /**
  * Vercel Serverless: GET/POST /api/bookings/:id/messages
- * Booking chat messages
+ * Booking chat messages + mark-read (merged; Hobby plan function limit)
+ *
+ * POST { mark_read: true } → mark chat as read
+ * POST { body: "..." } → send message
  */
 
 const { createClient } = require('@supabase/supabase-js');
@@ -29,6 +32,37 @@ function getBookingId(req) {
   return match ? match[1] : null;
 }
 
+function parseBody(req) {
+  if (!req.body) return {};
+  if (typeof req.body === 'string') {
+    try {
+      return JSON.parse(req.body);
+    } catch {
+      return {};
+    }
+  }
+  return req.body;
+}
+
+async function upsertRead(bookingId, readerType, readerKey) {
+  const now = new Date().toISOString();
+  const { data, error } = await supabase
+    .from('booking_message_reads')
+    .upsert(
+      {
+        booking_id: bookingId,
+        reader_type: readerType,
+        reader_key: readerKey,
+        last_read_at: now
+      },
+      { onConflict: 'booking_id,reader_type,reader_key' }
+    )
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -51,18 +85,18 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const { data: booking, error: bookingError } = await supabase
-      .from('bookings')
-      .select('id')
-      .eq('id', bookingId)
-      .eq('user_id', user.id)
-      .single();
-
-    if (bookingError || !booking) {
-      return res.status(404).json({ success: false, message: 'Booking not found' });
-    }
-
     if (req.method === 'GET') {
+      const { data: booking, error: bookingError } = await supabase
+        .from('bookings')
+        .select('id')
+        .eq('id', bookingId)
+        .eq('user_id', user.id)
+        .single();
+
+      if (bookingError || !booking) {
+        return res.status(404).json({ success: false, message: 'Booking not found' });
+      }
+
       const { data: messages, error } = await supabase
         .from('booking_messages')
         .select('*')
@@ -74,7 +108,50 @@ module.exports = async (req, res) => {
     }
 
     if (req.method === 'POST') {
-      const body = (req.body && (typeof req.body === 'string' ? JSON.parse(req.body) : req.body)) || {};
+      const body = parseBody(req);
+
+      // Mark as read (model owner or authenticated client on this booking)
+      if (body.mark_read === true || body.mark_read === 'true' || body.action === 'mark_read') {
+        const { data: booking, error: bookingError } = await supabase
+          .from('bookings')
+          .select('id, user_id, email')
+          .eq('id', bookingId)
+          .single();
+
+        if (bookingError || !booking) {
+          return res.status(404).json({ success: false, message: 'Booking not found' });
+        }
+
+        const userEmail = (user.email || '').trim().toLowerCase();
+        let readerType = null;
+        let readerKey = null;
+
+        if (booking.user_id === user.id) {
+          readerType = 'model';
+          readerKey = user.id;
+        } else if (userEmail && (booking.email || '').trim().toLowerCase() === userEmail) {
+          readerType = 'client';
+          readerKey = userEmail;
+        } else {
+          return res.status(403).json({ success: false, message: 'Not allowed to mark this chat as read' });
+        }
+
+        const data = await upsertRead(bookingId, readerType, readerKey);
+        return res.status(200).json({ success: true, data });
+      }
+
+      // Send message (model owner only)
+      const { data: booking, error: bookingError } = await supabase
+        .from('bookings')
+        .select('id')
+        .eq('id', bookingId)
+        .eq('user_id', user.id)
+        .single();
+
+      if (bookingError || !booking) {
+        return res.status(404).json({ success: false, message: 'Booking not found' });
+      }
+
       const messageBody = body.body;
       if (!messageBody || !String(messageBody).trim()) {
         return res.status(400).json({ success: false, message: 'Message body is required' });
