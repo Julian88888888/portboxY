@@ -5,8 +5,11 @@ import {
   sendBookingMessage,
   getGuestBookingMessages,
   sendGuestBookingMessage,
+  markBookingRead,
+  markGuestBookingRead,
   formatBookingClientHandle
 } from '../services/bookingsService';
+import { useInvalidateBookingUnread } from '../hooks/useBookingUnread';
 import { formatPayRateDisplay } from '../utils/payRate';
 import './BookingChat.css';
 
@@ -17,12 +20,24 @@ const BookingChatModal = ({ isOpen, onClose, booking }) => {
   const [inputValue, setInputValue] = useState('');
   const [error, setError] = useState(null);
   const messagesEndRef = useRef(null);
+  const invalidateUnread = useInvalidateBookingUnread();
 
   const asClient = !!booking?.asClient;
   const clientEmail = (booking?.clientEmail || '').trim();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const markRead = (refreshBadge = false) => {
+    if (!booking?.id) return;
+    if (asClient && !clientEmail) return;
+    const markPromise = asClient
+      ? markGuestBookingRead(booking.id, clientEmail)
+      : markBookingRead(booking.id);
+    markPromise.then((result) => {
+      if (result.success && refreshBadge) invalidateUnread();
+    }).catch(() => {});
   };
 
   const loadMessages = (silent = false) => {
@@ -42,6 +57,8 @@ const BookingChatModal = ({ isOpen, onClose, booking }) => {
       .then((result) => {
         if (result.success) {
           setMessages(result.data || []);
+          // Refresh badge on open; silent polls only update the read cursor
+          markRead(!silent);
         } else {
           if (!silent) {
             setError(result.error || 'Failed to load messages');
@@ -74,6 +91,14 @@ const BookingChatModal = ({ isOpen, onClose, booking }) => {
       setError(null);
     }
   }, [isOpen, booking?.id, asClient, clientEmail]);
+
+  // Refresh sidebar/section badges when chat closes
+  useEffect(() => {
+    if (!isOpen) return undefined;
+    return () => {
+      invalidateUnread();
+    };
+  }, [isOpen, invalidateUnread]);
 
   useEffect(() => {
     if (!isOpen || !booking?.id || (asClient && !clientEmail)) return;

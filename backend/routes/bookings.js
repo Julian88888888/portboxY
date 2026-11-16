@@ -11,7 +11,10 @@ const {
   getBookingMessages,
   createBookingMessage,
   getGuestBookingMessages,
-  createGuestBookingMessage
+  createGuestBookingMessage,
+  getUnreadSummary,
+  markBookingRead,
+  markGuestBookingRead
 } = require('../controllers/bookingsController');
 
 // Guest create booking (no auth) - for public model page "Book me"
@@ -20,6 +23,7 @@ router.post('/guest', createGuestBooking);
 // Guest chat (no auth) - validate by email
 router.get('/:id/guest-messages', getGuestBookingMessages);
 router.post('/:id/guest-messages', createGuestBookingMessage);
+router.post('/:id/guest-read', markGuestBookingRead);
 
 // All routes below require authentication
 router.use(verifySupabaseToken);
@@ -28,6 +32,8 @@ router.use(verifySupabaseToken);
 router.get('/', getBookings);
 // GET /api/bookings/as-client - Bookings where current user is the client
 router.get('/as-client', getBookingsAsClient);
+// GET /api/bookings/unread-summary - Unread chat counts
+router.get('/unread-summary', getUnreadSummary);
 
 // POST /api/bookings - Create a new booking (logged-in user)
 router.post('/', createBooking);
@@ -37,6 +43,9 @@ router.get('/:id/messages', getBookingMessages);
 
 // POST /api/bookings/:id/messages - Send a message in a booking chat
 router.post('/:id/messages', createBookingMessage);
+
+// POST /api/bookings/:id/read - Mark booking chat as read
+router.post('/:id/read', markBookingRead);
 
 // PUT /api/bookings/:id - Update a booking
 router.put('/:id', updateBooking);

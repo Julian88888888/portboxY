@@ -2,6 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { NavLink, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useProfile } from '../hooks/useProfile';
+import { useBookingUnread } from '../hooks/useBookingUnread';
+import UnreadBadge from './UnreadBadge';
 import './Sidebar.css';
 
 const MOBILE_MAX = 767;
@@ -48,6 +50,8 @@ const icons = {
 const Sidebar = ({ onToggle }) => {
   const { logout, user } = useAuth();
   const { data: profile } = useProfile();
+  const { data: unread } = useBookingUnread();
+  const bookingsUnreadTotal = unread?.total || 0;
   const [isOpen, setIsOpen] = useState(true);
   const [isMobile, setIsMobile] = useState(
     () => typeof window !== 'undefined' && window.innerWidth <= MOBILE_MAX
@@ -185,6 +189,7 @@ const Sidebar = ({ onToggle }) => {
                 <div className="nav-item-content">
                   <NavIcon>{icons.bookings}</NavIcon>
                   <span className="nav-text">Bookings</span>
+                  <UnreadBadge count={bookingsUnreadTotal} className="unread-badge--nav" />
                 </div>
               </NavLink>
             </li>

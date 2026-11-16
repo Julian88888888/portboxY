@@ -1,6 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
-import { getGuestBookingMessages, sendGuestBookingMessage } from '../services/bookingsService';
+import {
+  getGuestBookingMessages,
+  sendGuestBookingMessage,
+  markGuestBookingRead
+} from '../services/bookingsService';
 import '../components/BookingChat.css';
 
 export default function BookingChatPage() {
@@ -36,6 +40,7 @@ export default function BookingChatPage() {
       .then((result) => {
         if (result.success) {
           setMessages(result.data || []);
+          markGuestBookingRead(bookingId, email.trim()).catch(() => {});
           try {
             sessionStorage.setItem(`booking_chat_email_${bookingId}`, email.trim());
           } catch (_) {}

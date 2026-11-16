@@ -114,6 +114,81 @@ export const sendGuestBookingMessage = async (bookingId, email, body) => {
 };
 
 /**
+ * Unread chat summary for logged-in user
+ * { total, incoming_total, outgoing_total, by_booking: { [id]: count } }
+ */
+export const getUnreadSummary = async () => {
+  try {
+    const headers = await getAuthHeaders();
+    const response = await fetch(`${getApiBaseUrl()}/bookings/unread-summary`, {
+      method: 'GET',
+      headers
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      return {
+        success: false,
+        error: data.message || data.error || 'Failed to get unread summary',
+        data: { total: 0, incoming_total: 0, outgoing_total: 0, by_booking: {} }
+      };
+    }
+    return {
+      success: true,
+      data: data.data || { total: 0, incoming_total: 0, outgoing_total: 0, by_booking: {} }
+    };
+  } catch (error) {
+    console.error('Error getting unread summary:', error);
+    return {
+      success: false,
+      error: error.message || 'Failed to get unread summary',
+      data: { total: 0, incoming_total: 0, outgoing_total: 0, by_booking: {} }
+    };
+  }
+};
+
+/**
+ * Mark booking chat as read (logged-in model or client)
+ */
+export const markBookingRead = async (bookingId) => {
+  try {
+    const headers = await getAuthHeaders();
+    const response = await fetch(`${getApiBaseUrl()}/bookings/${bookingId}/read`, {
+      method: 'POST',
+      headers
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      return { success: false, error: data.message || data.error || 'Failed to mark as read' };
+    }
+    return { success: true, data: data.data };
+  } catch (error) {
+    console.error('Error marking booking read:', error);
+    return { success: false, error: error.message || 'Failed to mark as read' };
+  }
+};
+
+/**
+ * Guest: mark booking chat as read
+ */
+export const markGuestBookingRead = async (bookingId, email) => {
+  try {
+    const response = await fetch(`${getApiBaseUrl()}/bookings/${bookingId}/guest-read`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: (email || '').trim() })
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      return { success: false, error: data.message || data.error || 'Failed to mark as read' };
+    }
+    return { success: true, data: data.data };
+  } catch (error) {
+    console.error('Error marking guest booking read:', error);
+    return { success: false, error: error.message || 'Failed to mark as read' };
+  }
+};
+
+/**
  * Get messages for a booking (chat) - for logged-in model
  */
 export const getBookingMessages = async (bookingId) => {

@@ -8,8 +8,10 @@ import { createAlbum, getAlbums, uploadImageToAlbum, deleteAlbum, deleteImage, u
 import { validateMarkets } from '../utils/markets';
 import { getCustomLinks, createCustomLink, updateCustomLink, deleteCustomLink, uploadCustomLinkIcon } from '../services/customLinksService';
 import { getBookings, getBookingsAsClient, deleteBooking, updateBooking, formatBookingClientHandle } from '../services/bookingsService';
+import { useBookingUnread } from '../hooks/useBookingUnread';
 import ProfileSettings from './ProfileSettings';
 import BookingChatModal from './BookingChatModal';
+import UnreadBadge from './UnreadBadge';
 import './Dashboard.css';
 import { MAX_IMAGE_SIZE_HINT, validateImageFileSize } from '../utils/imageUploadLimits';
 import { formatJobType, isModelJobType } from '../utils/formatJobType';
@@ -253,6 +255,10 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
   const [bookingsAsClientLoading, setBookingsAsClientLoading] = useState(false);
   const [bookingChatOpen, setBookingChatOpen] = useState(false);
   const [selectedBookingForChat, setSelectedBookingForChat] = useState(null);
+  const { data: bookingUnread } = useBookingUnread();
+  const unreadByBooking = bookingUnread?.by_booking || {};
+  const unreadIncomingTotal = bookingUnread?.incoming_total || 0;
+  const unreadOutgoingTotal = bookingUnread?.outgoing_total || 0;
   const [outgoingBookingsPage, setOutgoingBookingsPage] = useState(1);
   const [incomingBookingsPage, setIncomingBookingsPage] = useState(1);
 
@@ -2630,7 +2636,10 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
 
                           <div className="dashboard-bookings-grid">
                             <div style={{ minWidth: 0, width: '100%', maxWidth: '100%' }}>
-                              <h4 style={{ margin: '0 0 12px 0', fontSize: '16px', fontWeight: '600', textAlign: 'left', width: '100%' }}>Outgoing Bookings</h4>
+                              <h4 style={{ margin: '0 0 12px 0', fontSize: '16px', fontWeight: '600', textAlign: 'left', width: '100%', display: 'flex', alignItems: 'center' }}>
+                                Outgoing Bookings
+                                <UnreadBadge count={unreadOutgoingTotal} className="unread-badge--section" />
+                              </h4>
                               <p style={{ margin: '0 0 16px 0', color: '#666', fontSize: '14px' }}>Outgoing Bookings will appear here. - Open chat to see more and discuss details</p>
                               {bookingsAsClientLoading ? (
                                 <p className="paragraph">Loading...</p>
@@ -2702,37 +2711,40 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                                           </div>
                                         )}
                                       </div>
-                                      <button
-                                        type="button"
-                                        className="dashboard-booking-open-chat-btn"
-                                        onClick={() => {
-                                          setSelectedBookingForChat({
-                                            id: b.id,
-                                            name: b.model_display_name || b.model_username || 'Model',
-                                            email: b.model_email || b.email || '',
-                                            asClient: true,
-                                            clientEmail: user?.email || '',
-                                            job_type: b.job_type,
-                                            dates: b.dates,
-                                            location: b.location,
-                                            pay_rate: b.pay_rate,
-                                            details: b.details,
-                                            created_at: b.created_at
-                                          });
-                                          setBookingChatOpen(true);
-                                        }}
-                                        style={{
-                                          padding: '6px 14px',
-                                          backgroundColor: '#783FF3',
-                                          color: 'white',
-                                          border: 'none',
-                                          borderRadius: '4px',
-                                          fontSize: '13px',
-                                          cursor: 'pointer'
-                                        }}
-                                      >
-                                        Open chat
-                                      </button>
+                                      <span className="unread-badge-wrap">
+                                        <button
+                                          type="button"
+                                          className="dashboard-booking-open-chat-btn"
+                                          onClick={() => {
+                                            setSelectedBookingForChat({
+                                              id: b.id,
+                                              name: b.model_display_name || b.model_username || 'Model',
+                                              email: b.model_email || b.email || '',
+                                              asClient: true,
+                                              clientEmail: user?.email || '',
+                                              job_type: b.job_type,
+                                              dates: b.dates,
+                                              location: b.location,
+                                              pay_rate: b.pay_rate,
+                                              details: b.details,
+                                              created_at: b.created_at
+                                            });
+                                            setBookingChatOpen(true);
+                                          }}
+                                          style={{
+                                            padding: '6px 14px',
+                                            backgroundColor: '#783FF3',
+                                            color: 'white',
+                                            border: 'none',
+                                            borderRadius: '4px',
+                                            fontSize: '13px',
+                                            cursor: 'pointer'
+                                          }}
+                                        >
+                                          Open chat
+                                        </button>
+                                        <UnreadBadge count={unreadByBooking[b.id]} className="unread-badge--chat" />
+                                      </span>
                                     </div>
                                   ))}
                                   <BookingsPaginationFooter
@@ -2745,7 +2757,10 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                             </div>
 
                             <div style={{ minWidth: 0, width: '100%', maxWidth: '100%' }}>
-                              <h4 className="dashboard-bookings-incoming-title" style={{ margin: '0 0 12px 0', fontSize: '16px', fontWeight: '600', textAlign: 'right', width: '100%' }}>Incoming Bookings</h4>
+                              <h4 className="dashboard-bookings-incoming-title" style={{ margin: '0 0 12px 0', fontSize: '16px', fontWeight: '600', textAlign: 'right', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
+                                Incoming Bookings
+                                <UnreadBadge count={unreadIncomingTotal} className="unread-badge--section" />
+                              </h4>
                               <p style={{ margin: '0 0 16px 0', color: '#666', fontSize: '14px', textAlign: 'right' }}>Incoming Bookings will appear here. - Open chat to see more and discuss details</p>
                               {bookingsLoading ? (
                                 <p className="paragraph">Loading bookings...</p>
@@ -2847,24 +2862,27 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                                           Email
                                         </a>
                                       )}
-                                      <button
-                                        onClick={() => {
-                                          setSelectedBookingForChat(booking);
-                                          setBookingChatOpen(true);
-                                        }}
-                                        style={{
-                                          padding: '6px 14px',
-                                          backgroundColor: 'rgba(120, 63, 243, 0.12)',
-                                          color: '#5c4d9e',
-                                          border: '1px solid rgba(120, 63, 243, 0.35)',
-                                          borderRadius: '6px',
-                                          cursor: 'pointer',
-                                          fontSize: '12px',
-                                          fontWeight: '500'
-                                        }}
-                                      >
-                                        Chat
-                                      </button>
+                                      <span className="unread-badge-wrap">
+                                        <button
+                                          onClick={() => {
+                                            setSelectedBookingForChat(booking);
+                                            setBookingChatOpen(true);
+                                          }}
+                                          style={{
+                                            padding: '6px 14px',
+                                            backgroundColor: 'rgba(120, 63, 243, 0.12)',
+                                            color: '#5c4d9e',
+                                            border: '1px solid rgba(120, 63, 243, 0.35)',
+                                            borderRadius: '6px',
+                                            cursor: 'pointer',
+                                            fontSize: '12px',
+                                            fontWeight: '500'
+                                          }}
+                                        >
+                                          Chat
+                                        </button>
+                                        <UnreadBadge count={unreadByBooking[booking.id]} className="unread-badge--chat" />
+                                      </span>
                                       <button
                                         onClick={async () => {
                                           if (window.confirm('Are you sure you want to delete this booking?')) {

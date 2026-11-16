@@ -573,6 +573,215 @@ const createGuestBookingMessage = async (req, res) => {
   }
 };
 
+/**
+ * Unread message summary for logged-in user (incoming as model + outgoing as client)
+ * GET /api/bookings/unread-summary
+ */
+const getUnreadSummary = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const userEmail = (req.user.email || '').trim().toLowerCase();
+
+    const { data: incoming, error: incomingError } = await supabase
+      .from('bookings')
+      .select('id')
+      .eq('user_id', userId);
+
+    if (incomingError) throw incomingError;
+
+    let outgoing = [];
+    if (userEmail) {
+      const { data: allBookings, error: allError } = await supabase
+        .from('bookings')
+        .select('id, email');
+      if (allError) throw allError;
+      outgoing = (allBookings || []).filter(
+        (b) => (b.email || '').trim().toLowerCase() === userEmail
+      );
+    }
+
+    const incomingIds = (incoming || []).map((b) => b.id);
+    const outgoingIds = outgoing.map((b) => b.id);
+    const allIds = [...new Set([...incomingIds, ...outgoingIds])];
+
+    if (allIds.length === 0) {
+      return res.json({
+        success: true,
+        data: { total: 0, incoming_total: 0, outgoing_total: 0, by_booking: {} }
+      });
+    }
+
+    const { data: messages, error: msgError } = await supabase
+      .from('booking_messages')
+      .select('booking_id, sender_type, created_at')
+      .in('booking_id', allIds);
+
+    if (msgError) throw msgError;
+
+    const readerKeys = [userId];
+    if (userEmail) readerKeys.push(userEmail);
+
+    const { data: reads, error: readsError } = await supabase
+      .from('booking_message_reads')
+      .select('booking_id, reader_type, reader_key, last_read_at')
+      .in('booking_id', allIds)
+      .in('reader_key', readerKeys);
+
+    if (readsError) throw readsError;
+
+    const readMap = {};
+    for (const r of reads || []) {
+      if (r.reader_type === 'model' && r.reader_key === userId) {
+        readMap[`${r.booking_id}:model`] = r.last_read_at;
+      }
+      if (r.reader_type === 'client' && userEmail && r.reader_key === userEmail) {
+        readMap[`${r.booking_id}:client`] = r.last_read_at;
+      }
+    }
+
+    const incomingSet = new Set(incomingIds);
+    const outgoingSet = new Set(outgoingIds);
+    const by_booking = {};
+    let incoming_total = 0;
+    let outgoing_total = 0;
+
+    for (const msg of messages || []) {
+      if (incomingSet.has(msg.booking_id) && msg.sender_type === 'client') {
+        const lastRead = readMap[`${msg.booking_id}:model`];
+        if (!lastRead || new Date(msg.created_at) > new Date(lastRead)) {
+          by_booking[msg.booking_id] = (by_booking[msg.booking_id] || 0) + 1;
+          incoming_total += 1;
+        }
+      }
+      if (outgoingSet.has(msg.booking_id) && msg.sender_type === 'model') {
+        const lastRead = readMap[`${msg.booking_id}:client`];
+        if (!lastRead || new Date(msg.created_at) > new Date(lastRead)) {
+          by_booking[msg.booking_id] = (by_booking[msg.booking_id] || 0) + 1;
+          outgoing_total += 1;
+        }
+      }
+    }
+
+    res.json({
+      success: true,
+      data: {
+        total: incoming_total + outgoing_total,
+        incoming_total,
+        outgoing_total,
+        by_booking
+      }
+    });
+  } catch (error) {
+    console.error('Error getting unread summary:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get unread summary',
+      error: error.message
+    });
+  }
+};
+
+async function upsertBookingRead(bookingId, readerType, readerKey) {
+  const now = new Date().toISOString();
+  const { data, error } = await supabase
+    .from('booking_message_reads')
+    .upsert(
+      {
+        booking_id: bookingId,
+        reader_type: readerType,
+        reader_key: readerKey,
+        last_read_at: now
+      },
+      { onConflict: 'booking_id,reader_type,reader_key' }
+    )
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+/**
+ * Mark booking chat as read (model or authenticated client)
+ * POST /api/bookings/:id/read
+ */
+const markBookingRead = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const userEmail = (req.user.email || '').trim().toLowerCase();
+    const bookingId = req.params.id;
+
+    const { data: booking, error: bookingError } = await supabase
+      .from('bookings')
+      .select('id, user_id, email')
+      .eq('id', bookingId)
+      .single();
+
+    if (bookingError || !booking) {
+      return res.status(404).json({ success: false, message: 'Booking not found' });
+    }
+
+    let readerType = null;
+    let readerKey = null;
+
+    if (booking.user_id === userId) {
+      readerType = 'model';
+      readerKey = userId;
+    } else if (userEmail && (booking.email || '').trim().toLowerCase() === userEmail) {
+      readerType = 'client';
+      readerKey = userEmail;
+    } else {
+      return res.status(403).json({ success: false, message: 'Not allowed to mark this chat as read' });
+    }
+
+    const data = await upsertBookingRead(bookingId, readerType, readerKey);
+    res.json({ success: true, data });
+  } catch (error) {
+    console.error('Error marking booking read:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to mark as read',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * Guest: mark booking chat as read (validate by email)
+ * POST /api/bookings/:id/guest-read  body: { email }
+ */
+const markGuestBookingRead = async (req, res) => {
+  try {
+    const bookingId = req.params.id;
+    const email = ((req.body && req.body.email) || '').trim().toLowerCase();
+    if (!email) {
+      return res.status(400).json({ success: false, message: 'Email is required' });
+    }
+
+    const { data: booking, error: bookingError } = await supabase
+      .from('bookings')
+      .select('id, email')
+      .eq('id', bookingId)
+      .single();
+
+    if (bookingError || !booking) {
+      return res.status(404).json({ success: false, message: 'Booking not found' });
+    }
+    if ((booking.email || '').trim().toLowerCase() !== email) {
+      return res.status(403).json({ success: false, message: 'Email does not match this booking' });
+    }
+
+    const data = await upsertBookingRead(bookingId, 'client', email);
+    res.json({ success: true, data });
+  } catch (error) {
+    console.error('Error marking guest booking read:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to mark as read',
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
   getBookings,
   getBookingsAsClient,
@@ -583,5 +792,8 @@ module.exports = {
   getBookingMessages,
   createBookingMessage,
   getGuestBookingMessages,
-  createGuestBookingMessage
+  createGuestBookingMessage,
+  getUnreadSummary,
+  markBookingRead,
+  markGuestBookingRead
 };
