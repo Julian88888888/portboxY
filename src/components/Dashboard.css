@@ -685,11 +685,65 @@
   box-sizing: border-box;
 }
 
+/* Mobile Outgoing/Incoming tabs — hidden on desktop */
+.dashboard-bookings-mobile-tabs {
+  display: none;
+}
+
 @media screen and (max-width: 767px) {
+  .dashboard-bookings-mobile-tabs {
+    display: flex;
+    align-items: stretch;
+    gap: 4px;
+    width: 100%;
+    margin: 0 0 16px 0;
+    padding: 4px;
+    background: #e5e7eb;
+    border-radius: 999px;
+    box-sizing: border-box;
+  }
+
+  .dashboard-bookings-mobile-tab {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin: 0;
+    padding: 10px 12px;
+    border: none;
+    border-radius: 999px;
+    background: transparent;
+    color: #374151;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.2;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .dashboard-bookings-mobile-tab.is-active {
+    background: #d1d5db;
+    color: #111827;
+    font-weight: 600;
+  }
+
   .dashboard-bookings-grid {
     grid-template-columns: 1fr;
     padding-right: 0;
     gap: 20px;
+  }
+
+  /* Show only the selected list on mobile */
+  .dashboard-bookings-grid--mobile-outgoing .dashboard-bookings-panel--incoming,
+  .dashboard-bookings-grid--mobile-incoming .dashboard-bookings-panel--outgoing {
+    display: none;
+  }
+
+  /* Titles live in the mobile tabs ( !important beats inline display styles ) */
+  .dashboard-bookings-panel-title,
+  .dashboard-bookings-panel-desc {
+    display: none !important;
   }
 
   .dashboard-booking-card-outgoing {

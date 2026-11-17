@@ -261,6 +261,8 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
   const unreadOutgoingTotal = bookingUnread?.outgoing_total || 0;
   const [outgoingBookingsPage, setOutgoingBookingsPage] = useState(1);
   const [incomingBookingsPage, setIncomingBookingsPage] = useState(1);
+  /** Mobile-only: which bookings list is visible ('outgoing' | 'incoming') */
+  const [mobileBookingsListTab, setMobileBookingsListTab] = useState('outgoing');
 
   // Sync with prop changes - this ensures the tab reflects the current page
   useEffect(() => {
@@ -453,6 +455,7 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
     showAlbumBadge: true,
     showAlbumTitle: true,
     showAlbumDescription: true,
+    portfolioDisplaySize: 'M',
     showBookMeButton: true,
     showBookMeProfileSection: true,
     showBookMePortfolioSection: true,
@@ -580,6 +583,16 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
             : (user.showAlbumDescription !== undefined
               ? user.showAlbumDescription
               : (user.user_metadata?.showAlbumDescription !== undefined ? user.user_metadata.showAlbumDescription : prev.showAlbumDescription))),
+        portfolioDisplaySize:
+          profile?.portfolio_display_size === 'S' ||
+          profile?.portfolio_display_size === 'M' ||
+          profile?.portfolio_display_size === 'L'
+            ? profile.portfolio_display_size
+            : (profile?.portfolioDisplaySize === 'S' ||
+              profile?.portfolioDisplaySize === 'M' ||
+              profile?.portfolioDisplaySize === 'L'
+              ? profile.portfolioDisplaySize
+              : (prev.portfolioDisplaySize || 'M')),
         heightFeet: (profile?.personal_stats?.heightFeet ?? user.heightFeet) || '',
         heightInches: (profile?.personal_stats?.heightInches ?? user.heightInches) || '',
         heightUnit: (profile?.personal_stats?.heightUnit ?? user.heightUnit) || 'FeetInches',
@@ -2324,6 +2337,53 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                       <p style={{ margin: 0 }}>Show Album Description</p>
                     </label>
                   </div>
+                  <div style={{ marginTop: '16px', maxWidth: '280px' }}>
+                    <label htmlFor="portfolioDisplaySize" style={{ display: 'block', marginBottom: '6px', fontSize: '14px', fontWeight: 500 }}>
+                      Size
+                    </label>
+                    <select
+                      id="portfolioDisplaySize"
+                      name="portfolioDisplaySize"
+                      className="w-select"
+                      value={
+                        formData.portfolioDisplaySize === 'S' ||
+                        formData.portfolioDisplaySize === 'M' ||
+                        formData.portfolioDisplaySize === 'L'
+                          ? formData.portfolioDisplaySize
+                          : 'M'
+                      }
+                      onChange={async (e) => {
+                        const nextSize = normalizeDisplaySize(e.target.value);
+                        const previousSize = formData.portfolioDisplaySize || 'M';
+                        setFormData((prev) => ({ ...prev, portfolioDisplaySize: nextSize }));
+                        try {
+                          await upsertProfile({ portfolio_display_size: nextSize });
+                          queryClient.invalidateQueries({ queryKey: ['profile'] });
+                          const u = String(profile?.username || formData.username || '')
+                            .trim()
+                            .replace(/^@+/, '');
+                          if (u) queryClient.invalidateQueries({ queryKey: ['publicProfile', u] });
+                        } catch (err) {
+                          console.error('Error updating portfolio_display_size:', err);
+                          setFormData((prev) => ({ ...prev, portfolioDisplaySize: previousSize }));
+                          alert(
+                            err?.message ||
+                              'Failed to update portfolio size. Run add_portfolio_display_size_column.sql in Supabase if needed.'
+                          );
+                        }
+                      }}
+                      style={{ width: '100%', marginBottom: '8px' }}
+                    >
+                      {DISPLAY_SIZE_OPTIONS.map((option) => (
+                        <option key={option.id} value={option.id}>
+                          {option.hint}
+                        </option>
+                      ))}
+                    </select>
+                    <p className="text_color_grey" style={{ margin: 0, fontSize: '13px' }}>
+                      Album card size on your public Portfolio.
+                    </p>
+                  </div>
                   
                   {/* New Albums API Section */}
                   <div className="settingssection" style={{ marginTop: '32px', paddingTop: '32px', borderTop: '1px solid #e0e0e0' }}>
@@ -2634,13 +2694,40 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                         <div className="w-layout-vflex flex-block-11">
                           <div className="spacing_48"></div>
 
-                          <div className="dashboard-bookings-grid">
-                            <div style={{ minWidth: 0, width: '100%', maxWidth: '100%' }}>
-                              <h4 style={{ margin: '0 0 12px 0', fontSize: '16px', fontWeight: '600', textAlign: 'left', width: '100%', display: 'flex', alignItems: 'center' }}>
+                          <div
+                            className="dashboard-bookings-mobile-tabs"
+                            role="tablist"
+                            aria-label="Outgoing or Incoming bookings"
+                          >
+                            <button
+                              type="button"
+                              role="tab"
+                              aria-selected={mobileBookingsListTab === 'outgoing'}
+                              className={`dashboard-bookings-mobile-tab ${mobileBookingsListTab === 'outgoing' ? 'is-active' : ''}`}
+                              onClick={() => setMobileBookingsListTab('outgoing')}
+                            >
+                              <span>Outgoing</span>
+                              <UnreadBadge count={unreadOutgoingTotal} className="unread-badge--nav" />
+                            </button>
+                            <button
+                              type="button"
+                              role="tab"
+                              aria-selected={mobileBookingsListTab === 'incoming'}
+                              className={`dashboard-bookings-mobile-tab ${mobileBookingsListTab === 'incoming' ? 'is-active' : ''}`}
+                              onClick={() => setMobileBookingsListTab('incoming')}
+                            >
+                              <span>Incoming</span>
+                              <UnreadBadge count={unreadIncomingTotal} className="unread-badge--nav" />
+                            </button>
+                          </div>
+
+                          <div className={`dashboard-bookings-grid dashboard-bookings-grid--mobile-${mobileBookingsListTab}`}>
+                            <div className="dashboard-bookings-panel dashboard-bookings-panel--outgoing" style={{ minWidth: 0, width: '100%', maxWidth: '100%' }}>
+                              <h4 className="dashboard-bookings-panel-title" style={{ margin: '0 0 12px 0', fontSize: '16px', fontWeight: '600', textAlign: 'left', width: '100%', display: 'flex', alignItems: 'center' }}>
                                 Outgoing Bookings
                                 <UnreadBadge count={unreadOutgoingTotal} className="unread-badge--section" />
                               </h4>
-                              <p style={{ margin: '0 0 16px 0', color: '#666', fontSize: '14px' }}>Outgoing Bookings will appear here. - Open chat to see more and discuss details</p>
+                              <p className="dashboard-bookings-panel-desc" style={{ margin: '0 0 16px 0', color: '#666', fontSize: '14px' }}>Outgoing Bookings will appear here. - Open chat to see more and discuss details</p>
                               {bookingsAsClientLoading ? (
                                 <p className="paragraph">Loading...</p>
                               ) : bookingsAsClient.length === 0 ? (
@@ -2756,12 +2843,12 @@ export default function Dashboard({ activeTab: propActiveTab, onTabChange }) {
                               )}
                             </div>
 
-                            <div style={{ minWidth: 0, width: '100%', maxWidth: '100%' }}>
-                              <h4 className="dashboard-bookings-incoming-title" style={{ margin: '0 0 12px 0', fontSize: '16px', fontWeight: '600', textAlign: 'right', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
+                            <div className="dashboard-bookings-panel dashboard-bookings-panel--incoming" style={{ minWidth: 0, width: '100%', maxWidth: '100%' }}>
+                              <h4 className="dashboard-bookings-incoming-title dashboard-bookings-panel-title" style={{ margin: '0 0 12px 0', fontSize: '16px', fontWeight: '600', textAlign: 'right', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
                                 Incoming Bookings
                                 <UnreadBadge count={unreadIncomingTotal} className="unread-badge--section" />
                               </h4>
-                              <p style={{ margin: '0 0 16px 0', color: '#666', fontSize: '14px', textAlign: 'right' }}>Incoming Bookings will appear here. - Open chat to see more and discuss details</p>
+                              <p className="dashboard-bookings-panel-desc" style={{ margin: '0 0 16px 0', color: '#666', fontSize: '14px', textAlign: 'right' }}>Incoming Bookings will appear here. - Open chat to see more and discuss details</p>
                               {bookingsLoading ? (
                                 <p className="paragraph">Loading bookings...</p>
                               ) : bookings.length === 0 ? (

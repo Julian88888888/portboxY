@@ -4487,19 +4487,19 @@ a {
   z-index: 2;
 }
 
-/* Public profile: portfolio size control */
+/* Public profile: portfolio header — left on desktop, center on mobile */
 .portfolio_header {
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
+  display: flex;
   align-items: center;
+  justify-content: flex-start;
   gap: 16px;
   width: 100%;
 }
 
 .portfolio_header .section_title {
-  grid-column: 2;
   margin: 0;
-  text-align: center;
+  text-align: left;
+  width: 100%;
 }
 
 .portfolio_size_control {
@@ -4574,25 +4574,12 @@ a {
 
 @media screen and (max-width: 767px) {
   .portfolio_header {
-    grid-template-columns: 1fr;
-    justify-items: center;
+    justify-content: center;
     text-align: center;
   }
 
   .portfolio_header .section_title {
-    grid-column: 1;
-  }
-
-  .portfolio_size_control {
-    grid-column: 1;
-    justify-self: center;
-    width: 100%;
-    justify-content: center;
-  }
-
-  .portfolio_size_select {
-    flex: 1;
-    max-width: 220px;
+    text-align: center;
   }
 
   .portfolio-albums-flex {
@@ -4627,14 +4614,34 @@ a {
   text-transform: uppercase;
 }
 
-.links_sec .section_title {
-  text-align: center;
+/* Desktop: titles align with left edge of section content */
+.links_sec .section_title,
+.public-block--bookings h4,
+.public-block--bookings .public-bookings-title {
+  text-align: left;
+  width: 100%;
+  margin-left: 0;
+  margin-right: 0;
 }
 
-/* Public profile: no extra vertical spacing above/below the section blocks */
+/* Public profile: keep section chrome tight; spacing lives on the inner blocks */
 .section.links_sec {
   padding-top: 0;
   padding-bottom: 0;
+}
+
+/* Same breathing room above BOOKINGS and LINKS titles */
+.public-block--bookings,
+.public-block--links {
+  padding-top: 30px;
+}
+
+@media screen and (max-width: 767px) {
+  .links_sec .section_title,
+  .public-block--bookings h4,
+  .public-block--bookings .public-bookings-title {
+    text-align: center !important;
+  }
 }
 
 /* Public bookings stats: if a row doesn't fit, items drop to the next line
@@ -4654,11 +4661,9 @@ a {
   text-align: center;
 }
 
-.public-block--bookings h4 {
-  text-align: center !important;
+.public-block--bookings h4,
+.public-block--bookings .public-bookings-title {
   width: 100%;
-  margin-left: auto;
-  margin-right: auto;
 }
 
 .public-block--bookings .stats_wrap .stat_title {

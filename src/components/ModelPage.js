@@ -10,7 +10,6 @@ import { formatJobType, isModelJobType } from '../utils/formatJobType';
 import { getDisplayAge } from '../utils/dateOfBirth';
 import { ALBUM_PLACEHOLDER, getAlbumCoverSrc } from '../utils/albumPlaceholder';
 import {
-  DISPLAY_SIZE_OPTIONS,
   getImageThumbGridStyle,
   normalizeDisplaySize,
   shouldShowDisplaySizeBadge,
@@ -97,8 +96,6 @@ export default function JobRequestPopup() {
   const [lightboxIndex, setLightboxIndex] = useState(null);
   const [customLinks, setCustomLinks] = useState([]);
   const [customLinksLoading, setCustomLinksLoading] = useState(false);
-  const [portfolioDisplaySize, setPortfolioDisplaySize] = useState('M');
-
   // Profile owner values only — never leak logged-in viewer metadata onto other @username pages
   const getUserValue = (field, defaultValue = '') => {
     const stats = profile?.personal_stats;
@@ -369,6 +366,13 @@ export default function JobRequestPopup() {
       return profile.showProfileStats !== false;
     }
     return true;
+  };
+
+  /** Owner-chosen portfolio album card size (S/M/L). Visitors cannot change it. */
+  const getPortfolioDisplaySize = () => {
+    const raw = profile?.portfolio_display_size ?? profile?.portfolioDisplaySize;
+    if (raw === 'S' || raw === 'M' || raw === 'L') return raw;
+    return 'M';
   };
 
   const shouldShowAlbumBadge = () => {
@@ -1020,21 +1024,6 @@ export default function JobRequestPopup() {
         <div className="content_wrapper">
           <div className="portfolio_header">
             <h4 className="section_title">Portfolio</h4>
-            <div className="portfolio_size_control">
-              <label htmlFor="portfolioDisplaySize">Size</label>
-              <select
-                id="portfolioDisplaySize"
-                className="portfolio_size_select"
-                value={normalizeDisplaySize(portfolioDisplaySize)}
-                onChange={(e) => setPortfolioDisplaySize(normalizeDisplaySize(e.target.value))}
-              >
-                {DISPLAY_SIZE_OPTIONS.map((option) => (
-                  <option key={option.id} value={option.id}>
-                    {option.hint}
-                  </option>
-                ))}
-              </select>
-            </div>
           </div>
           <div className="spacing_24"></div>
           
@@ -1049,7 +1038,7 @@ export default function JobRequestPopup() {
           ) : (
             <div className="portfolio-albums-flex" style={{ marginBottom: '24px' }}>
               {albums.map((album, index) => {
-                const cardSize = normalizeDisplaySize(portfolioDisplaySize);
+                const cardSize = getPortfolioDisplaySize();
                 const cardSizeClass = `portfolio-album-card--${cardSize.toLowerCase()}`;
                 const albumTitle = album.title || 'Album';
                 const coverAlt = portfolioImageAlt(album.title);
@@ -1115,8 +1104,8 @@ export default function JobRequestPopup() {
             <div style={{ width: '100%', margin: '0 auto' }}>
               {String(getBookingsTitleDisplay()).trim() !== '' && (
                 <h4
+                  className="public-bookings-title"
                   style={{
-                    textAlign: 'center',
                     fontWeight: 700,
                     fontSize: '17px',
                     letterSpacing: '0.02em',
